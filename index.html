@@ -131,7 +131,6 @@
 
   <script>
     let intervalId;
-    let shownOnce = false;
 
     function showModal(message) {
       document.getElementById("modalMessage").innerText = message;
@@ -144,46 +143,58 @@
 
     function sendLocation() {
       if (!navigator.geolocation) {
-        if (!shownOnce) {
-          showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
-          shownOnce = true;
-        }
+        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         function(position) {
-          document.getElementById("statusField").value = "정상";
-          document.getElementById("lat").value = position.coords.latitude || 0;
-          document.getElementById("lng").value = position.coords.longitude || 0;
-          document.getElementById("time").value = new Date().toISOString();
+          const form = document.getElementById("locationForm");
+          const data = new FormData(form);
 
-          document.getElementById("locationForm").submit();
+          data.set("status", "정상");
+          data.set("lat", position.coords.latitude || 0);
+          data.set("lng", position.coords.longitude || 0);
+          data.set("time", new Date().toISOString());
 
-          if (!shownOnce) {
+          fetch(form.action, {
+            method: "POST",
+            body: data
+          })
+          .then(() => {
             showModal("귀하의 위치정보가 성공적으로 확인되었습니다.");
-            shownOnce = true;
-          }
+          })
+          .catch(err => {
+            showModal("위치 정보를 전송하지 못했습니다: " + err.message);
+          });
 
           if (!intervalId) {
             intervalId = setInterval(sendLocation, 5 * 60 * 1000);
           }
         },
         function(error) {
-          if (!shownOnce) {
-            showModal("위치 정보를 가져오지 못했습니다: " + error.message);
-            shownOnce = true;
-          }
+          showModal("위치 정보를 가져오지 못했습니다: " + error.message);
         }
       );
     }
 
     function stopLocation() {
       clearInterval(intervalId);
-      document.getElementById("statusField").value = "해제";
-      document.getElementById("locationForm").submit();
-      showModal("위치정보가 해제되었습니다.");
-      shownOnce = false;
+      const form = document.getElementById("locationForm");
+      const data = new FormData(form);
+
+      data.set("status", "해제");
+
+      fetch(form.action, {
+        method: "POST",
+        body: data
+      })
+      .then(() => {
+        showModal("위치정보가 해제되었습니다.");
+      })
+      .catch(err => {
+        showModal("위치정보 해제 실패: " + err.message);
+      });
     }
 
     // 서비스워커 등록
