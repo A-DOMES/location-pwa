@@ -1,13 +1,200 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>A-DOMES 위치정보시스템</title>
-  <link rel="manifest" href="manifest.json">
+  <title>A-DOMES | 위치정보시스템</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background-color: #f9f9f9;
+      margin: 0;
+      text-align: center;
+    }
+
+    /* 상단 헤더 */
+    header {
+      background-color: #2196F3; /* 파란색 배경 */
+      padding: 20px;
+    }
+    header h2 {
+      font-size: 28px;
+      margin: 0;
+      font-weight: bold;
+      color: #fff; /* 흰색 글씨 */
+    }
+
+    input[type="text"] {
+      width: 100%;
+      max-width: 400px;
+      font-size: 18px;
+      padding: 8px;
+      margin: 20px auto;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .button-group button {
+      flex: 1;
+      font-size: 18px;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* 버튼 색상: 그라데이션 처리 */
+    #sendBtn {
+      background: linear-gradient(to bottom, #66bb6a, #4CAF50); /* 연두 → 초록 */
+      color: white;
+    }
+    #stopBtn {
+      background: linear-gradient(to bottom, #ef5350, #f44336); /* 밝은 빨강 → 진한 빨강 */
+      color: white;
+    }
+
+    /* 모달 스타일 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 20% auto;
+      padding: 20px;
+      width: 300px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content p {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .modal-content button {
+      padding: 8px 16px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* 반응형 처리 */
+    @media (max-width: 600px) {
+      input[type="text"] {
+        width: 90%;
+        font-size: 16px;
+      }
+      .button-group {
+        flex-direction: column; /* 버튼 세로 배치 */
+      }
+      .button-group button {
+        width: 100%;
+        font-size: 16px;
+      }
+      .modal-content {
+        width: 90%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>A-DOMES 위치정보시스템</h2>
-  <p>여기에 위치정보 전송 버튼 등을 넣을 수 있습니다.</p>
-  <script src="service-worker.js"></script>
+  <header>
+    <h2>A-DOMES 위치정보시스템</h2>
+  </header>
+
+  <form id="locationForm" 
+        action="https://script.google.com/macros/s/AKfycbwVRRecOMqkOm4TYEjhONvBu5kC8yVh9BZU1968eE_kQoqpcHiMFJQ4VlrarciIwXbFQw/exec" 
+        method="POST">
+    <input type="text" name="phone" id="phone" placeholder="전화번호 입력">
+
+    <input type="hidden" name="status" id="statusField" value="정상">
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+    <input type="hidden" name="time" id="time">
+
+    <div class="button-group">
+      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+    </div>
+  </form>
+
+  <!-- 모달 구조 -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modalMessage"></p>
+      <button onclick="closeModal()">확인</button>
+    </div>
+  </div>
+
+  <script>
+    let intervalId;
+    let shownOnce = false; // 메시지를 한 번만 보여주도록 제어
+
+    function showModal(message) {
+      document.getElementById("modalMessage").innerText = message;
+      document.getElementById("modal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function sendLocation() {
+      if (!navigator.geolocation) {
+        if (!shownOnce) {
+          showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+          shownOnce = true;
+        }
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          document.getElementById("statusField").value = "정상";
+          document.getElementById("lat").value = position.coords.latitude || 0;
+          document.getElementById("lng").value = position.coords.longitude || 0;
+          document.getElementById("time").value = new Date().toISOString();
+
+          document.getElementById("locationForm").submit();
+
+          // 메시지는 처음 한 번만 보여줌
+          if (!shownOnce) {
+            showModal("귀하의 위치정보가 성공적으로 확인되었습니다.");
+            shownOnce = true;
+          }
+
+          if (!intervalId) {
+            intervalId = setInterval(sendLocation, 5 * 60 * 1000);
+          }
+        },
+        function(error) {
+          if (!shownOnce) {
+            showModal("위치 정보를 가져오지 못했습니다: " + error.message);
+            shownOnce = true;
+          }
+        }
+      );
+    }
+
+    function stopLocation() {
+      clearInterval(intervalId);
+      document.getElementById("statusField").value = "해제";
+      document.getElementById("locationForm").submit();
+      showModal("위치정보가 해제되었습니다.");
+      shownOnce = false; // 해제 시 다시 메시지를 보여줄 수 있도록 초기화
+    }
+  </script>
 </body>
 </html>
