@@ -40,7 +40,7 @@
     let mode = "current";
 
     function showMap() {
-      fetch("YOUR_SCRIPT_URL")
+      fetch("https://script.google.com/macros/s/AKfycbzX6BC6mGl1ealnB3S6HtWwDQH0CjNjXY_p49j9PT2834A4ItMDxgK1V5gDkNXi4ZD6Ww/exec")
         .then(response => response.json())
         .then(data => {
           map = new google.maps.Map(document.getElementById("map"), {
