@@ -5,23 +5,19 @@
   <title>관리자용 차량 위치 추적 지도</title>
   <!-- ✅ 발급받은 API 키를 넣으세요 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 18px; margin: 0; text-align: center; }
-    h2 { background-color: #2196F3; color: #fff; padding: 15px; margin: 0; }
-    #map { width: 100%; height: 500px; margin-top: 20px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-  </style>
 </head>
-<body>
+<body onload="initMap()">
   <h2>관리자용 차량 위치 추적 지도</h2>
   <div class="button-group">
     <!-- 지도 버튼 -->
-    <img src="btn-map.png"
-         alt="지도 메뉴"
+    <img src="btn-current.png"
+         alt="전체 사용자 위치 보기"
          style="cursor:pointer; width:60px; height:60px; margin:10px;"
-         onclick="toggleAdminMapMenu()">
+         onclick="showAllUsers()">
   </div>
-  <div id="map"></div>
+
+  <!-- 지도 표시 영역 -->
+  <div id="map" style="width:100%; height:500px;"></div>
 
   <script>
     var map;
@@ -47,11 +43,16 @@
                 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
                 : "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
 
-              new google.maps.Marker({
+              var marker = new google.maps.Marker({
                 position: {lat: parseFloat(item.lat), lng: parseFloat(item.lng)},
                 map: map,
                 icon: markerColor,
                 title: item.name + " (" + item.status + ", " + item.time + ")"
+              });
+
+              // 마커 클릭 시 해당 사용자 경로 표시
+              marker.addListener("click", () => {
+                showUserPath(item.name, data);
               });
             });
           } else if (mode === "paths") {
@@ -80,6 +81,21 @@
         .catch(err => console.error("데이터 불러오기 실패:", err));
     }
 
+    // 특정 사용자 경로 표시
+    function showUserPath(userName, data) {
+      var userPath = data.filter(item => item.name === userName)
+                         .map(item => ({lat: parseFloat(item.lat), lng: parseFloat(item.lng)}));
+
+      new google.maps.Polyline({
+        path: userPath,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 3,
+        map: map
+      });
+    }
+
     // 페이지 로드 시 기본 모드 실행
     window.onload = refreshMap;
 
@@ -88,3 +104,4 @@
   </script>
 </body>
 </html>
+
