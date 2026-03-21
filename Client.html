@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>관리자용 차량 위치 추적</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <style>
+    #map { width: 100%; height: 600px; }
+    button { margin: 5px; padding: 8px 12px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>관리자용 차량 위치 추적 지도</h2>
+  <button onclick="mode='current'; refreshMap()">현재 위치 보기</button>
+  <button onclick="mode='paths'; refreshMap()">전체 경로 보기</button>
+  <div id="map"></div>
+
+  <script>
+    var map;
+    var mode = "current"; // 기본 모드: 현재 위치
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: {lat: 36.5, lng: 127.5}, // 한국 중심 좌표
+        zoom: 7
+      });
+    }
+
+    function refreshMap() {
+      initMap();
+      fetch("YOUR_SCRIPT_WEBAPP_URL?doGetData")
+        .then(response => response.json())
+        .then(data => {
+          if (mode === "current") {
+            // 현재 위치만 표시
+            data.forEach(item => {
+              var markerColor = (item.status === "정상") 
+                ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                : "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+
+              new google.maps.Marker({
+                position: {lat: parseFloat(item.lat), lng: parseFloat(item.lng)},
+                map: map,
+                icon: markerColor,
+                title: item.name + " (" + item.status + ", " + item.time + ")"
+              });
+            });
+          } else if (mode === "paths") {
+            // 전체 이동 경로 표시
+            var grouped = {};
+            data.forEach(item => {
+              if (!grouped[item.name]) grouped[item.name] = [];
+              grouped[item.name].push({
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lng)
+              });
+            });
+
+            for (var name in grouped) {
+              var pathLine = new google.maps.Polyline({
+                path: grouped[name],
+                geodesic: true,
+                strokeColor: "#" + Math.floor(Math.random()*16777215).toString(16),
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+              });
+              pathLine.setMap(map);
+            }
+          }
+        });
+    }
+
+    // 페이지 로드 시 기본 모드 실행
+    window.onload = refreshMap;
+
+    // 5분마다 자동 갱신
+    setInterval(refreshMap, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
