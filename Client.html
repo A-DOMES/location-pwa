@@ -2,11 +2,14 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>관리자용 차량 위치 추적</title>
+  <title>관리자용 차량 위치 추적 지도</title>
+  <!-- ✅ 발급받은 API 키를 넣으세요 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
   <style>
-    #map { width: 100%; height: 600px; }
-    button { margin: 5px; padding: 8px 12px; font-size: 16px; }
+    body { font-family: Arial, sans-serif; font-size: 18px; margin: 0; text-align: center; }
+    h2 { background-color: #2196F3; color: #fff; padding: 15px; margin: 0; }
+    #map { width: 100%; height: 500px; margin-top: 20px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -28,7 +31,8 @@
 
     function refreshMap() {
       initMap();
-      fetch("YOUR_SCRIPT_WEBAPP_URL?doGetData")
+      // ✅ doGetData() 웹앱 URL로 교체하세요
+      fetch("https://script.google.com/macros/s/AKfycbzX6BC6mGl1ealnB3S6HtWwDQH0CjNjXY_p49j9PT2834A4ItMDxgK1V5gDkNXi4ZD6Ww/exec")
         .then(response => response.json())
         .then(data => {
           if (mode === "current") {
@@ -67,13 +71,14 @@
               pathLine.setMap(map);
             }
           }
-        });
+        })
+        .catch(err => console.error("데이터 불러오기 실패:", err));
     }
 
     // 페이지 로드 시 기본 모드 실행
     window.onload = refreshMap;
 
-    // 5분마다 자동 갱신
+    // ✅ 5분마다 자동 갱신
     setInterval(refreshMap, 5 * 60 * 1000);
   </script>
 </body>
