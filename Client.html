@@ -14,17 +14,14 @@
 </head>
 <body>
   <h2>관리자용 차량 위치 추적 지도</h2>
-<!-- 현재 위치 보기 버튼 (지도 아이콘 그림) -->
-    <img src="btn-current.png" 
-         alt="현재 위치 보기" 
+  <div class="button-group">
+    <!-- 지도 버튼 -->
+    <img src="btn-map.png"
+         alt="지도 메뉴"
          style="cursor:pointer; width:60px; height:60px; margin:10px;"
-         onclick="mode='current'; refreshMap()">
-    
-    <!-- 전체 경로 보기 버튼 (경로 아이콘 그림) -->
-    <img src="btn-paths.png" 
-         alt="전체 경로 보기" 
-         style="cursor:pointer; width:60px; height:60px; margin:10px;"
-         onclick="mode='paths'; refreshMap()">
+         onclick="toggleAdminMapMenu()">
+  </div>
+  
   <div id="map"></div>
 
   <script>
