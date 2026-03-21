@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <title>관리자용 위치정보 시스템</title>
@@ -36,6 +36,7 @@
       border-radius: 8px;
     }
   </style>
+  <!-- ✅ 구글 지도 API 키 반드시 교체 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
 </head>
 <body>
@@ -44,6 +45,12 @@
   </header>
 
   <div class="button-group">
+    <!-- 지도맵 버튼 이미지 추가 -->
+    <img src="btn-current.png"
+         alt="지도 메뉴"
+         style="cursor:pointer; width:60px; height:60px; margin:10px;"
+         onclick="mode='current'; showMap()">
+
     <button type="button" onclick="mode='current'; showMap()">현재 위치 보기</button>
     <button type="button" onclick="mode='paths'; showMap()">경로 보기</button>
   </div>
@@ -64,9 +71,13 @@
           });
 
           if (mode === "current") {
-            // 모든 사용자 최신 위치 표시
+            // ✅ 사용자별 최신 위치만 표시
             const latestByUser = {};
-            data.forEach(item => { latestByUser[item.phone] = item; });
+            data.forEach(item => {
+              if (!latestByUser[item.phone] || new Date(item.time) > new Date(latestByUser[item.phone].time)) {
+                latestByUser[item.phone] = item;
+              }
+            });
             Object.values(latestByUser).forEach(user => {
               new google.maps.Marker({
                 position: {lat: parseFloat(user.lat), lng: parseFloat(user.lng)},
@@ -76,13 +87,18 @@
               });
             });
           } else {
-            // 모든 사용자 경로 표시
+            // ✅ 사용자별 경로 표시 (시간순 정렬)
             const grouped = {};
             data.forEach(item => {
               if (!grouped[item.phone]) grouped[item.phone] = [];
-              grouped[item.phone].push({lat: parseFloat(item.lat), lng: parseFloat(item.lng)});
+              grouped[item.phone].push(item);
             });
-            Object.values(grouped).forEach(pathCoords => {
+            Object.values(grouped).forEach(records => {
+              records.sort((a, b) => new Date(a.time) - new Date(b.time));
+              const pathCoords = records.map(item => ({
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lng)
+              }));
               new google.maps.Polyline({
                 path: pathCoords,
                 geodesic: true,
@@ -99,3 +115,4 @@
   </script>
 </body>
 </html>
+
