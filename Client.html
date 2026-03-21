@@ -6,17 +6,15 @@
   <!-- ✅ 발급받은 API 키를 넣으세요 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
 </head>
-<body onload="initMap()">
+<body>
   <h2>관리자용 차량 위치 추적 지도</h2>
   <div class="button-group">
-    <!-- 지도 버튼 -->
     <img src="btn-current.png"
          alt="전체 사용자 위치 보기"
          style="cursor:pointer; width:60px; height:60px; margin:10px;"
-         onclick="showAllUsers()">
+         onclick="refreshMap()">
   </div>
 
-  <!-- 지도 표시 영역 -->
   <div id="map" style="width:100%; height:500px;"></div>
 
   <script>
@@ -25,7 +23,7 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat: 36.5, lng: 127.5}, // 한국 중심 좌표
+        center: {lat: 36.5, lng: 127.5},
         zoom: 7
       });
     }
@@ -41,12 +39,12 @@
               var markerColor = (item.status === "정상") 
                 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
                 : "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-    
+
               new google.maps.Marker({
                 position: {lat: parseFloat(item.lat), lng: parseFloat(item.lng)},
                 map: map,
                 icon: markerColor,
-                title: item.name + " (" + item.status + ", " + item.time + ")"
+                title: item.phone + " (" + item.status + ", " + item.time + ")"
               });
             });
           } else if (mode === "paths") {
@@ -59,7 +57,7 @@
                 lng: parseFloat(item.lng)
               });
             });
-    
+
             for (var phone in grouped) {
               var pathLine = new google.maps.Polyline({
                 path: grouped[phone],
@@ -76,8 +74,8 @@
     }
 
     // 특정 사용자 경로 표시
-    function showUserPath(userName, data) {
-      var userPath = data.filter(item => item.name === userName)
+    function showUserPath(userPhone, data) {
+      var userPath = data.filter(item => item.phone === userPhone)
                          .map(item => ({lat: parseFloat(item.lat), lng: parseFloat(item.lng)}));
 
       new google.maps.Polyline({
@@ -90,10 +88,7 @@
       });
     }
 
-    // 페이지 로드 시 기본 모드 실행
     window.onload = refreshMap;
-
-    // ✅ 5분마다 자동 갱신
     setInterval(refreshMap, 5 * 60 * 1000);
   </script>
 </body>
