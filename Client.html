@@ -2,60 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>사용자용 위치정보 시스템</title>
+  <title>관리자용 위치정보 시스템</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 18px;
-      background-color: #f9f9f9;
-      margin: 0;
-      text-align: center;
-      color: #333;
-    }
-    header {
-      background-color: #2196F3;
-      padding: 20px;
-    }
-    header h2 {
-      font-size: 26px;
-      margin: 0;
-      font-weight: bold;
-      color: #fff;
-    }
-    input[type="text"] {
-      width: 100%;
-      max-width: 400px;
-      font-size: 18px;
-      padding: 10px;
-      margin: 15px auto;
-      border: 2px solid #2196F3;
-      border-radius: 6px;
-      display: block;
+    /* 기존 CSS 그대로 사용 가능 */
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px auto;
+      max-width: 420px;
     }
     .button-group button {
-      flex: 1;                    /* 버튼 크기를 균등하게 */
-      font-size: 16px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    
-    #mapBtn {
-      background-color: #2196F3;
-      color: white;
-    }
-    
-    #sendBtn {
-      background-color: #4CAF50;
-      color: white;
-    }
-    
-    #stopBtn {
-      background-color: #f44336;
-      color: white;
-    }
-    #sendBtn, #stopBtn {
       flex: 1;
       font-size: 16px;
       padding: 10px;
@@ -63,218 +20,70 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    #sendBtn {
-      background: linear-gradient(to bottom, #66bb6a, #4CAF50);
-      color: white;
-    }
-    #stopBtn {
-      background: linear-gradient(to bottom, #ef5350, #f44336);
-      color: white;
-    }
-    #map {
-      width: 100%;
-      height: 400px;
-      margin-top: 20px;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-      background-color: #fff;
-      margin: 20% auto;
-      padding: 20px;
-      width: 320px;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .modal-content p {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-    .modal-content button {
-      font-size: 16px;
-      padding: 8px 16px;
-      background-color: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+    #map { width: 100%; height: 500px; margin-top: 20px; }
   </style>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 </head>
 <body>
   <header>
-    <h2>사용자용 위치정보 시스템</h2>
+    <h2>관리자용 위치정보 시스템</h2>
   </header>
 
-  <form id="locationForm"
-        action="YOUR_SCRIPT_URL"
-        method="POST">
-    <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
-    <div class="button-group">
-      <img src="btn-current.png"
-           alt="지도 메뉴"
-           style="cursor:pointer; width:60px; height:60px; margin:10px;"
-           onclick="toggleMapMode()">
-
-      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-    </div>
-    <div id="map"></div>
-  </form>
-
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <p id="modalMessage"></p>
-      <button onclick="closeModal()">확인</button>
-    </div>
+  <div class="button-group">
+    <button type="button" onclick="mode='current'; showMap()">현재 위치 보기</button>
+    <button type="button" onclick="mode='paths'; showMap()">경로 보기</button>
   </div>
 
+  <div id="map"></div>
+
   <script>
-    let intervalId;
     let map;
-    let mode = "current"; // 기본 모드: 현재 위치
+    let mode = "current"; // 기본 모드
 
-    function showModal(message) {
-      document.getElementById("modalMessage").innerText = message;
-      document.getElementById("modal").style.display = "block";
-    }
-    function closeModal() {
-      document.getElementById("modal").style.display = "none";
-    }
-
-    // 위치 전송
-    function sendLocation() {
-      showModal("위치정보 전송 중입니다...");
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          const form = document.getElementById("locationForm");
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date());
-          fetch(form.action, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          })
-          .then(() => { showModal("위치정보가 성공적으로 전송되었습니다."); })
-          .catch(err => { showModal("위치 전송 실패:\n" + err.message); });
-          if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
-        },
-        function(error) { showModal("위치 정보를 가져오지 못했습니다:\n" + error.message); }
-      );
-    }
-
-    // 위치 해제
-    function stopLocation() {
-      showModal("위치정보 해제 처리 중입니다...");
-      clearInterval(intervalId);
-      intervalId = null;
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "해제");
-      params.append("time", new Date());
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      })
-      .then(() => { showModal("위치정보가 해제되었습니다."); })
-      .catch(err => { showModal("처리 중 오류:\n" + err.message); });
-    }
-
-    // 자동 갱신
-    function autoUpdate() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          const form = document.getElementById("locationForm");
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date());
-          params.append("auto", "true");
-          fetch(form.action, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          });
-        }
-      );
-    }
-
-    // 지도 모드 전환
-    function toggleMapMode() {
-      if (mode === "current") {
-        mode = "path";
-        showModal("이동 경로 보기 모드로 전환되었습니다.");
-      } else {
-        mode = "current";
-        showModal("현재 위치 보기 모드로 전환되었습니다.");
-      }
-      showMap();
-    }
-
-    // ✅ 교체된 showMap 함수
     function showMap() {
-      const form = document.getElementById("locationForm");
-      const phone = document.getElementById("phone").value;
-    
-      fetch(form.action)
+      fetch("YOUR_SCRIPT_URL")
         .then(response => response.json())
         .then(data => {
           map = new google.maps.Map(document.getElementById("map"), {
-            center: {lat: 36.5, lng: 127.5}, // 한국 중심 좌표
+            center: {lat: 36.5, lng: 127.5},
             zoom: 7
           });
-    
+
           if (mode === "current") {
-            // 현재 위치만 표시
-            const latest = data.filter(item => item.phone === phone).slice(-1)[0];
-            if (latest) {
+            // 모든 사용자 최신 위치 표시
+            const latestByUser = {};
+            data.forEach(item => {
+              latestByUser[item.phone] = item;
+            });
+            Object.values(latestByUser).forEach(user => {
               new google.maps.Marker({
-                position: {lat: parseFloat(latest.lat), lng: parseFloat(latest.lng)},
+                position: {lat: parseFloat(user.lat), lng: parseFloat(user.lng)},
                 map: map,
-                icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
-                title: latest.phone + " (" + latest.status + ", " + latest.time + ")"
+                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                title: user.phone + " (" + user.status + ", " + user.time + ")"
               });
-            }
+            });
           } else {
-            // 내 경로 표시
-            const myRecords = data.filter(item => item.phone === phone);
-            const pathCoords = myRecords.map(item => ({
-              lat: parseFloat(item.lat),
-              lng: parseFloat(item.lng)
-            }));
-    
-            new google.maps.Polyline({
-              path: pathCoords,
-              geodesic: true,
-              strokeColor: "#FF0000",
-              strokeOpacity: 1.0,
-              strokeWeight: 2,
-              map: map
+            // 모든 사용자 경로 표시
+            const grouped = {};
+            data.forEach(item => {
+              if (!grouped[item.phone]) grouped[item.phone] = [];
+              grouped[item.phone].push({lat: parseFloat(item.lat), lng: parseFloat(item.lng)});
+            });
+            Object.values(grouped).forEach(pathCoords => {
+              new google.maps.Polyline({
+                path: pathCoords,
+                geodesic: true,
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map
+              });
             });
           }
         })
-        .catch(err => {
-          showModal("경로 데이터를 불러오지 못했습니다:\n" + err.message);
-        });
+        .catch(err => { alert("데이터 불러오기 실패: " + err.message); });
     }
+  </script>
+</body>
+</html>
