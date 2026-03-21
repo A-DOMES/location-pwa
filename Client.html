@@ -32,8 +32,7 @@
 
     function refreshMap() {
       initMap();
-      // ✅ doGetData() 웹앱 URL로 교체하세요
-      fetch("https://script.google.com/macros/s/AKfycbzX6BC6mGl1ealnB3S6HtWwDQH0CjNjXY_p49j9PT2834A4ItMDxgK1V5gDkNXi4ZD6Ww/exec")
+      fetch("YOUR_SCRIPT_URL")
         .then(response => response.json())
         .then(data => {
           if (mode === "current") {
@@ -42,35 +41,30 @@
               var markerColor = (item.status === "정상") 
                 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
                 : "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-
-              var marker = new google.maps.Marker({
+    
+              new google.maps.Marker({
                 position: {lat: parseFloat(item.lat), lng: parseFloat(item.lng)},
                 map: map,
                 icon: markerColor,
                 title: item.name + " (" + item.status + ", " + item.time + ")"
               });
-
-              // 마커 클릭 시 해당 사용자 경로 표시
-              marker.addListener("click", () => {
-                showUserPath(item.name, data);
-              });
             });
           } else if (mode === "paths") {
-            // 전체 이동 경로 표시
+            // 사용자별 경로 표시
             var grouped = {};
             data.forEach(item => {
-              if (!grouped[item.name]) grouped[item.name] = [];
-              grouped[item.name].push({
+              if (!grouped[item.phone]) grouped[item.phone] = [];
+              grouped[item.phone].push({
                 lat: parseFloat(item.lat),
                 lng: parseFloat(item.lng)
               });
             });
-
-            for (var name in grouped) {
+    
+            for (var phone in grouped) {
               var pathLine = new google.maps.Polyline({
-                path: grouped[name],
+                path: grouped[phone],
                 geodesic: true,
-                strokeColor: "#" + Math.floor(Math.random()*16777215).toString(16),
+                strokeColor: "#" + Math.floor(Math.random()*16777215).toString(16), // 랜덤 색상
                 strokeOpacity: 1.0,
                 strokeWeight: 2
               });
