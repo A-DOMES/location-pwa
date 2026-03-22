@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>차량 위치 추적 관리자 화면</title>
-  <!-- 반드시 구글 지도 API 키로 교체 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; background:#f5f7fa; color:#333; font-size:15px; }
+    body { font-family:'Segoe UI',Arial,sans-serif; margin:0; background:#f5f7fa; color:#333; font-size:15px; }
     h2 { margin:0; padding:20px; background:linear-gradient(90deg,#2196F3,#21CBF3); color:white; text-align:center; font-weight:600; font-size:20px; border-bottom:3px solid #1976D2; }
-    #controls { display:flex; justify-content:space-around; padding:15px; background:#fff; border-bottom:1px solid #ddd; font-size:14px; }
-    #controls section { background:#f9fafc; padding:12px 18px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+    #controls { display:flex; justify-content:center; gap:20px; padding:15px; background:#fff; border-bottom:1px solid #ddd; }
+    #controls button { padding:10px 20px; border:none; border-radius:6px; background:#2196F3; color:white; font-weight:600; cursor:pointer; }
+    #controls button:hover { background:#1976D2; }
     #layout { display:flex; justify-content:space-between; gap:20px; padding:20px; }
     #map { flex:2; height:600px; border:1px solid #ccc; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.12); }
     #infoPanel { flex:1; height:600px; background:#fff; border-radius:12px; border:1px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.12); overflow-y:auto; padding:15px; font-size:14px; }
@@ -22,28 +22,8 @@
   <h2>🚗 차량 위치 추적 관리자 화면</h2>
 
   <div id="controls">
-    <section>
-      <strong>사용자 선택:</strong><br>
-      <select id="userSelect" multiple size="5" style="width:200px;"></select><br>
-      <button onclick="showSelectedUsers()">선택된 사용자 보기</button>
-      <button onclick="showAllUsers()">전체 사용자 보기</button>
-    </section>
-
-    <section>
-      <strong>갱신 주기 설정:</strong><br>
-      <input type="number" id="intervalValue" value="30" min="1" style="width:60px;">
-      <select id="intervalUnit">
-        <option value="seconds" selected>초</option>
-        <option value="minutes">분</option>
-      </select>
-      <button onclick="setCustomInterval()">적용</button>
-    </section>
-
-    <section>
-      <strong>성능 최적화 옵션:</strong><br>
-      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label><br>
-      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
-    </section>
+    <button onclick="showSelectedUsers()">선택된 사용자 보기</button>
+    <button onclick="showAllUsers()">전체 사용자 보기</button>
   </div>
 
   <p id="lastUpdate" style="padding-left:20px;">마지막 갱신: -</p>
@@ -64,7 +44,6 @@
       allData = await response.json();
       document.getElementById("lastUpdate").textContent =
         "마지막 갱신: " + new Date().toLocaleTimeString();
-      applyOptions();
     }
 
     function clearMap() {
@@ -74,7 +53,8 @@
     }
 
     function showSelectedUsers() {
-      const selected = Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
+      const selected = Array.from(document.getElementById("userSelect")?.selectedOptions || []).map(o=>o.value);
+      if(selected.length===0){ alert("사용자를 선택하세요."); return; }
       updateInfoPanel(selected);
       drawUsers(selected);
     }
@@ -88,20 +68,18 @@
     function drawUsers(userList) {
       clearMap();
       map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 7, center: { lat: 36.5, lng: 127.5 } // 기본 대한민국 중심
+        zoom: 7, center: { lat: 36.5, lng: 127.5 }
       });
 
       userList.forEach(user=>{
         let userData = allData.filter(d=>d.phone===user);
-        if(document.getElementById("limitOption").checked) userData=userData.slice(-50);
+        userData=userData.slice(-50); // 최근 50개만
         drawUserPath(userData);
       });
 
-      if(document.getElementById("clusterOption").checked){
-        markerCluster=new MarkerClusterer(map,markers,{
-          imagePath:'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        });
-      }
+      markerCluster=new MarkerClusterer(map,markers,{
+        imagePath:'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+      });
     }
 
     function drawUserPath(userData) {
@@ -144,51 +122,19 @@
       });
     }
 
-    function setCustomInterval(){
-      const value = parseInt(document.getElementById("intervalValue").value);
-      const unit = document.getElementById("intervalUnit").value;
-      if(isNaN(value) || value <= 0){
-        alert("1 이상의 값을 입력하세요.");
-        return;
-      }
-      let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-      clearInterval(intervalId);
-      intervalId = setInterval(loadData, newInterval);
-      alert("갱신 주기가 " + value + (unit === "seconds" ? "초" : "분") + "으로 변경되었습니다.");
-    }
-
-    function applyOptions(){
-      const selected = Array.from(document.getElementById("userSelect").selectedOptions).map(o => o.value);
-      if(selected.length > 0){
-        showSelectedUsers();
-      } else {
-        showAllUsers();
-      }
-    }
-
     window.onload = async () => {
-      // ✅ 기본 지도 먼저 표시 (데이터 없어도 지도는 뜨도록)
+      // 기본 지도 먼저 표시
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 36.5, lng: 127.5 }, // 대한민국 중심 좌표
+        center: { lat: 36.5, lng: 127.5 },
         zoom: 7
       });
 
-      // ✅ 데이터 불러오기
+      // 데이터 불러오기
       await loadData();
 
-      // ✅ 사용자 목록 드롭다운 채우기
-      const users = [...new Set(allData.map(d => d.phone))];
-      const select = document.getElementById("userSelect");
-      users.forEach(u => {
-        const option = document.createElement("option");
-        option.value = u;
-        option.textContent = u;
-        select.appendChild(option);
-      });
-
-      // ✅ 기본 30초 갱신 주기 시작
+      // 기본 30초 갱신
       intervalId = setInterval(loadData, 30000);
     };
   </script>
 </body>
-</html>
+</html>  
