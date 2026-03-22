@@ -2,143 +2,171 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>관리자용 위치정보 시스템</title>
-  <style>
-    .button-group {
-      display: flex;
-      justify-content: center;
-      align-items: center;   /* 버튼 세로 정렬 보정 */
-      gap: 12px;
-      margin: 20px auto;
-      max-width: 420px;
-      flex-wrap: wrap;       /* 화면이 좁을 때 줄바꿈 허용 */
-    }
-    .button-group button {
-      flex: 1;
-      min-width: 100px;      /* 버튼 최소 크기 확보 */
-      font-size: 16px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background-color: #2196F3;
-      color: white;
-      transition: background-color 0.3s;
-    }
-    .button-group button:hover {
-      background-color: #1976D2; /* hover 시 색상 변경 */
-    }
-    #map {
-      width: 100%;
-      height: 500px;
-      margin-top: 20px;
-      border: 2px solid #ccc;   /* 지도 영역 테두리 */
-      border-radius: 8px;
-    }
-  </style>
-  <!-- ✅ 구글 지도 API 키 반드시 교체 -->
+  <title>차량 위치 추적 관리자 화면</title>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { margin-top: 0; }
+    #controls { margin-bottom: 15px; }
+    #controls section { margin-bottom: 10px; }
+    #map { width: 70%; height: 600px; border: 1px solid #ccc; float:left; }
+    #infoPanel { width: 28%; height: 600px; border:1px solid #ccc; float:right; overflow:auto; padding:10px; }
+    label { margin-right: 10px; }
+    button { margin-right: 5px; }
+  </style>
 </head>
 <body>
-  <header>
-    <h2>관리자용 위치정보 시스템</h2>
-  </header>
+  <h2>🚗 차량 위치 추적 관리자 화면</h2>
 
-  <div class="button-group">
-    <!-- 지도맵 버튼 이미지 추가 -->
-    <img src="btn-current.png"
-         alt="지도 메뉴"
-         style="cursor:pointer; width:60px; height:60px; margin:10px;"
-         onclick="mode='current'; showMap()">
+  <div id="controls">
+    <section>
+      <strong>사용자 선택:</strong><br>
+      <select id="userSelect" multiple size="5" style="width:200px;"></select><br>
+      <button onclick="showSelectedUsers()">선택된 사용자 보기</button>
+      <button onclick="showAllUsers()">전체 사용자 보기</button>
+    </section>
 
-    <button type="button" onclick="mode='current'; showMap()">현재 위치 보기</button>
-    <button type="button" onclick="mode='paths'; showMap()">경로 보기</button>
+    <section>
+      <strong>갱신 주기 설정:</strong><br>
+      <input type="number" id="intervalValue" value="30" min="1" style="width:60px;">
+      <select id="intervalUnit">
+        <option value="seconds" selected>초</option>
+        <option value="minutes">분</option>
+      </select>
+      <button onclick="setCustomInterval()">적용</button>
+    </section>
+
+    <section>
+      <strong>성능 최적화 옵션:</strong><br>
+      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+    </section>
   </div>
 
+  <p id="lastUpdate">마지막 갱신: -</p>
+
   <div id="map"></div>
+  <div id="infoPanel">
+    <h3>📋 사용자 정보 패널</h3>
+    <div id="userInfo"></div>
+  </div>
 
   <script>
-    let map;
-    let mode = "current";
+    let allData=[], map, markers=[], polylines=[], markerCluster, intervalId;
 
-    function showMap() {
-      fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec")
-        .then(response => response.json())
-        .then(data => {
-          map = new google.maps.Map(document.getElementById("map"), {
-            center: {lat: 36.5, lng: 127.5},
-            zoom: 7
-          });
-
-          if (mode === "current") {
-            // ✅ 사용자별 최신 위치만 표시
-            const latestByUser = {};
-            data.forEach(item => {
-              if (!latestByUser[item.phone] || new Date(item.time) > new Date(latestByUser[item.phone].time)) {
-                latestByUser[item.phone] = item;
-              }
-            });
-
-            Object.values(latestByUser).forEach(user => {
-              const marker = new google.maps.Marker({
-                position: {lat: parseFloat(user.lat), lng: parseFloat(user.lng)},
-                map: map,
-                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                title: user.phone + " (" + user.status + ", " + user.time + ")"
-              });
-
-              // ✅ 마커에 사용자 식별자 저장
-              marker.phone = user.phone;
-
-              // ✅ 마커 클릭 시 해당 사용자 경로 표시
-              marker.addListener("click", () => {
-                const records = data.filter(item => item.phone === marker.phone);
-                records.sort((a, b) => new Date(a.time) - new Date(b.time));
-
-                const pathCoords = records.map(item => ({
-                  lat: parseFloat(item.lat),
-                  lng: parseFloat(item.lng)
-                }));
-
-                new google.maps.Polyline({
-                  path: pathCoords,
-                  geodesic: true,
-                  strokeColor: "#FF0000",
-                  strokeOpacity: 1.0,
-                  strokeWeight: 2,
-                  map: map
-                });
-              });
-            });
-
-          } else {
-            // ✅ 사용자별 전체 경로 표시 (시간순 정렬)
-            const grouped = {};
-            data.forEach(item => {
-              if (!grouped[item.phone]) grouped[item.phone] = [];
-              grouped[item.phone].push(item);
-            });
-
-            Object.values(grouped).forEach(records => {
-              records.sort((a, b) => new Date(a.time) - new Date(b.time));
-              const pathCoords = records.map(item => ({
-                lat: parseFloat(item.lat),
-                lng: parseFloat(item.lng)
-              }));
-              new google.maps.Polyline({
-                path: pathCoords,
-                geodesic: true,
-                strokeColor: "#FF0000",
-                strokeOpacity: 1.0,
-                strokeWeight: 2,
-                map: map
-              });
-            });
-          }
-        })
-        .catch(err => { alert("데이터 불러오기 실패: " + err.message); });
+    async function loadData() {
+      const response = await fetch("https://script.google.com/macros/s/AKfycb.../exec");
+      allData = await response.json();
+      document.getElementById("lastUpdate").textContent =
+        "마지막 갱신: " + new Date().toLocaleTimeString();
+      applyOptions(); // 자동 반영
     }
+
+    function clearMap() {
+      markers.forEach(m=>m.setMap(null)); markers=[];
+      polylines.forEach(p=>p.setMap(null)); polylines=[];
+      if(markerCluster) markerCluster.clearMarkers();
+    }
+
+    function showSelectedUsers() {
+      const selected = Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
+      updateInfoPanel(selected);
+      drawUsers(selected);
+    }
+
+    function showAllUsers() {
+      const users = [...new Set(allData.map(d=>d.name))];
+      updateInfoPanel(users);
+      drawUsers(users);
+    }
+
+    function drawUsers(userList) {
+      clearMap();
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12, center: { lat: allData[0].lat, lng: allData[0].lng }
+      });
+
+      userList.forEach(user=>{
+        let userData = allData.filter(d=>d.name===user);
+        if(document.getElementById("limitOption").checked) userData=userData.slice(-50);
+        drawUserPath(userData);
+      });
+
+      if(document.getElementById("clusterOption").checked){
+        markerCluster=new MarkerClusterer(map,markers,{
+          imagePath:'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+        });
+      }
+    }
+
+    function drawUserPath(userData) {
+      if(userData.length===0) return;
+      const pathCoords=[];
+      userData.forEach((d,idx)=>{
+        const pos={lat:d.lat,lng:d.lng};
+        pathCoords.push(pos);
+        const marker=new google.maps.Marker({
+          position:pos,
+          title:d.name+" / "+d.time+" / "+d.location,
+          icon: idx===userData.length-1 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                                       : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+        });
+        markers.push(marker);
+      });
+      const polyline=new google.maps.Polyline({
+        path:pathCoords, geodesic:true,
+        strokeColor:"#"+Math.floor(Math.random()*16777215).toString(16),
+        strokeOpacity:1.0, strokeWeight:2, map:map
+      });
+      polylines.push(polyline);
+    }
+
+    function updateInfoPanel(selectedUsers){
+      const panel=document.getElementById("userInfo");
+      panel.innerHTML="";
+      selectedUsers.forEach(user=>{
+        const userData=allData.filter(d=>d.name===user);
+        if(userData.length===0) return;
+        const latest=userData[userData.length-1];
+        const div=document.createElement("div");
+        div.style.marginBottom="10px";
+        div.innerHTML=`
+          <strong>${latest.name}</strong><br>
+          📍 위치: ${latest.location}<br>
+          🕒 시간: ${latest.time}<br>
+          좌표: (${latest.lat}, ${latest.lng})
+        `;
+        panel.appendChild(div);
+      });
+    }
+
+    function setCustomInterval(){
+      const value=parseInt(document.getElementById("intervalValue").value);
+      const unit=document.getElementById("intervalUnit").value;
+      if(isNaN(value)||value<=0){alert("1 이상의 값을 입력하세요.");return;}
+      let newInterval=unit==="seconds"?value*1000:value*60000;
+      clearInterval(intervalId);
+      intervalId=setInterval(loadData,newInterval);
+      alert("갱신 주기가 "+value+(unit==="seconds"?"초":"분")+"으로 변경되었습니다.");
+    }
+
+    function applyOptions(){
+      const selected=Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
+      if(selected.length>0){showSelectedUsers();} else {showAllUsers();}
+    }
+
+    window.onload=async()=>{
+      await loadData();
+      const users=[...new Set(allData.map(d=>d.name))];
+      const select=document.getElementById("userSelect");
+      users.forEach(u=>{
+        const option=document.createElement("option");
+        option.value=u; option.textContent=u;
+        select.appendChild(option);
+      });
+      intervalId=setInterval(loadData,30000); // 기본 30초
+    };
   </script>
 </body>
 </html>
-
