@@ -22,8 +22,9 @@
   <h2>🚗 차량 위치 추적 관리자 화면</h2>
 
   <div id="controls">
-    <button onclick="showSelectedUsers()">선택된 사용자 보기</button>
     <button onclick="showAllUsers()">전체 사용자 보기</button>
+    <button onclick="showSelectedUsers()">선택된 사용자 보기</button>
+    <select id="userSelect" multiple size="5" style="width:200px;"></select>
   </div>
 
   <p id="lastUpdate" style="padding-left:20px;">마지막 갱신: -</p>
@@ -35,7 +36,7 @@
       <div id="userInfo"></div>
     </div>
   </div>
-
+  
   <script>
     let allData=[], map, markers=[], polylines=[], markerCluster, intervalId;
 
@@ -44,6 +45,17 @@
       allData = await response.json();
       document.getElementById("lastUpdate").textContent =
         "마지막 갱신: " + new Date().toLocaleTimeString();
+
+      // 사용자 목록 채우기 (중복 제거)
+      const users = [...new Set(allData.map(d => d.phone))];
+      const select = document.getElementById("userSelect");
+      select.innerHTML = "";
+      users.forEach(u => {
+        const option = document.createElement("option");
+        option.value = u;
+        option.textContent = u;
+        select.appendChild(option);
+      });
     }
 
     function clearMap() {
@@ -53,7 +65,7 @@
     }
 
     function showSelectedUsers() {
-      const selected = Array.from(document.getElementById("userSelect")?.selectedOptions || []).map(o=>o.value);
+      const selected = Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
       if(selected.length===0){ alert("사용자를 선택하세요."); return; }
       updateInfoPanel(selected);
       drawUsers(selected);
@@ -123,18 +135,13 @@
     }
 
     window.onload = async () => {
-      // 기본 지도 먼저 표시
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.5, lng: 127.5 },
         zoom: 7
       });
-
-      // 데이터 불러오기
       await loadData();
-
-      // 기본 30초 갱신
       intervalId = setInterval(loadData, 30000);
     };
   </script>
 </body>
-</html>  
+</html>
