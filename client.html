@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>차량 위치 추적 관리자 화면</title>
   <!-- 반드시 구글 지도 API 키로 교체 -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
   <style>
     body {
@@ -128,7 +128,8 @@
     </div>
   </div>
 
-  <script>
+
+   <script>
     let allData=[], map, markers=[], polylines=[], markerCluster, intervalId;
 
     async function loadData() {
@@ -160,7 +161,7 @@
     function drawUsers(userList) {
       clearMap();
       map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12, center: { lat: allData[0].lat, lng: allData[0].lng }
+        zoom: 12, center: { lat: 36.5, lng: 127.5 }
       });
 
       userList.forEach(user=>{
@@ -218,39 +219,17 @@
     }
 
     function setCustomInterval(){
-      const value = parseInt(document.getElementById("intervalValue").value);
-      const unit = document.getElementById("intervalUnit").value;
-      if(isNaN(value) || value <= 0){
-        alert("1 이상의 값을 입력하세요.");
-        return;
-      }
-      let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+      const value=parseInt(document.getElementById("intervalValue").value);
+      const unit=document.getElementById("intervalUnit").value;
+      if(isNaN(value)||value<=0){alert("1 이상의 값을 입력하세요.");return;}
+      let newInterval=unit==="seconds"?value*1000:value*60000;
       clearInterval(intervalId);
-      intervalId = setInterval(loadData, newInterval);
-      alert("갱신 주기가 " + value + (unit === "seconds" ? "초" : "분") + "으로 변경되었습니다.");
+      intervalId=setInterval(loadData,newInterval);
+      alert("갱신 주기가 "+value+(unit==="seconds"?"초":"분")+"으로 변경되었습니다.");
     }
 
     function applyOptions(){
-      const selected = Array.from(document.getElementById("userSelect").selectedOptions).map(o => o.value);
-      if(selected.length > 0){
-        showSelectedUsers();
-      } else {
-        showAllUsers();
-      }
+      const selected=Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
+      if(selected.length>0){showSelectedUsers();} else {showAllUsers();}
     }
-
-    window.onload = async () => {
-      await loadData();
-      const users = [...new Set(allData.map(d => d.name))];
-      const select = document.getElementById("userSelect");
-      users.forEach(u => {
-        const option = document.createElement("option");
-        option.value = u;
-        option.textContent = u;
-        select.appendChild(option);
-      });
-      intervalId = setInterval(loadData, 30000); // 기본 30초
-    };
-  </script>
-</body>
-</html>
+ 
