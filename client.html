@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>차량 위치 추적 관리자 화면</title>
   <!-- 반드시 구글 지도 API 키로 교체 -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
   <style>
     body {
@@ -128,8 +128,7 @@
     </div>
   </div>
 
-
-   <script>
+  <script>
     let allData=[], map, markers=[], polylines=[], markerCluster, intervalId;
 
     async function loadData() {
@@ -153,7 +152,7 @@
     }
 
     function showAllUsers() {
-      const users = [...new Set(allData.map(d=>d.name))];
+      const users = [...new Set(allData.map(d=>d.phone))];
       updateInfoPanel(users);
       drawUsers(users);
     }
@@ -165,7 +164,7 @@
       });
 
       userList.forEach(user=>{
-        let userData = allData.filter(d=>d.name===user);
+        let userData = allData.filter(d=>d.phone===user);
         if(document.getElementById("limitOption").checked) userData=userData.slice(-50);
         drawUserPath(userData);
       });
@@ -185,7 +184,7 @@
         pathCoords.push(pos);
         const marker=new google.maps.Marker({
           position:pos,
-          title:d.name+" / "+d.time+" / "+d.location,
+          title:d.phone+" / "+d.update_time+" / "+d.location,
           icon: idx===userData.length-1 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
                                        : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
@@ -203,15 +202,15 @@
       const panel=document.getElementById("userInfo");
       panel.innerHTML="";
       selectedUsers.forEach(user=>{
-        const userData=allData.filter(d=>d.name===user);
+        const userData=allData.filter(d=>d.phone===user);
         if(userData.length===0) return;
         const latest=userData[userData.length-1];
         const div=document.createElement("div");
         div.style.marginBottom="10px";
         div.innerHTML=`
-          <strong>${latest.name}</strong><br>
+          <strong>${latest.phone}</strong><br>
           📍 위치: ${latest.location}<br>
-          🕒 시간: ${latest.time}<br>
+          🕒 갱신시간: ${latest.update_time}<br>
           좌표: (${latest.lat}, ${latest.lng})
         `;
         panel.appendChild(div);
@@ -229,7 +228,4 @@
     }
 
     function applyOptions(){
-      const selected=Array.from(document.getElementById("userSelect").selectedOptions).map(o=>o.value);
-      if(selected.length>0){showSelectedUsers();} else {showAllUsers();}
-    }
- 
+  
