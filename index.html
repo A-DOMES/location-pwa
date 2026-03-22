@@ -253,7 +253,7 @@
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params.toString()
           })
-          .then(() => { showModal("위치정보가 성공적으로 전송되었습니다."); })
+          .then(() => { showModal("위치정보가\n성공적으로 전송되었습니다."); })
           .catch(err => { showModal("위치 전송 실패:\n" + err.message); });
 
           if (!intervalId) {
