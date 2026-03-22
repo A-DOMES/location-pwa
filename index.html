@@ -4,140 +4,165 @@
   <meta charset="UTF-8">
   <title>A-DOMES | 위치정보시스템</title>
   <link rel="manifest" href="manifest.json">
+
   <style>
+    /* ============================
+       전체 페이지 기본 설정
+       ============================ */
     body {
-      font-family: Arial, sans-serif;   /* 전체 글꼴 설정 */
-      font-size: 18px;                  /* 기본 글씨 크기 */
-      background-color: #f9f9f9;        /* 배경색 (연한 회색) */
-      margin: 0;                        /* 기본 여백 제거 */
-      text-align: center;               /* 기본 텍스트 중앙 정렬 */
-      color: #333;                      /* 글씨 색상 (짙은 회색) */
-    }
-    
-    header {
-      background-color: #2196F3;        /* 헤더 배경색 (파란색) */
-      padding: 25px;                    /* 헤더 내부 여백 */
-    }
-    
-    header h2 {
-      font-size: 30px;                  /* 헤더 제목 글씨 크기 */
-      margin: 0;                        /* 제목 위아래 여백 제거 */
-      font-weight: bold;                /* 굵은 글씨 */
-      color: #fff;                      /* 글씨 색상 (흰색) */
-    }
-    
-    .info-box {
-      border: 2px solid #2196F3;        /* 파란색 테두리 */
-      border-radius: 10px;              /* 모서리 둥글게 */
-      background-color: #e3f2fd;        /* 연한 파란색 배경 */
-      padding: 25px;                    /* 내부 여백 */
-      margin: 40px auto;                /* 위아래 40px, 좌우 자동 → 중앙 정렬 */
-      max-width: 615px;                 /* 박스 최대 폭 (화면 중앙에 맞춤) */
-      text-align: left;                 /* 텍스트 좌측 정렬 */
-      font-size: 20px;                  /* 글씨 크기 */
-      line-height: 1.8;                 /* 줄 간격 */
-    }
-    
-    .info-box h3 {
-      margin-top: 0;                    /* 제목 위쪽 여백 제거 */
-      margin-bottom: 6px;               /* ✅ 제목과 문단 사이 간격 줄임 */
-      color: #1976d2;                   /* 제목 색상 (짙은 파란색) */
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background-color: #f9f9f9;
+      margin: 0;
+      color: #333;
     }
 
-    .info-box p {
-      margin-top: 4px;                  /* ✅ 문단 시작 간격 줄임 */
-      margin-bottom: 10px;              /* 문단 끝 간격은 적당히 유지 */
-    } 
-    
-    .info-box .warning {
-      font-weight: bold;                /* 굵은 글씨 */
-      color: #d32f2f;                   /* 빨간색 강조 */
-      font-size: 22px;                  /* 글씨 크기 크게 */
-      margin-top: 20px;                 /* 위쪽 여백 */
-      margin-bottom: 2px;               /* ✅ 아래쪽 여백 줄임 (5px) */
+    /* ============================
+       상단 헤더
+       ============================ */
+    header {
+      background-color: #2196F3;
+      padding: 20px;
+      text-align: center;
     }
-    
+
+    header h2 {
+      font-size: 36px;
+      margin: 0;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    /* ============================
+       안내 박스
+       ============================ */
+    .info-box {
+      border: 2px solid #2196F3;
+      border-radius: 10px;
+      background-color: #e3f2fd;
+      padding: 20px;
+      margin: 40px auto;
+      max-width: 620px;
+      text-align: left;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .info-box h3 {
+      margin: 10px 0 5px 0;
+      color: #1976d2;
+    }
+
+    .warning {
+      display: block;
+      margin-top: 10px;
+      font-size: 20px;
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
+    /* ============================
+       중앙정렬 컨테이너
+       ============================ */
+    .center-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .inner-group {
+      text-align: left;
+    }
+
+    /* ============================
+       전화번호 입력창
+       ============================ */
     input[type="text"] {
-      width: 100%;                      /* 입력창 폭 100% */
-      max-width: 500px;                 /* 최대 폭 500px */
-      font-size: 20px;                  /* 글씨 크기 */
-      padding: 12px;                    /* 내부 여백 */
-      margin: 20px auto;                /* 위아래 20px, 좌우 자동 중앙 정렬 */
-      border: 2px solid #2196F3;        /* 파란색 테두리 */
-      border-radius: 6px;               /* 모서리 둥글게 */
-      display: block;                   /* 블록 요소로 표시 */
+      width: 400px;
+      height: 30px;
+      font-size: 20px;
+      padding: 8px;
+      margin-left: 140px;
+      margin-bottom: 5px;
+      border: 2px solid #2196F3;
+      border-radius: 6px;
+      display: block;
     }
-    
+
+    /* ============================
+       버튼 그룹
+       ============================ */
     .button-group {
-      display: flex;                    /* 버튼 가로 배치 */
-      justify-content: flex-start;      /* 왼쪽 정렬 */
-      max-width: 500px;                 /* 최대 폭 500px */
-      margin: 40px auto;                /* 위아래 40px, 좌우 자동 중앙 정렬 */
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-left: 1px;
+      margin-top: 10px;
+      gap: 40px;
     }
-    
+
+    .map-btn {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+    }
+
     #sendBtn {
-      flex: 1;                          /* 버튼 폭 균등 분배 */
-      font-size: 20px;                  /* 글씨 크기 */
-      padding: 15px;                    /* 내부 여백 */
-      border: none;                     /* 테두리 없음 */
-      border-radius: 8px;               /* 모서리 둥글게 */
-      cursor: pointer;                  /* 마우스 포인터 변경 */
-      background: linear-gradient(to bottom, #66bb6a, #4CAF50); /* 초록색 그라데이션 */
-      color: white;                     /* 글씨 색상 흰색 */
-      margin-right: 60px;               /* 오른쪽 버튼과 간격 */
+      width: 200px;
+      height: 50px;
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: linear-gradient(to bottom, #66bb6a, #4CAF50);
+      color: white;
     }
-    
+
     #stopBtn {
-      flex: 1;                          /* 버튼 폭 균등 분배 */
-      font-size: 20px;                  /* 글씨 크기 */
-      padding: 15px;                    /* 내부 여백 */
-      border: none;                     /* 테두리 없음 */
-      border-radius: 8px;               /* 모서리 둥글게 */
-      cursor: pointer;                  /* 마우스 포인터 변경 */
-      background: linear-gradient(to bottom, #ef5350, #f44336); /* 빨간색 그라데이션 */
-      color: white;                     /* 글씨 색상 흰색 */
+      width: 200px;
+      height: 50px;
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: linear-gradient(to bottom, #ef5350, #f44336);
+      color: white;
     }
-    
+
+    /* ============================
+       모달창
+       ============================ */
     .modal {
-      display: none;                    /* 기본적으로 숨김 */
-      position: fixed;                  /* 화면 고정 위치 */
-      z-index: 1000;                    /* 최상위 레이어 */
-      left: 0; top: 0;                   /* 화면 좌측 상단 기준 */
-      width: 100%; height: 100%;        /* 전체 화면 덮기 */
-      background-color: rgba(0,0,0,0.5);/* 반투명 검정 배경 */
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
     }
-    
+
     .modal-content {
-      background-color: #fff;           /* 모달 내용 배경 흰색 */
-      margin: 20% auto;                 /* 위쪽 20%, 좌우 중앙 정렬 */
-      padding: 25px;                    /* 내부 여백 */
-      width: 350px;                     /* 모달 폭 */
-      border-radius: 10px;              /* 모서리 둥글게 */
-      text-align: center;               /* 텍스트 중앙 정렬 */
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 그림자 효과 */
-    }
-    
-    .modal-content p {
-      font-size: 20px;                  /* 글씨 크기 */
-      margin-bottom: 25px;              /* 아래쪽 여백 */
-    }
-    
-    .modal-content button {
-      font-size: 18px;                  /* 버튼 글씨 크기 */
-      padding: 10px 20px;               /* 버튼 내부 여백 */
-      background-color: #2196F3;        /* 버튼 배경 파란색 */
-      color: white;                     /* 글씨 색상 흰색 */
-      border: none;                     /* 테두리 없음 */
-      border-radius: 6px;               /* 모서리 둥글게 */
-      cursor: pointer;                  /* 마우스 포인터 변경 */
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      margin: 200px auto;
+      text-align: center;
+      font-size: 20px;
     }
   </style>
 </head>
+
 <body>
+
+  <!-- 상단 헤더 -->
   <header>
     <h2>A-DOMES | 위치정보시스템</h2>
   </header>
 
+  <!-- 안내 박스 -->
   <section class="info-box">
     <h3>앱 목적</h3>
     <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
@@ -149,19 +174,37 @@
       화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
     </p>
 
-    <p class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</p>
+    <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
   </section>
 
+  <!-- ★★★ 핵심: form 복구 ★★★ -->
   <form id="locationForm"
-        action="https://script.google.com/macros/s/AKfycbzX6BC6mGl1ealnB3S6HtWwDQH0CjNjXY_p49j9PT2834A4ItMDxgK1V5gDkNXi4ZD6Ww/exec"
+        action="https://script.google.com/macros/s/AKfycby5AltWUN2ziDLtSA_rI49e_0cQfK56yGUcUl5oL55PPweYtulIRQ4htO39CZQ6-1IfzQ/exec"
         method="POST">
-    <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
-    <div class="button-group">
-      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+
+    <div class="center-wrapper">
+      <div class="inner-group">
+
+        <!-- 전화번호 입력창 -->
+        <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
+
+        <!-- 버튼 그룹 -->
+        <div class="button-group">
+
+          <!-- 지도 버튼 -->
+          <a href="client.html" target="_blank">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+          </a>
+
+          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+        </div>
+
+      </div>
     </div>
   </form>
 
+  <!-- 모달창 -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <p id="modalMessage"></p>
@@ -169,9 +212,9 @@
     </div>
   </div>
 
-   <!-- 여기 위에 iframe 추가 -->
-  <iframe src="client.html" width="100%" height="600" style="border:none;"></iframe>
-  
+  <!-- ============================
+       기능 JS (정상 버전 그대로)
+       ============================ -->
   <script>
     let intervalId;
 
@@ -185,7 +228,7 @@
     }
 
     function sendLocation() {
-      // ✅ 실행 중 표시 추가
+
       showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
 
       if (!navigator.geolocation) {
@@ -195,6 +238,7 @@
 
       navigator.geolocation.getCurrentPosition(
         function(position) {
+
           const form = document.getElementById("locationForm");
           const params = new URLSearchParams();
 
@@ -202,7 +246,7 @@
           params.append("status", "정상");
           params.append("lat", position.coords.latitude || 0);
           params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date());
+          params.append("time", new Date().toISOString());
 
           fetch(form.action, {
             method: "POST",
@@ -223,7 +267,7 @@
     }
 
     function stopLocation() {
-      // ✅ 실행 중 표시 추가
+
       showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
 
       clearInterval(intervalId);
@@ -234,45 +278,47 @@
 
       params.append("phone", document.getElementById("phone").value);
       params.append("status", "해제");
-      params.append("time", new Date());
+      params.append("time", new Date().toISOString());
 
       fetch(form.action, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString()
       })
-      .then(response => response.text())
-      .then(text => { showModal(text); })
+      .then(() => { showModal("위치정보가 해제되었습니다."); })
       .catch(err => { showModal("처리 중 오류가 발생했습니다:\n" + err.message); });
     }
 
-      function autoUpdate() {
-        if (!navigator.geolocation) return;
+    function autoUpdate() {
 
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const form = document.getElementById("locationForm");
-            const params = new URLSearchParams();
+      if (!navigator.geolocation) return;
 
-            params.append("phone", document.getElementById("phone").value);
-            params.append("status", "정상");
-            params.append("lat", position.coords.latitude || 0);
-            params.append("lng", position.coords.longitude || 0);
-            params.append("time", new Date());
-            params.append("auto", "true");
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
 
-            fetch(form.action, {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: params.toString()
-            });
-          }
-        );
-      }
+          const form = document.getElementById("locationForm");
+          const params = new URLSearchParams();
+
+          params.append("phone", document.getElementById("phone").value);
+          params.append("status", "정상");
+          params.append("lat", position.coords.latitude || 0);
+          params.append("lng", position.coords.longitude || 0);
+          params.append("time", new Date().toISOString());
+          params.append("auto", "true");
+
+          fetch(form.action, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params.toString()
+          });
+        }
+      );
+    }
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }
   </script>
+
 </body>
 </html>
