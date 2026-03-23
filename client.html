@@ -89,21 +89,25 @@
         box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         padding: 10px 0;
       }
-  
+      
+      /* 각 항목 스타일 */
       .dropdown-item {
-        padding: 10px 15px;
+        padding: 12px 18px;       /* 여백 조금 늘림 */
         cursor: pointer;
         border-bottom: 1px solid #eee;
-        font-size: 14px;
+        font-size: 16px;          /* ← 글자 크기 조정 (기본 14px → 16px) */
+        font-weight: 500;         /* ← 글씨 두께 조금 강조 */
       }
-  
+      
       .dropdown-item:hover {
         background: #f0f0f0;
       }
-  
+      
       .dropdown-item input,
-      .dropdown-item select {
+      .dropdown-item select,
+      .dropdown-item button {
         margin-top: 5px;
+        font-size: 15px;          /* 입력창/버튼 글씨 크기도 키움 */
       }
   
       /* 우측 사용자 정보 패널 */
