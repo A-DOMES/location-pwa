@@ -83,15 +83,14 @@
     import { showAllUsers, showSingleUser } from './panelModule.js';
     import { searchUser } from './searchModule.js';
 
-    // 데이터 갱신 시작
-    startUpdateCycle();
-
-    // 지도 초기화 (callback으로 실행됨)
+    // 지도 초기화 (Google Maps API callback)
     window.initMap = function() {
       window.map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.0, lng: 127.0 }, // 대한민국 중심
         zoom: 7
       });
+      // 데이터 갱신 시작
+      startUpdateCycle();
     };
 
     // 접속현황 버튼 이벤트
