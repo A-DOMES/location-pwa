@@ -158,6 +158,27 @@
     // 데이터 갱신 시작
     startUpdateCycle();
 
+    // 지도 초기화
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 37.5665, lng: 126.9780 }, // 서울 좌표 예시
+        zoom: 12
+      });
+    }
+    window.onload = initMap;
+
+    // 접속현황 버튼 클릭 시 패널 토글
+    document.getElementById("btn-connection").addEventListener("click", () => {
+      const panel = document.getElementById("connection-panel");
+      panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    });
+
+    // 환경설정 버튼 클릭 시 패널 토글
+    document.getElementById("btn-settings").addEventListener("click", () => {
+      const panel = document.getElementById("settings-panel");
+      panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    });
+
     // 사용자 패널 닫기 버튼
     document.getElementById("close-user-panel").addEventListener("click", () => {
       document.getElementById("user-panel").style.display = "none";
@@ -184,6 +205,8 @@
       const userId = document.getElementById("panelSearchInput").value.trim();
       if (userId) searchUser(userId);
     });
+
+
 
 
 
