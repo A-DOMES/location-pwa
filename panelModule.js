@@ -1,5 +1,6 @@
 // panelModule.js
 import { initMap, drawPath } from './mapModule.js';
+import { globalData } from './updateCycle.js';
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -62,7 +63,7 @@ function showAllUsers(data) {
   document.getElementById("user-content").innerHTML = html;
 }
 
-function showSingleUser(userId, globalData) {
+function showSingleUser(userId) {
   const row = globalData.find(r => r[1] === userId);
   if (!row) return;
 
@@ -86,3 +87,4 @@ function showSingleUser(userId, globalData) {
 }
 
 export { showAllUsers, showSingleUser };
+
