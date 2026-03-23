@@ -82,7 +82,7 @@
 
     // 데이터 불러오기
     async function loadData() {
-      const response = await fetch("https://script.google.com/macros/s/AKfycb.../exec"); // code.gs 웹앱 URL
+      const response = await fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec"); // code.gs 웹앱 URL
       allData = await response.json();
       document.getElementById("lastUpdate").textContent =
         "마지막 갱신: " + new Date().toLocaleTimeString();
