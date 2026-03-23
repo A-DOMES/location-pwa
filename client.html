@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <!-- Google Maps API (callback 방식) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
   <!-- 마커 클러스터링 -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
@@ -86,14 +86,13 @@
     // 데이터 갱신 시작
     startUpdateCycle();
 
-    // 지도 초기화 (기본 지도만 띄움)
-    function initMap() {
+    // 지도 초기화 (callback으로 실행됨)
+    window.initMap = function() {
       window.map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.0, lng: 127.0 }, // 대한민국 중심
         zoom: 7
       });
-    }
-    window.onload = initMap;
+    };
 
     // 접속현황 버튼 이벤트
     document.getElementById("btn-connection").addEventListener("click", () => {
