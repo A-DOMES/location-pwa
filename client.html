@@ -1,161 +1,209 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>관리자용 위치정보 시스템</title>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
-  <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
-
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-
-    /* ---------------------- 상단 UI ---------------------- */
-    .top-wrapper {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .top-inner {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      max-width: 900px;
-      gap: 20px;
-    }
-
-    .title {
-      font-size: 24px;
-      font-weight: bold;
-      margin: 0 auto;
-      white-space: nowrap;
-    }
-
-    .menu {
-      display: flex;
-      gap: 20px;
-    }
-
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      color: #555;
-      font-size: 16px;
-    }
-
-    .menu-item svg {
-      width: 18px;
-      height: 18px;
-      stroke: #555;
-    }
-
-    /* ---------------------- 기존 스타일 ---------------------- */
-    .button-group { display: flex; justify-content: center; gap: 12px; margin: 20px auto; max-width: 420px; flex-wrap: wrap; }
-    .button-group button { flex: 1; min-width: 100px; font-size: 16px; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background-color: #2196F3; color: white; }
-    .button-group button:hover { background-color: #1976D2; }
-
-    .container { display: flex; gap: 20px; }
-    #map { flex: 3; height: 700px; border: 2px solid #ccc; border-radius: 8px; }
-    #infoPanel { flex: 1; height: 700px; border: 1px solid #ccc; overflow: auto; padding: 10px; }
-  </style>
-</head>
-
-<body>
-
-  <!-- ---------------------- 상단 UI ---------------------- -->
-  <div class="top-wrapper">
-    <div class="top-inner">
-
-      <!-- 타이틀 -->
-      <div class="title">A-DOMES | 위치정보시스템</div>
-
-      <!-- 메뉴 -->
-      <div class="menu">
-
-        <!-- 접속현황 -->
-        <div class="menu-item">
-          <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-          </svg>
-          접속현황
-        </div>
-
-        <!-- 환경설정 -->
-        <div class="menu-item">
-          <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .69.4 1.31 1.02 1.58.62.27 1.31.12 1.78-.35l.06-.06"></path>
-          </svg>
-          환경설정
-        </div>
-
+  <!DOCTYPE html>
+  <html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <title>A-DOMES 위치정보시스템</title>
+  
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+  
+    <style>
+      /* 전체 초기화 */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+  
+      /* 상단바 */
+      #top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50px;
+        background: #1a237e;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 1000;
+      }
+  
+      #title {
+        font-size: 20px;
+        font-weight: bold;
+      }
+  
+      #menu-buttons {
+        display: flex;
+        gap: 20px;
+      }
+  
+      .menu-btn {
+        cursor: pointer;
+        padding: 6px 12px;
+        background: #3949ab;
+        border-radius: 4px;
+        user-select: none;
+      }
+  
+      /* 지도 전체 화면 */
+      #map {
+        position: absolute;
+        top: 50px;
+        left: 0;
+        width: 100%;
+        height: calc(100% - 50px);
+        background: #ddd;
+        z-index: 1;
+      }
+  
+      /* 접속현황/환경설정 패널 */
+      .dropdown-panel {
+        position: absolute;
+        top: 50px;
+        background: white;
+        border: 1px solid #ccc;
+        width: 260px;
+        display: none;
+        z-index: 2000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        padding: 10px 0;
+      }
+  
+      .dropdown-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+      }
+  
+      .dropdown-item:hover {
+        background: #f0f0f0;
+      }
+  
+      .dropdown-item input,
+      .dropdown-item select {
+        margin-top: 5px;
+      }
+  
+      /* 우측 사용자 정보 패널 */
+      #user-panel {
+        position: absolute;
+        top: 50px;
+        right: 0;
+        width: 320px;
+        height: calc(100% - 50px);
+        background: white;
+        border-left: 1px solid #ccc;
+        display: none;
+        z-index: 3000;
+        padding: 15px;
+        overflow-y: auto;
+      }
+  
+      #user-panel h3 {
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  
+  <body>
+  
+    <!-- 상단바 -->
+    <div id="top-bar">
+      <div id="title">A-DOMES | 위치정보시스템</div>
+  
+      <div id="menu-buttons">
+        <div id="btn-connection" class="menu-btn">접속현황</div>
+        <div id="btn-settings" class="menu-btn">환경설정</div>
       </div>
     </div>
-  </div>
-
-  <!-- ---------------------- 기존 내용 ---------------------- -->
-
-  <div class="button-group">
-    <button type="button" onclick="mode='current'; showMap()">현재 위치 보기</button>
-    <button type="button" onclick="mode='paths'; showMap()">경로 보기</button>
-  </div>
-
-  <div id="controls">
-    <section>
-      <strong>갱신 주기 설정:</strong><br>
-      <input type="number" id="intervalValue" value="30" min="1" style="width:60px;">
-      <select id="intervalUnit"><option value="seconds" selected>초</option><option value="minutes">분</option></select>
-      <button onclick="setCustomInterval()">적용</button>
-    </section>
-
-    <section>
-      <strong>성능 최적화 옵션:</strong><br>
-      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
-      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
-    </section>
-  </div>
-
-  <div class="container">
-    <div id="map"></div>
-    <div id="infoPanel">
-      <h3>📋 사용자 정보 패널</h3>
-      <p id="lastUpdate">마지막 갱신: -</p>
-      <div id="userInfo"></div>
+  
+    <!-- 접속현황 패널 -->
+    <div id="connection-panel" class="dropdown-panel">
+      <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
+      <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
+      <div class="dropdown-item" onclick="openUserPanel('detail')">사용자별 상세 보기</div>
+      <div class="dropdown-item" onclick="closeUserPanel()">사용자 패널 닫기</div>
     </div>
-  </div>
-
+  
+    <!-- 환경설정 패널 -->
+    <div id="settings-panel" class="dropdown-panel">
+  
+      <div class="dropdown-item" onclick="mode='current'; showMap()">현재 위치 보기</div>
+      <div class="dropdown-item" onclick="mode='paths'; showMap()">경로 보기</div>
+  
+      <div class="dropdown-item">
+        <strong>갱신 주기 설정</strong><br>
+        <input type="number" id="intervalValue" value="30" min="1" style="width:60px;">
+        <select id="intervalUnit">
+          <option value="seconds">초</option>
+          <option value="minutes">분</option>
+        </select>
+        <button onclick="setCustomInterval()">적용</button>
+      </div>
+  
+      <div class="dropdown-item">
+        <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+      </div>
+  
+      <div class="dropdown-item">
+        <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+      </div>
+  
+    </div>
+  
+    <!-- 우측 사용자 정보 패널 -->
+    <div id="user-panel">
+      <h3>사용자 정보</h3>
+      <div id="user-content"></div>
+    </div>
+  
+    <!-- 지도 -->
+    <div id="map"></div>
+  
+  
+  
   <script>
     let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
-
+  
+    /* ---------------------- 데이터 로딩 ---------------------- */
     async function loadData() {
       const response = await fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec");
       allData = await response.json();
-      document.getElementById("lastUpdate").textContent = "마지막 갱신: " + new Date().toLocaleTimeString();
       showMap();
     }
-
+  
+    /* ---------------------- 지도 초기화 ---------------------- */
     function clearMap() {
       markers.forEach(m => m.setMap(null)); markers = [];
       polylines.forEach(p => p.setMap(null)); polylines = [];
       if (markerCluster) markerCluster.clearMarkers();
     }
-
+  
     function showMap() {
       clearMap();
-      map = new google.maps.Map(document.getElementById("map"), { center: { lat: 36.5, lng: 127.5 }, zoom: 7 });
-
+  
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 36.5, lng: 127.5 },
+        zoom: 7
+      });
+  
       if (mode === "current") {
         const latestByUser = {};
+  
         allData.forEach(item => {
           if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
             latestByUser[item.name] = item;
           }
         });
-
+  
         Object.values(latestByUser).forEach(user => {
           const marker = new google.maps.Marker({
             position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
@@ -165,20 +213,28 @@
           });
           markers.push(marker);
         });
-
+  
       } else if (mode === "paths") {
         const grouped = {};
+  
         allData.forEach(item => {
           if (!grouped[item.name]) grouped[item.name] = [];
           grouped[item.name].push(item);
         });
-
+  
         Object.values(grouped).forEach(records => {
           records.sort((a, b) => new Date(a.time) - new Date(b.time));
+  
           let data = records;
-          if (document.getElementById("limitOption").checked) data = data.slice(-50);
-
-          const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
+          if (document.getElementById("limitOption").checked) {
+            data = data.slice(-50);
+          }
+  
+          const pathCoords = data.map(item => ({
+            lat: parseFloat(item.lat),
+            lng: parseFloat(item.lng)
+          }));
+  
           const polyline = new google.maps.Polyline({
             path: pathCoords,
             geodesic: true,
@@ -188,7 +244,7 @@
             map: map
           });
           polylines.push(polyline);
-
+  
           data.forEach((d, idx) => {
             const marker = new google.maps.Marker({
               position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
@@ -202,27 +258,29 @@
           });
         });
       }
-
+  
       if (document.getElementById("clusterOption").checked) {
         markerCluster = new MarkerClusterer(map, markers, {
           imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
         });
       }
-
-      updateInfoPanel();
+  
+      updateUserPanelContent();
     }
-
-    function updateInfoPanel() {
-      const panel = document.getElementById("userInfo");
+  
+    /* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
+    function updateUserPanelContent() {
+      const panel = document.getElementById("user-content");
       panel.innerHTML = "";
+  
       const latestByUser = {};
-
+  
       allData.forEach(item => {
         if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
           latestByUser[item.name] = item;
         }
       });
-
+  
       Object.values(latestByUser).forEach(latest => {
         const div = document.createElement("div");
         div.style.marginBottom = "10px";
@@ -237,26 +295,85 @@
         panel.appendChild(div);
       });
     }
-
+  
+    /* ---------------------- 갱신 주기 설정 ---------------------- */
     function setCustomInterval() {
       const value = parseInt(document.getElementById("intervalValue").value);
       const unit = document.getElementById("intervalUnit").value;
-      if (isNaN(value) || value <= 0) { alert("1 이상의 값을 입력하세요."); return; }
-
+  
+      if (isNaN(value) || value <= 0) {
+        alert("1 이상의 값을 입력하세요.");
+        return;
+      }
+  
       let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+  
       clearInterval(intervalId);
       intervalId = setInterval(loadData, newInterval);
-
-      alert("갱신 주기가 " + value + (unit === "seconds" ? "초" : "분") + "으로 변경되었습니다.");
+  
+      alert("갱신 주기가 변경되었습니다.");
     }
-
+  
+    /* ---------------------- 패널 동작 ---------------------- */
+    const btnConnection = document.getElementById("btn-connection");
+    const btnSettings = document.getElementById("btn-settings");
+    const connectionPanel = document.getElementById("connection-panel");
+    const settingsPanel = document.getElementById("settings-panel");
+    const userPanel = document.getElementById("user-panel");
+  
+    btnConnection.onclick = () => {
+      settingsPanel.style.display = "none";
+      connectionPanel.style.left = btnConnection.getBoundingClientRect().left + "px";
+      connectionPanel.style.display =
+        connectionPanel.style.display === "block" ? "none" : "block";
+    };
+  
+    btnSettings.onclick = () => {
+      connectionPanel.style.display = "none";
+      settingsPanel.style.left = btnSettings.getBoundingClientRect().left + "px";
+      settingsPanel.style.display =
+        settingsPanel.style.display === "block" ? "none" : "block";
+    };
+  
+    function openUserPanel(mode) {
+      connectionPanel.style.display = "none";
+      userPanel.style.display = "block";
+  
+      if (mode === "current") {
+        mode = "current";
+      } else if (mode === "all") {
+        mode = "current"; // 전체 사용자도 최신 위치 기준
+      } else if (mode === "detail") {
+        mode = "current"; // 상세 보기 모드도 최신 위치 기준
+      }
+  
+      showMap();
+    }
+  
+    function closeUserPanel() {
+      userPanel.style.display = "none";
+    }
+  
+    /* 화면 클릭 시 패널 닫기 */
+    document.addEventListener("click", function(e) {
+      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+        connectionPanel.style.display = "none";
+      }
+      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+        settingsPanel.style.display = "none";
+      }
+    });
+  
+    /* ---------------------- 초기 실행 ---------------------- */
     window.onload = () => {
-      map = new google.maps.Map(document.getElementById("map"), { center: { lat: 36.5, lng: 127.5 }, zoom: 7 });
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 36.5, lng: 127.5 },
+        zoom: 7
+      });
+  
       loadData();
       intervalId = setInterval(loadData, 30000);
     };
   </script>
-
-</body>
-</html>
-
+  </body>
+  </html>
