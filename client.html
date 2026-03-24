@@ -120,6 +120,7 @@
 <script>
   /* ---------------------- 전역 변수 ---------------------- */
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
+  const previousCoords = {}; // ✅ 사용자별 이전 좌표/시간 저장
 
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData() {
@@ -143,50 +144,9 @@
     });
 
     if (mode === "current") {
-      const latestByUser = {};
-      allData.forEach(item => {
-        if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-          latestByUser[item.name] = item;
-        }
-      });
-      Object.values(latestByUser).forEach(user => {
-        const marker = new google.maps.Marker({
-          position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
-          map: map,
-          icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: `${user.name} (${user.status}, ${user.time})`
-        });
-        markers.push(marker);
-      });
+      drawCurrentMarkers();   // ✅ 갱신된 사용자만 표시
     } else if (mode === "paths") {
-      const grouped = {};
-      allData.forEach(item => {
-        if (!grouped[item.name]) grouped[item.name] = [];
-        grouped[item.name].push(item);
-      });
-      Object.values(grouped).forEach(records => {
-        records.sort((a, b) => new Date(a.time) - new Date(b.time));
-        let data = records;
-        if (document.getElementById("limitOption").checked) data = data.slice(-50);
-        const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
-        const polyline = new google.maps.Polyline({
-          path: pathCoords, geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0, strokeWeight: 2, map: map
-        });
-        polylines.push(polyline);
-        data.forEach((d, idx) => {
-          const marker = new google.maps.Marker({
-            position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
-            map: map,
-            title: `${d.name} / ${d.time}`,
-            icon: idx === data.length - 1
-              ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-              : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-          });
-          markers.push(marker);
-        });
-      });
+      drawPaths();            // ✅ 경로 표시
     }
 
     if (document.getElementById("clusterOption").checked) {
@@ -198,10 +158,73 @@
     updateUserPanelContent(mode);
   }
 
+  /* ---------------------- 현재 위치 표시 ---------------------- */
+  function drawCurrentMarkers() {
+    const latestByUser = {};
+    allData.forEach(item => {
+      if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
+        latestByUser[item.name] = item;
+      }
+    });
+
+    Object.values(latestByUser).forEach(user => {
+      if (user.status === "정상") {
+        const prev = previousCoords[user.name];
+        const timeChanged = !prev || prev.time !== user.time;
+        if (timeChanged) {
+          const marker = new google.maps.Marker({
+            position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
+            map: map,
+            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            title: `${user.name} (${user.status}, ${user.time})`
+          });
+          markers.push(marker);
+        }
+        previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
+      }
+    });
+  }
+
+  /* ---------------------- 경로 표시 ---------------------- */
+  function drawPaths() {
+    const grouped = {};
+    allData.forEach(item => {
+      if (!grouped[item.name]) grouped[item.name] = [];
+      grouped[item.name].push(item);
+    });
+
+    Object.values(grouped).forEach(records => {
+      records.sort((a, b) => new Date(a.time) - new Date(b.time));
+      let data = records;
+      if (document.getElementById("limitOption").checked) data = data.slice(-50);
+
+      const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
+      const polyline = new google.maps.Polyline({
+        path: pathCoords, geodesic: true,
+        strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+        strokeOpacity: 1.0, strokeWeight: 2, map: map
+      });
+      polylines.push(polyline);
+
+      data.forEach((d, idx) => {
+        const marker = new google.maps.Marker({
+          position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
+          map: map,
+          title: `${d.name} / ${d.time}`,
+          icon: idx === data.length - 1
+            ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png" // 마지막 위치
+            : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"   // 이전 위치
+        });
+        markers.push(marker);
+      });
+    });
+  }
+
   /* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
   function updateUserPanelContent(viewMode = "current") {
     const panel = document.getElementById("user-content");
     panel.innerHTML = "";
+
     if (viewMode === "current") {
       const latestByUser = {};
       allData.forEach(item => {
@@ -209,18 +232,32 @@
           latestByUser[item.name] = item;
         }
       });
-      Object.values(latestByUser).forEach(latest => {
-        panel.innerHTML += `
-          <div style="margin-bottom:10px">
-            <strong>${latest.name}</strong><br>
-            📍 위치: ${latest.location}<br>
-            🕒 최초 입력: ${latest.connectTime}<br>
-            🕒 마지막 갱신: ${latest.time}<br>
-            상태: ${latest.status}<br>
-            좌표: (${latest.lat}, ${latest.lng})
-          </div>
-        `;
+
+      let hasCurrent = false;
+
+      Object.values(latestByUser).forEach(user => {
+        const prev = previousCoords[user.name];
+        const timeChanged = !prev || prev.time !== user.time;
+
+        if (user.status === "정상" && timeChanged) {
+          hasCurrent = true;
+          panel.innerHTML += `
+            <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+              <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+              <div>📍 위치: ${user.location}</div>
+              <div>🕒 최초 입력(A열): ${user.connectTime}</div>
+              <div>🕒 마지막 갱신(F열): ${user.time}</div>
+              <div>✅ 상태: ${user.status}</div>
+              <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+            </div>
+          `;
+        }
+        previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       });
+
+      if (!hasCurrent) {
+        panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+      }
     }
   }
 
@@ -261,6 +298,7 @@
   }
 
   function closeUserPanel() { userPanel.style.display = "none"; }
+  
 
   /* ---------------------- 닫기 버튼 이벤트 ---------------------- */
   document.addEventListener("DOMContentLoaded", () => {
