@@ -226,6 +226,8 @@
     panel.innerHTML = "";
   
     if (viewMode === "current") {
+      // 👉 여기서는 timeChanged 조건을 써서
+      // "새로 갱신된 사용자만" 표시
       const latestByUser = {};
       allData.forEach(item => {
         if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
@@ -239,10 +241,7 @@
         const prev = previousCoords[user.name];
         const timeChanged = !prev || prev.time !== user.time;
   
-        console.log("패널 갱신 체크:", user.name, "status:", user.status, "timeChanged:", timeChanged);
-  
-        // 조건을 조금 완화: 정상 상태면 무조건 표시
-        if (user.status === "정상") {
+        if (user.status === "정상" && timeChanged) {
           hasCurrent = true;
           panel.innerHTML += `
             <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
@@ -255,13 +254,34 @@
             </div>
           `;
         }
-  
-        // 이전 좌표 갱신
         previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       });
   
       if (!hasCurrent) {
-        console.log("현재 접속자 없음");
+        panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+      }
+    }
+  
+    if (viewMode === "all") {
+      // 👉 여기서는 정상 상태인 사용자라면 모두 표시
+      let hasUser = false;
+      allData.forEach(user => {
+        if (user.status === "정상") {
+          hasUser = true;
+          panel.innerHTML += `
+            <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+              <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+              <div>📍 위치: ${user.location}</div>
+              <div>🕒 최초 입력(A열): ${user.connectTime}</div>
+              <div>🕒 마지막 갱신(F열): ${user.time}</div>
+              <div>✅ 상태: ${user.status}</div>
+              <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+            </div>
+          `;
+        }
+      });
+  
+      if (!hasUser) {
         panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
       }
     }
