@@ -220,7 +220,10 @@
     
       function showMap() {
         clearMap();
-        map = new google.maps.Map(document.getElementById("map"), { center: { lat: 36.5, lng: 127.5 }, zoom: 7 });
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 36.5, lng: 127.5 },  // 대한민국 중앙 좌표
+          zoom: 7                             // 국가 단위 확대
+        });
     
         if (mode === "current") {
           const latestByUser = {};
@@ -249,21 +252,29 @@
             let data = records;
             if (document.getElementById("limitOption").checked) data = data.slice(-50);
             const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
-            const polyline = new google.maps.Polyline({ path: pathCoords, geodesic: true, strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16), strokeOpacity: 1.0, strokeWeight: 2, map: map });
+            const polyline = new google.maps.Polyline({
+              path: pathCoords, geodesic: true,
+              strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+              strokeOpacity: 1.0, strokeWeight: 2, map: map
+            });
             polylines.push(polyline);
             data.forEach((d, idx) => {
               const marker = new google.maps.Marker({
                 position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
                 map: map,
                 title: `${d.name} / ${d.time}`,
-                icon: idx === data.length - 1 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                icon: idx === data.length - 1
+                  ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                  : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
               });
               markers.push(marker);
             });
           });
         }
         if (document.getElementById("clusterOption").checked) {
-          markerCluster = new MarkerClusterer(map, markers, { imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' });
+          markerCluster = new MarkerClusterer(map, markers, {
+            imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+          });
         }
         updateUserPanelContent(mode);
       }
@@ -369,7 +380,10 @@
     
       /* ---------------------- 초기 실행 ---------------------- */
       window.onload = () => {
-        map = new google.maps.Map(document.getElementById("map"), { center: { lat: 36.5, lng: 127.5 }, zoom: 7 });
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 36.5, lng: 127.5 },
+          zoom: 7
+        });
         loadData();
         intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
       };
