@@ -10,7 +10,6 @@
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
   <style>
-    /* 네가 준 스타일 그대로 */
     html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
     #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
                display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
@@ -51,8 +50,8 @@
 
   <!-- 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
-    <div class="dropdown-item" onclick="mode='current'; showMap(); openUserPanel('current')">현재 위치 보기</div>
-    <div class="dropdown-item" onclick="mode='paths'; showMap(); openUserPanel('detail')">경로 보기</div>
+    <div class="dropdown-item" onclick="mode='current'; showMap(globalData); openUserPanel('current')">현재 위치 보기</div>
+    <div class="dropdown-item" onclick="mode='paths'; showMap(globalData); openUserPanel('detail')">경로 보기</div>
     <div class="dropdown-item">
       <strong>갱신 주기 설정</strong><br>
       <input type="number" id="intervalValue" value="5" min="1" style="width:80px;">
@@ -79,20 +78,72 @@
   <div id="map"></div>
 
   <!-- 스크립트 -->
-  <script type="module">
-    import { startUpdateCycle, globalData } from './updateCycle.js';
-    import { showAllUsers, showSingleUser } from './panelModule.js';
-    import { searchUser } from './searchModule.js';
-    import { clearMap } from './mapUtils.js';
+  <script>
+    let globalData = [];
+    let markers = [], polylines = [], markerCluster;
 
     // 지도 초기화 (Google Maps API callback)
-    window.initMap = function() {
+    function initMap() {
       window.map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.0, lng: 127.0 },
         zoom: 7
       });
       startUpdateCycle();
-    };
+    }
+
+    // 데이터 갱신
+    function startUpdateCycle() {
+      setInterval(async () => {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec");
+        globalData = await response.json();
+        showMap(globalData);
+      }, 5000);
+    }
+
+    // 지도 표시
+    function showMap(data) {
+      clearMap();
+      markers = data.map(user => {
+        return new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: window.map,
+          title: user.name
+        });
+      });
+      markerCluster = new MarkerClusterer(window.map, markers, {
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+      });
+    }
+
+    // 지도 클리어
+    function clearMap() {
+      markers.forEach(m => m.setMap(null)); markers = [];
+      polylines.forEach(p => p.setMap(null)); polylines = [];
+      if (markerCluster) markerCluster.clearMarkers();
+    }
+
+    // 사용자 패널
+    function showAllUsers(data) {
+      const panel = document.getElementById("user-content");
+      panel.innerHTML = data.map(u => `<div>${u.name} (${u.lat}, ${u.lng})</div>`).join("");
+    }
+
+    function showSingleUser(data) {
+      const panel = document.getElementById("user-content");
+      if (data.length > 0) {
+        const u = data[0];
+        panel.innerHTML = `<div><strong>${u.name}</strong><br>위치: ${u.lat}, ${u.lng}</div>`;
+      }
+    }
+
+    function openUserPanel(mode) {
+      document.getElementById("user-panel").style.display = "block";
+      if (mode === 'current') {
+        showAllUsers(globalData);
+      } else if (mode === 'detail') {
+        showSingleUser(globalData);
+      }
+    }
 
     // 버튼 이벤트
     document.getElementById("btn-connection").addEventListener("click", () => {
@@ -108,15 +159,6 @@
     document.getElementById("close-user-panel").addEventListener("click", () => {
       document.getElementById("user-panel").style.display = "none";
     });
-
-    window.openUserPanel = function(mode) {
-      document.getElementById("user-panel").style.display = "block";
-      if (mode === 'current') {
-        showAllUsers(globalData);
-      } else if (mode === 'detail') {
-        showSingleUser(globalData);
-      }
-    };
 
    
     <script>
