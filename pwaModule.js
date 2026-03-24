@@ -3,7 +3,7 @@
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 
 /* ---------------------- 데이터 로딩 ---------------------- */
-export async function loadData() {
+async function loadData() {
   const response = await fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec");
   allData = await response.json();
   showMap();
@@ -16,7 +16,7 @@ function clearMap() {
   if (markerCluster) markerCluster.clearMarkers();
 }
 
-export function showMap() {
+function showMap() {
   clearMap();
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 36.5, lng: 127.5 },
@@ -93,7 +93,7 @@ function drawPaths() {
 }
 
 /* ---------------------- 패널 업데이트 ---------------------- */
-export function updateUserPanelContent(viewMode = "current") {
+function updateUserPanelContent(viewMode = "current") {
   const panel = document.getElementById("user-content");
   panel.innerHTML = "";
 
@@ -145,7 +145,7 @@ export function updateUserPanelContent(viewMode = "current") {
 }
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
-export function setCustomInterval() {
+function setCustomInterval() {
   const value = parseInt(document.getElementById("intervalValue").value);
   const unit = document.getElementById("intervalUnit").value;
   if (isNaN(value) || value <= 0) { alert("1 이상의 값을 입력하세요."); return; }
@@ -156,17 +156,17 @@ export function setCustomInterval() {
 }
 
 /* ---------------------- 패널 동작 ---------------------- */
-export function openUserPanel(viewMode) {
+function openUserPanel(viewMode) {
   document.getElementById("connection-panel").style.display = "none";
   document.getElementById("user-panel").style.display = "block";
   updateUserPanelContent(viewMode);
 }
-export function closeUserPanel() {
+function closeUserPanel() {
   document.getElementById("user-panel").style.display = "none";
 }
 
 /* ---------------------- 초기 실행 ---------------------- */
-export function initApp() {
+function initApp() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 36.5, lng: 127.5 },
     zoom: 7
