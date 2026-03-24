@@ -10,7 +10,6 @@
       <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     
       <style>
-        /* 네가 준 스타일 그대로 */
         html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
         #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
                    display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
@@ -78,127 +77,17 @@
       <!-- 지도 -->
       <div id="map"></div>
     
-      <!-- 스크립트 -->
-      <script>
-        let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
+      <!-- 스크립트: 기존 긴 코드 삭제, pwaModule.js 불러오기 -->
+      <script type="module">
+        import { initApp, openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
     
-        async function loadData() {
-          const response = await fetch("https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec");
-          allData = await response.json();
-          showMap();
-        }
+        window.onload = () => initApp();
     
-        function clearMap() {
-          markers.forEach(m => m.setMap(null)); markers = [];
-          polylines.forEach(p => p.setMap(null)); polylines = [];
-          if (markerCluster) markerCluster.clearMarkers();
-        }
+        document.getElementById("btn-connection").onclick = () => openUserPanel("current");
+        document.getElementById("btn-settings").onclick = () => openUserPanel("detail");
+        document.getElementById("close-user-panel").onclick = () => closeUserPanel();
+
     
-        function showMap() {
-          clearMap();
-          map = new google.maps.Map(document.getElementById("map"), { center: { lat: 36.5, lng: 127.5 }, zoom: 7 });
-    
-          if (mode === "current") {
-            const latestByUser = {};
-            allData.forEach(item => {
-              if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-                latestByUser[item.name] = item;
-              }
-            });
-            Object.values(latestByUser).forEach(user => {
-              const marker = new google.maps.Marker({
-                position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
-                map: map,
-                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                title: `${user.name} (${user.status}, ${user.time})`
-              });
-              markers.push(marker);
-            });
-          } else if (mode === "paths") {
-            const grouped = {};
-            allData.forEach(item => {
-              if (!grouped[item.name]) grouped[item.name] = [];
-              grouped[item.name].push(item);
-            });
-            Object.values(grouped).forEach(records => {
-              records.sort((a, b) => new Date(a.time) - new Date(b.time));
-              let data = records;
-              if (document.getElementById("limitOption").checked) data = data.slice(-50);
-              const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
-              const polyline = new google.maps.Polyline({ path: pathCoords, geodesic: true, strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16), strokeOpacity: 1.0, strokeWeight: 2, map: map });
-              polylines.push(polyline);
-              data.forEach((d, idx) => {
-                const marker = new google.maps.Marker({
-                  position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
-                  map: map,
-                  title: `${d.name} / ${d.time}`,
-                  icon: idx === data.length - 1 ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-                });
-                markers.push(marker);
-              });
-            });
-          }
-          if (document.getElementById("clusterOption").checked) {
-            markerCluster = new MarkerClusterer(map, markers, { imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m' });
-          }
-          updateUserPanelContent(mode);
-        }
-    
-    function updateUserPanelContent(viewMode = "current") {
-      const panel = document.getElementById("user-content");
-      panel.innerHTML = "";
-    
-      if (viewMode === "current") {
-        const latestByUser = {};
-        allData.forEach(item => {
-          if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-            latestByUser[item.name] = item;
-          }
-        });
-    
-        Object.values(latestByUser).forEach(latest => {
-          panel.innerHTML += `
-            <div style="margin-bottom:10px">
-              <strong>${latest.name}</strong><br>
-              📍 위치: ${latest.location}<br>
-              🕒 최초 입력: ${latest.connectTime}<br>
-              🕒 마지막 갱신: ${latest.time}<br>
-              상태: ${latest.status}<br>
-              좌표: (${latest.lat}, ${latest.lng})
-            </div>
-          `;
-        });
-    
-      } else if (viewMode === "all") {
-        allData.forEach(item => {
-          panel.innerHTML += `
-            <div style="margin-bottom:10px">
-              <strong>${item.name}</strong><br>
-              📍 위치: ${item.location}<br>
-              🕒 입력: ${item.time}<br>
-              상태: ${item.status}<br>
-              좌표: (${item.lat}, ${item.lng})
-            </div>
-          `;
-        });
-    
-      } else if (viewMode === "detail") {
-        const grouped = {};
-        allData.forEach(item => {
-          if (!grouped[item.name]) grouped[item.name] = [];
-          grouped[item.name].push(item);
-        });
-    
-        Object.entries(grouped).forEach(([name, records]) => {
-          panel.innerHTML += `<div style="margin-bottom:15px"><strong>${name}</strong><br>`;
-          records.forEach(r => {
-            panel.innerHTML += `🕒 ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
-          });
-          panel.innerHTML += `</div>`;
-        });
-      }
-    }
-            
 
    
     <script>
