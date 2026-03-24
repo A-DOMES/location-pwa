@@ -84,25 +84,31 @@
     window.onload = () => initApp();
 
     // 접속현황 패널 버튼
-    document.getElementById("btn-connection").onclick = () => {
-      document.getElementById("connection-panel").style.display = "block";
-      document.getElementById("settings-panel").style.display = "none";
-    };
-    document.getElementById("btn-current").onclick = () => openUserPanel("current");
-    document.getElementById("btn-all").onclick = () => openUserPanel("all");
-    document.getElementById("btn-detail").onclick = () => openUserPanel("detail");
-
-    // 환경설정 패널 버튼
-    document.getElementById("btn-settings").onclick = () => {
-      document.getElementById("settings-panel").style.display = "block";
-      document.getElementById("connection-panel").style.display = "none";
-    };
-    document.getElementById("btn-current-location").onclick = () => { mode = "current"; showMap(); openUserPanel("current"); };
-    document.getElementById("btn-paths").onclick = () => { mode = "paths"; showMap(); openUserPanel("detail"); };
-    document.getElementById("btn-interval").onclick = () => setCustomInterval();
-
-    // 사용자 패널 닫기
-    document.getElementById("close-user-panel").onclick = () => closeUserPanel();
+    <script type="module">
+      import { initApp, openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
+    
+      window.onload = () => initApp();
+    
+      // 접속현황 패널 버튼
+      document.getElementById("btn-connection").onclick = () => {
+        document.getElementById("connection-panel").style.display = "block";
+        document.getElementById("settings-panel").style.display = "none";
+      };
+      document.getElementById("btn-current").onclick = () => openUserPanel("current");
+      document.getElementById("btn-all").onclick = () => openUserPanel("all");
+      document.getElementById("btn-detail").onclick = () => openUserPanel("detail");
+    
+      // 환경설정 패널 버튼
+      document.getElementById("btn-settings").onclick = () => {
+        document.getElementById("settings-panel").style.display = "block";
+        document.getElementById("connection-panel").style.display = "none";
+      };
+      document.getElementById("btn-current-location").onclick = () => { mode = "current"; showMap(); openUserPanel("current"); };
+      document.getElementById("btn-paths").onclick = () => { mode = "paths"; showMap(); openUserPanel("detail"); };
+      document.getElementById("btn-interval").onclick = () => setCustomInterval();
+    
+      // 사용자 패널 닫기
+      document.getElementById("close-user-panel").onclick = () => closeUserPanel();
 
 
 
