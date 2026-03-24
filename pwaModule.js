@@ -174,3 +174,11 @@ export function initApp() {
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
 }
+
+/* ---------------------- 전역(window)에 붙이기 ---------------------- */
+window.initApp = initApp;
+window.openUserPanel = openUserPanel;
+window.closeUserPanel = closeUserPanel;
+window.setCustomInterval = setCustomInterval;
+window.showMap = showMap;
+
