@@ -224,7 +224,7 @@
   function updateUserPanelContent(viewMode = "current") {
     const panel = document.getElementById("user-content");
     panel.innerHTML = "";
-
+  
     if (viewMode === "current") {
       const latestByUser = {};
       allData.forEach(item => {
@@ -232,14 +232,17 @@
           latestByUser[item.name] = item;
         }
       });
-
+  
       let hasCurrent = false;
-
+  
       Object.values(latestByUser).forEach(user => {
         const prev = previousCoords[user.name];
         const timeChanged = !prev || prev.time !== user.time;
-
-        if (user.status === "정상" && timeChanged) {
+  
+        console.log("패널 갱신 체크:", user.name, "status:", user.status, "timeChanged:", timeChanged);
+  
+        // 조건을 조금 완화: 정상 상태면 무조건 표시
+        if (user.status === "정상") {
           hasCurrent = true;
           panel.innerHTML += `
             <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
@@ -252,10 +255,13 @@
             </div>
           `;
         }
+  
+        // 이전 좌표 갱신
         previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       });
-
+  
       if (!hasCurrent) {
+        console.log("현재 접속자 없음");
         panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
       }
     }
