@@ -299,7 +299,14 @@
 
   function closeUserPanel() { userPanel.style.display = "none"; }
   
-
+  /* ---------------------- 화면 복귀 시 갱신 ---------------------- */
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      console.log("화면 복귀 → 데이터 갱신 실행");
+      loadData(); // ✅ 패널과 지도 즉시 갱신
+    }
+  });
+  
   /* ---------------------- 닫기 버튼 이벤트 ---------------------- */
   document.addEventListener("DOMContentLoaded", () => {
     const closeBtn = document.getElementById("close-user-panel");
