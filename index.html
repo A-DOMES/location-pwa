@@ -184,14 +184,19 @@
 
 
 
-  <!-- 폼 -->
+  <!-- ============================
+       위치 전송 폼 영역
+       ============================ -->
   <form id="locationForm"
         action="https://script.google.com/macros/s/AKfycbztvsGB7DD9V4CfHprAjtOKxvOmiIMnlInHCk5hDTjOeSTzaF2vgGXcw9fMsNtKcLlvAg/exec"
         method="POST">
-
+  
     <div class="center-wrapper">
       <div class="inner-group">
+        <!-- 사용자 입력 -->
         <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
+  
+        <!-- 버튼 그룹 -->
         <div class="button-group">
           <a href="client.html" target="_blank">
             <img src="btn-current.png" alt="지도 버튼" class="map-btn">
@@ -202,78 +207,51 @@
       </div>
     </div>
   </form>
-
-  <!-- 모달창 -->
+  
+  <!-- ============================
+       모달창 영역
+       ============================ -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <p id="modalMessage"></p>
       <button onclick="closeModal()">확인</button>
     </div>
   </div>
-
+  
   <!-- ============================
-       기능 JS (정상 버전 그대로)
+       기능 JS (위치 전송 로직)
        ============================ -->
   <script>
     let intervalId;
     let cachedPosition = null; // 최초 위치 저장용
-
-    function showModal(message) {
-      const modal = document.createElement("div");
-      modal.className = "modal";
-    
-      const content = document.createElement("div");
-      content.className = "modal-content";
-      content.innerText = message;
-    
-      modal.appendChild(content);
-      document.body.appendChild(modal);
-    
-      modal.style.display = "block";
-    
-      // 2초 후 자동 닫기
-      setTimeout(() => {
-        modal.remove();
-      }, 2000);
-    }
-
-    function closeModal() {
-      document.getElementById("modal").style.display = "none";
-    }
-
-    // 앱 시작 시 최초 위치 요청 (한 번만 권한 팝업)
-    function initLocation() {
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          cachedPosition = position.coords; // 최초 좌표 저장
-        },
-        function(error) {
-          showModal("위치 정보를 가져오지 못했습니다:\n" + error.message);
-        }
-      );
-    }
-
+  
+    /* ---------------------- 모달창 표시 함수 ---------------------- */
+    function showModal(message) { ... }
+  
+    function closeModal() { ... }
+  
+    /* ---------------------- 최초 위치 요청 ---------------------- */
+    function initLocation() { ... }
+  
+    /* ---------------------- 위치 전송 함수 ---------------------- */
     function sendLocation() {
       showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-
-      if (!cachedPosition) {
+  
+      // ✅ 여기서 null 좌표를 걸러내야 함
+      if (!cachedPosition || cachedPosition.latitude == null || cachedPosition.longitude == null) {
         showModal("위치 정보가 아직 준비되지 않았습니다.");
         return;
       }
-
+  
       const form = document.getElementById("locationForm");
       const params = new URLSearchParams();
-
+  
       params.append("phone", document.getElementById("phone").value);
       params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude || 0);
-      params.append("lng", cachedPosition.longitude || 0);
+      params.append("lat", cachedPosition.latitude);
+      params.append("lng", cachedPosition.longitude);
       params.append("time", new Date().toISOString());
-
+  
       fetch(form.action, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -281,59 +259,25 @@
       })
       .then(() => { showModal("위치정보가\n성공적으로 전송되었습니다."); })
       .catch(err => { showModal("위치 전송 실패:\n" + err.message); });
-
+  
       if (!intervalId) {
         intervalId = setInterval(autoUpdate, 60000); // ✅ 1분마다 갱신
       }
     }
-
-    function stopLocation() {
-      showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-
-      clearInterval(intervalId);
-      intervalId = null;
-
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "해제");
-      params.append("time", new Date().toISOString());
-
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      })
-      .then(() => { showModal("위치정보가 해제되었습니다."); })
-      .catch(err => { showModal("처리 중 오류가 발생했습니다:\n" + err.message); });
-    }
-
-    function autoUpdate() {
-      if (!cachedPosition) return;
-
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude || 0);
-      params.append("lng", cachedPosition.longitude || 0);
-      params.append("time", new Date().toISOString());
-      params.append("auto", "true");
-
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      });
-    }
-
+  
+    /* ---------------------- 위치 해제 함수 ---------------------- */
+    function stopLocation() { ... }
+  
+    /* ---------------------- 자동 갱신 함수 ---------------------- */
+    function autoUpdate() { ... }
+  
+    /* ---------------------- 서비스워커 등록 ---------------------- */
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }
-
-    window.onload = initLocation; // ✅ 앱 시작 시 최초 위치 요청
+  
+    /* ---------------------- 앱 시작 시 최초 위치 요청 ---------------------- */
+    window.onload = initLocation;
   </script>
 
 </body>
