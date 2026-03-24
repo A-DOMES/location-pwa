@@ -51,7 +51,7 @@ function drawCurrentMarkers() {
   Object.values(latestByUser).forEach(user => {
     if (user.status === "정상") {
       const prev = previousCoords[user.name];
-      const timeChanged = !prev || prev.time !== user.time;
+      const timeChanged = !prev || prev.time !== user.time; // F열 기준 비교
 
       const marker = new google.maps.Marker({
         position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
@@ -121,12 +121,15 @@ function updateUserPanelContent(viewMode = "current") {
       }
     });
 
+    let hasCurrent = false;
+
     Object.values(latestByUser).forEach(user => {
       if (user.status === "정상") {
         const prev = previousCoords[user.name];
-        const timeChanged = !prev || prev.time !== user.time;
+        const timeChanged = !prev || prev.time !== user.time; // F열 기준 비교
 
         if (timeChanged) {
+          hasCurrent = true;
           panel.innerHTML += `
             <div style="
               margin-bottom:20px;
@@ -139,8 +142,8 @@ function updateUserPanelContent(viewMode = "current") {
                 👤 ${user.name}
               </div>
               <div>📍 위치: <span style="color:#555">${user.location}</span></div>
-              <div>🕒 최초 입력: <span style="color:#777">${user.connectTime}</span></div>
-              <div>🕒 마지막 갱신: <span style="color:#777">${user.time}</span></div>
+              <div>🕒 최초 입력(A열): <span style="color:#777">${user.connectTime}</span></div>
+              <div>🕒 마지막 갱신(F열): <span style="color:#777">${user.time}</span></div>
               <div>✅ 상태: <span style="color:green">${user.status}</span></div>
               <div style="font-family:monospace; color:#444;">
                 좌표: (${user.lat}, ${user.lng})
@@ -152,13 +155,19 @@ function updateUserPanelContent(viewMode = "current") {
         previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       }
     });
+
+    if (!hasCurrent) {
+      panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+    }
+
   } else if (viewMode === "all") {
     allData.forEach(item => {
       panel.innerHTML += `
         <div style="margin-bottom:20px; padding:10px; border-bottom:1px solid #eee;">
           <strong>${item.name}</strong><br>
           📍 위치: ${item.location}<br>
-          🕒 입력: ${item.time}<br>
+          🕒 최초 입력(A열): ${item.connectTime}<br>
+          🕒 갱신(F열): ${item.time}<br>
           상태: ${item.status}<br>
           좌표: (${item.lat}, ${item.lng})
         </div>
@@ -173,7 +182,7 @@ function updateUserPanelContent(viewMode = "current") {
     Object.entries(grouped).forEach(([name, records]) => {
       panel.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee;"><strong>${name}</strong><br>`;
       records.forEach(r => {
-        panel.innerHTML += `🕒 ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
+        panel.innerHTML += `🕒 최초(A): ${r.connectTime} | 갱신(F): ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
       });
       panel.innerHTML += `</div>`;
     });
