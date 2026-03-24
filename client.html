@@ -226,8 +226,7 @@
     panel.innerHTML = "";
   
     if (viewMode === "current") {
-      // 👉 여기서는 timeChanged 조건을 써서
-      // "새로 갱신된 사용자만" 표시
+      // 👉 여기서는 timeChanged 조건을 써서 "새로 갱신된 사용자만" 표시
       const latestByUser = {};
       allData.forEach(item => {
         if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
@@ -253,8 +252,9 @@
               <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
             </div>
           `;
+          // 👉 표시한 뒤에 갱신
+          previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
         }
-        previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       });
   
       if (!hasCurrent) {
@@ -286,6 +286,7 @@
       }
     }
   }
+
 
   /* ---------------------- 갱신 주기 설정 ---------------------- */
   function setCustomInterval() {
