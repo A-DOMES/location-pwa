@@ -128,13 +128,23 @@ function updateUserPanelContent(viewMode = "current") {
 
         if (timeChanged) {
           panel.innerHTML += `
-            <div style="margin-bottom:10px">
-              <strong>${user.name}</strong><br>
-              📍 위치: ${user.location}<br>
-              🕒 최초 입력: ${user.connectTime}<br>
-              🕒 마지막 갱신: ${user.time}<br>
-              상태: ${user.status}<br>
-              좌표: (${user.lat}, ${user.lng})
+            <div style="
+              margin-bottom:20px;
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+              background:#fafafa;
+            ">
+              <div style="font-weight:bold; font-size:16px; color:#333;">
+                👤 ${user.name}
+              </div>
+              <div>📍 위치: <span style="color:#555">${user.location}</span></div>
+              <div>🕒 최초 입력: <span style="color:#777">${user.connectTime}</span></div>
+              <div>🕒 마지막 갱신: <span style="color:#777">${user.time}</span></div>
+              <div>✅ 상태: <span style="color:green">${user.status}</span></div>
+              <div style="font-family:monospace; color:#444;">
+                좌표: (${user.lat}, ${user.lng})
+              </div>
             </div>
           `;
         }
@@ -145,7 +155,7 @@ function updateUserPanelContent(viewMode = "current") {
   } else if (viewMode === "all") {
     allData.forEach(item => {
       panel.innerHTML += `
-        <div style="margin-bottom:10px">
+        <div style="margin-bottom:20px; padding:10px; border-bottom:1px solid #eee;">
           <strong>${item.name}</strong><br>
           📍 위치: ${item.location}<br>
           🕒 입력: ${item.time}<br>
@@ -161,7 +171,7 @@ function updateUserPanelContent(viewMode = "current") {
       grouped[item.name].push(item);
     });
     Object.entries(grouped).forEach(([name, records]) => {
-      panel.innerHTML += `<div style="margin-bottom:15px"><strong>${name}</strong><br>`;
+      panel.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee;"><strong>${name}</strong><br>`;
       records.forEach(r => {
         panel.innerHTML += `🕒 ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
       });
