@@ -49,24 +49,22 @@ function drawCurrentMarkers() {
   });
 
   Object.values(latestByUser).forEach(user => {
-    if (user.status === "정상") {
+    if (user.status === "정상") { // ✅ C열 정상 조건
       const prev = previousCoords[user.name];
-      const timeChanged = !prev || prev.time !== user.time; // F열 기준 비교
+      const timeChanged = !prev || prev.time !== user.time; // ✅ F열 비교
 
-      const marker = new google.maps.Marker({
-        position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
-        map: map,
-        icon: {
-          url: timeChanged
-            ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"   // 현재 접속자
-            : "http://maps.google.com/mapfiles/ms/icons/grey-dot.png",  // 타임 동일 사용자
-          scaledSize: timeChanged
-            ? new google.maps.Size(28, 28)  // 현재 접속자 조금 크게
-            : new google.maps.Size(24, 24)  // 기본 크기 유지
-        },
-        title: `${user.name} (${user.status}, ${user.time})`
-      });
-      markers.push(marker);
+      if (timeChanged) {
+        const marker = new google.maps.Marker({
+          position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
+          map: map,
+          icon: {
+            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            scaledSize: new google.maps.Size(28, 28)
+          },
+          title: `${user.name} (${user.status}, ${user.time})`
+        });
+        markers.push(marker);
+      }
 
       previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
     }
@@ -124,68 +122,30 @@ function updateUserPanelContent(viewMode = "current") {
     let hasCurrent = false;
 
     Object.values(latestByUser).forEach(user => {
-      if (user.status === "정상") {
-        const prev = previousCoords[user.name];
-        const timeChanged = !prev || prev.time !== user.time; // F열 기준 비교
+      const prev = previousCoords[user.name];
+      const timeChanged = !prev || prev.time !== user.time;
 
-        if (timeChanged) {
-          hasCurrent = true;
-          panel.innerHTML += `
-            <div style="
-              margin-bottom:20px;
-              padding:12px;
-              border:1px solid #ddd;
-              border-radius:8px;
-              background:#fafafa;
-            ">
-              <div style="font-weight:bold; font-size:16px; color:#333;">
-                👤 ${user.name}
-              </div>
-              <div>📍 위치: <span style="color:#555">${user.location}</span></div>
-              <div>🕒 최초 입력(A열): <span style="color:#777">${user.connectTime}</span></div>
-              <div>🕒 마지막 갱신(F열): <span style="color:#777">${user.time}</span></div>
-              <div>✅ 상태: <span style="color:green">${user.status}</span></div>
-              <div style="font-family:monospace; color:#444;">
-                좌표: (${user.lat}, ${user.lng})
-              </div>
-            </div>
-          `;
-        }
-
-        previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
+      // ✅ C열 정상 + F열 갱신된 경우만 출력
+      if (user.status === "정상" && timeChanged) {
+        hasCurrent = true;
+        panel.innerHTML += `
+          <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+            <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+            <div>📍 위치: ${user.location}</div>
+            <div>🕒 최초 입력(A열): ${user.connectTime}</div>
+            <div>🕒 마지막 갱신(F열): ${user.time}</div>
+            <div>✅ 상태: ${user.status}</div>
+            <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+          </div>
+        `;
       }
+
+      previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
     });
 
     if (!hasCurrent) {
       panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
     }
-
-  } else if (viewMode === "all") {
-    allData.forEach(item => {
-      panel.innerHTML += `
-        <div style="margin-bottom:20px; padding:10px; border-bottom:1px solid #eee;">
-          <strong>${item.name}</strong><br>
-          📍 위치: ${item.location}<br>
-          🕒 최초 입력(A열): ${item.connectTime}<br>
-          🕒 갱신(F열): ${item.time}<br>
-          상태: ${item.status}<br>
-          좌표: (${item.lat}, ${item.lng})
-        </div>
-      `;
-    });
-  } else if (viewMode === "detail") {
-    const grouped = {};
-    allData.forEach(item => {
-      if (!grouped[item.name]) grouped[item.name] = [];
-      grouped[item.name].push(item);
-    });
-    Object.entries(grouped).forEach(([name, records]) => {
-      panel.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee;"><strong>${name}</strong><br>`;
-      records.forEach(r => {
-        panel.innerHTML += `🕒 최초(A): ${r.connectTime} | 갱신(F): ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
-      });
-      panel.innerHTML += `</div>`;
-    });
   }
 }
 
@@ -217,7 +177,7 @@ function initApp() {
     zoom: 7
   });
   loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
+  intervalId = setInterval(loadData, 60000); // ✅ 1분 갱신
 }
 
 /* ---------------------- 전역(window)에 붙이기 ---------------------- */
