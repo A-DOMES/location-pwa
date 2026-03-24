@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-  <!-- Google Maps API -->
+  <!-- Google Maps API: 로드 후 initApp 실행 -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initApp" async defer></script>
   <!-- 마커 클러스터링 -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
   <style>
+    /* 스타일 그대로 */
     html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
     #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
                display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
@@ -79,7 +80,7 @@
 
   <!-- 모듈 불러오기 -->
   <script type="module">
-    import { initApp, openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
+    import { openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
 
     // 접속현황 패널 버튼
     document.getElementById("btn-connection").onclick = () => {
@@ -101,6 +102,8 @@
 
     // 사용자 패널 닫기
     document.getElementById("close-user-panel").onclick = () => closeUserPanel();
+
+
 
    
     <script>
