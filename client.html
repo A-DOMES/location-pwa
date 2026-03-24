@@ -5,7 +5,7 @@
   <title>A-DOMES 위치정보시스템</title>
 
   <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initApp" async defer></script>
   <!-- 마커 클러스터링 -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
@@ -81,34 +81,28 @@
   <script type="module">
     import { initApp, openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
 
-    window.onload = () => initApp();
-
     // 접속현황 패널 버튼
-    <script type="module">
-      import { initApp, openUserPanel, closeUserPanel, setCustomInterval, showMap } from './pwaModule.js';
-    
-      window.onload = () => initApp();
-    
-      // 접속현황 패널 버튼
-      document.getElementById("btn-connection").onclick = () => {
-        document.getElementById("connection-panel").style.display = "block";
-        document.getElementById("settings-panel").style.display = "none";
-      };
-      document.getElementById("btn-current").onclick = () => openUserPanel("current");
-      document.getElementById("btn-all").onclick = () => openUserPanel("all");
-      document.getElementById("btn-detail").onclick = () => openUserPanel("detail");
-    
-      // 환경설정 패널 버튼
-      document.getElementById("btn-settings").onclick = () => {
-        document.getElementById("settings-panel").style.display = "block";
-        document.getElementById("connection-panel").style.display = "none";
-      };
-      document.getElementById("btn-current-location").onclick = () => { mode = "current"; showMap(); openUserPanel("current"); };
-      document.getElementById("btn-paths").onclick = () => { mode = "paths"; showMap(); openUserPanel("detail"); };
-      document.getElementById("btn-interval").onclick = () => setCustomInterval();
-    
-      // 사용자 패널 닫기
-      document.getElementById("close-user-panel").onclick = () => closeUserPanel();
+    document.getElementById("btn-connection").onclick = () => {
+      document.getElementById("connection-panel").style.display = "block";
+      document.getElementById("settings-panel").style.display = "none";
+    };
+    document.getElementById("btn-current").onclick = () => openUserPanel("current");
+    document.getElementById("btn-all").onclick = () => openUserPanel("all");
+    document.getElementById("btn-detail").onclick = () => openUserPanel("detail");
+
+    // 환경설정 패널 버튼
+    document.getElementById("btn-settings").onclick = () => {
+      document.getElementById("settings-panel").style.display = "block";
+      document.getElementById("connection-panel").style.display = "none";
+    };
+    document.getElementById("btn-current-location").onclick = () => { mode = "current"; showMap(); openUserPanel("current"); };
+    document.getElementById("btn-paths").onclick = () => { mode = "paths"; showMap(); openUserPanel("detail"); };
+    document.getElementById("btn-interval").onclick = () => setCustomInterval();
+
+    // 사용자 패널 닫기
+    document.getElementById("close-user-panel").onclick = () => closeUserPanel();
+
+
 
 
 
