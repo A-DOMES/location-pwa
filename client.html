@@ -197,7 +197,7 @@
 
     updateUserPanelContent(mode);
   }
-    
+
   /* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
   function updateUserPanelContent(viewMode = "current") {
     const panel = document.getElementById("user-content");
@@ -223,6 +223,56 @@
       });
     }
   }
+
+  /* ---------------------- 갱신 주기 설정 ---------------------- */
+  function setCustomInterval() {
+    const value = parseInt(document.getElementById("intervalValue").value);
+    const unit = document.getElementById("intervalUnit").value;
+    if (isNaN(value) || value <= 0) { alert("1 이상의 값을 입력하세요."); return; }
+    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+    clearInterval(intervalId);
+    intervalId = setInterval(loadData, newInterval);
+    alert("갱신 주기가 변경되었습니다.");
+  }
+
+  /* ---------------------- 패널 동작 ---------------------- */
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
+
+  btnConnection.onclick = () => {
+    settingsPanel.style.display = "none";
+    connectionPanel.style.left = btnConnection.getBoundingClientRect().left + "px";
+    connectionPanel.style.display = connectionPanel.style.display === "block" ? "none" : "block";
+  };
+
+  btnSettings.onclick = () => {
+    connectionPanel.style.display = "none";
+    settingsPanel.style.left = btnSettings.getBoundingClientRect().left + "px";
+    settingsPanel.style.display = settingsPanel.style.display === "block" ? "none" : "block";
+  };
+
+  function openUserPanel(viewMode) {
+    connectionPanel.style.display = "none";
+    userPanel.style.display = "block";
+    updateUserPanelContent(viewMode);
+  }
+
+  function closeUserPanel() { userPanel.style.display = "none"; }
+
+  /* ---------------------- 닫기 버튼 이벤트 ---------------------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    const closeBtn = document.getElementById("close-user-panel");
+    if (closeBtn) closeBtn.addEventListener("click", closeUserPanel);
+  });
+
+  /* ---------------------- 바깥 클릭 시 패널 닫기 ---------------------- */
+  document.addEventListener("click", function(e) {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) connectionPanel.style.display = "none";
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) settingsPanel.style.display = "none";
+  });
 
   /* ---------------------- 위치 전송 ---------------------- */
   async function sendLocation() {
