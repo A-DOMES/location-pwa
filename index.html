@@ -260,16 +260,16 @@
     const pw = document.getElementById("userPw").value;
 
     google.script.run.withSuccessHandler(function(auth) {
-      if (auth.result === "success" && auth.role === "admin") {
+      if (auth.result === "success" && auth.role === "RA") {
         showModal("로그인 성공!", true);
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("stopBtn").disabled = false;
 
-        // ✅ 사용자정보 표시
+        // ✅ 사용자정보 표시 (status, lastLogin은 반환값에 따라 표시)
         document.getElementById("userInfo").innerHTML =
-          "관리자 " + auth.name + "님<br>" +
-          "상태: " + auth.status + "<br>" +
-          "마지막 로그인: " + auth.lastLogin;
+          "관리자 " + (auth.name || "") + "님<br>" +
+          "상태: " + (auth.status || "active") + "<br>" +
+          "마지막 로그인: " + (auth.lastLogin || new Date().toLocaleString());
       } else if (auth.result === "blocked") {
         showModal("계정이 비활성화되었습니다.", true);
       } else if (auth.result === "unknown") {
@@ -314,7 +314,7 @@
     const params = new URLSearchParams();
 
     params.append("phone", document.getElementById("phone").value);
-    params.append("password", document.getElementById("userPw").value); // ✅ 비밀번호 추가
+    params.append("password", document.getElementById("userPw").value);
     params.append("status", "정상");
     params.append("lat", cachedPosition.latitude);
     params.append("lng", cachedPosition.longitude);
@@ -350,7 +350,7 @@
     const params = new URLSearchParams();
 
     params.append("phone", document.getElementById("phone").value);
-    params.append("password", document.getElementById("userPw").value); // ✅ 비밀번호 추가
+    params.append("password", document.getElementById("userPw").value);
     params.append("status", "해제");
     params.append("time", new Date().toISOString());
 
@@ -380,7 +380,7 @@
     const params = new URLSearchParams();
 
     params.append("phone", document.getElementById("phone").value);
-    params.append("password", document.getElementById("userPw").value); // ✅ 비밀번호 추가
+    params.append("password", document.getElementById("userPw").value);
     params.append("status", "정상");
     params.append("lat", cachedPosition.latitude);
     params.append("lng", cachedPosition.longitude);
@@ -402,6 +402,7 @@
   /* ---------------------- 앱 시작 시 최초 위치 요청 ---------------------- */
   window.onload = initLocation;
 </script>
+
 
 </body>
 </html>
