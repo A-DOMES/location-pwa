@@ -1,384 +1,91 @@
-  <!DOCTYPE html>
-  <html lang="ko">
-  <head>
-    <meta charset="UTF-8">
-    <title>A-DOMES | 위치정보시스템</title>
-    <link rel="manifest" href="manifest.json">
-  
-    <style>
-      /* ============================
-         전체 페이지 기본 설정
-         ============================ */
-      body {
-        font-family: Arial, sans-serif;
-        font-size: 18px;
-        background-color: #f9f9f9;
-        margin: 0;
-        color: #333;
-      }
-  
-      /* ============================
-         상단 헤더
-         ============================ */
-      header {
-        background-color: #2196F3;
-        padding: 20px;
-        text-align: center;
-      }
-  
-      header h2 {
-        font-size: 36px;
-        margin: 0;
-        font-weight: bold;
-        color: #fff;
-      }
-  
-      /* ============================
-         안내 박스
-         ============================ */
-      .info-box {
-        border: 2px solid #2196F3;
-        border-radius: 10px;
-        background-color: #e3f2fd;
-        padding: 20px;
-        margin: 40px auto;
-        max-width: 620px;
-        text-align: left;
-        font-size: 20px;
-        line-height: 1.4;
-      }
-  
-      .info-box h3 {
-        margin: 10px 0 5px 0;
-        color: #1976d2;
-      }
-  
-      .warning {
-        display: block;
-        margin-top: 10px;
-        font-size: 20px;
-        color: #d32f2f;
-        font-weight: bold;
-      }
-  
-      /* ============================
-         중앙정렬 컨테이너
-         ============================ */
-      .center-wrapper {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-      }
-  
-      .inner-group {
-        text-align: left;
-      }
-  
-      /* ============================
-         전화번호 입력창
-         ============================ */
-      input[type="text"] {
-        width: 400px;
-        height: 30px;
-        font-size: 20px;
-        padding: 8px;
-        margin-left: 140px;
-        margin-bottom: 5px;
-        border: 2px solid #2196F3;
-        border-radius: 6px;
-        display: block;
-      }
-  
-      /* ============================
-         버튼 그룹
-         ============================ */
-      .button-group {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        margin-left: 1px;
-        margin-top: 10px;
-        gap: 40px;
-      }
-  
-      .map-btn {
-        width: 100px;
-        height: 100px;
-        cursor: pointer;
-      }
-  
-      #sendBtn {
-        width: 200px;
-        height: 50px;
-        font-size: 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: linear-gradient(to bottom, #66bb6a, #4CAF50);
-        color: white;
-      }
-  
-      #stopBtn {
-        width: 200px;
-        height: 50px;
-        font-size: 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: linear-gradient(to bottom, #ef5350, #f44336);
-        color: white;
-      }
-  
-      /* ============================
-         모달창
-         ============================ */
-      /* 모달 전체 배경 */
-      .modal {
-        display: none; /* 기본은 숨김 */
-        position: fixed;
-        z-index: 999;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.4); /* 반투명 검정 배경 */
-      }
-      
-      /* 모달 내용 박스 */
-      .modal-content {
-        background-color: #fefefe; /* 흰색 대신 원하는 색 */
-        margin: 15% auto;
-        padding: 20px;
-        border: 2px solid #2196F3;
-        border-radius: 10px;
-        width: 80%;
-        max-width: 400px;
-        text-align: center;
-        font-size: 18px;
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb); /* 파스텔 블루 그라데이션 */
-      }
-    </style>
-  </head>
-      
-  <body>
-  
-    <!-- 상단 헤더 -->
-    <header>
-      <h2>A-DOMES | 위치정보시스템</h2>
-    </header>
-  
-    <!-- 안내 박스 -->
-    <section class="info-box">
-      <h3>앱 목적(관리자)</h3>
-      <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
-  
-      <h3>사용 방법</h3>
-      <p>
-        먼저 전화번호 또는 이름을 입력하세요.<br>
-        위치 전송 버튼을 누르면 입력한 값과 현재 위치가 구글 시트에 기록됩니다.<br>
-        화면을 켜 두시면 1분마다 자동으로 위치가 갱신됩니다.
-      </p>
-  
-      <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
-    </section>
-  
-  
-  
-    <!-- ============================
-         위치 전송 폼 영역
-         ============================ -->
-    <form id="locationForm"
-          action="https://script.google.com/macros/s/AKfycbykRdHh_v4J0oNLq7wtkh6Eu8-BV0jxHa_JVp0Q1UpOQLsJVSZ7RacOGBnSwKJHi_I_sQ/exec"
-          method="POST">
-    
-      <div class="center-wrapper">
-        <div class="inner-group">
-          <!-- 사용자 입력 -->
-          <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
-    
-          <!-- 버튼 그룹 -->
-          <div class="button-group">
-            <a href="client.html" target="_blank">
-              <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-            </a>
-            <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-            <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-          </div>
-        </div>
-      </div>
-    </form>
-    
-    <!-- ============================
-         모달창 영역
-         ============================ -->
-    <div id="modal" class="modal">
-      <div class="modal-content">
-        <p id="modalMessage"></p>
-        <button onclick="closeModal()">확인</button>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>로그인</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      font-family: Arial, sans-serif;
+    }
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+    .login-box h2 {
+      margin-bottom: 20px;
+      color: #1976d2;
+      font-size: 24px;
+    }
+    .login-box input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
+      font-size: 18px;
+      border: 2px solid #2196F3;
+      border-radius: 6px;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background: linear-gradient(to bottom, #66bb6a, #4CAF50);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    #message { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>📍 A-DOMES | 위치정보시스템</h2>
+    <input type="text" id="id" placeholder="아이디">
+    <input type="password" id="pw" placeholder="비밀번호">
+    <button onclick="login()">로그인</button>
+    <div id="message"></div>
+  </div>
 
-
-  
-  <!-- ============================
-       기능 JS (관리자용 수정 버전)
-       ============================ -->
   <script>
-    let intervalId;
-    let cachedPosition = null; // 최초 위치 저장용
-  
-    /* ---------------------- 로그인 여부 체크 ---------------------- */
-    if (!sessionStorage.getItem("loggedIn")) {
-      window.location.href = "/login.html";
-    }
-  
-    /* ---------------------- 모달창 표시 함수 ---------------------- */
-    function showModal(message, autoClose = false) {
-      document.querySelectorAll(".modal").forEach(m => m.remove());
-  
-      const modal = document.createElement("div");
-      modal.className = "modal";
-  
-      const content = document.createElement("div");
-      content.className = "modal-content";
-      content.innerText = message;
-  
-      modal.appendChild(content);
-      document.body.appendChild(modal);
-  
-      modal.style.display = "block";
-  
-      if (autoClose) {
-        setTimeout(() => {
-          modal.remove();
-        }, 2000);
-      }
-    }
-  
-    function closeModal() {
-      document.querySelectorAll(".modal").forEach(m => m.remove());
-    }
-  
-    /* ---------------------- 최초 위치 요청 ---------------------- */
-    function initLocation() {
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+    function login() {
+      var id = document.getElementById("id").value.trim();
+      var pw = document.getElementById("pw").value.trim();
+      if (!id || !pw) {
+        document.getElementById("message").style.color = "red";
+        document.getElementById("message").innerText = "아이디와 비밀번호를 입력하세요.";
         return;
       }
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          if (position && position.coords && position.coords.latitude != null && position.coords.longitude != null) {
-            cachedPosition = position.coords;
-          } else {
-            showModal("좌표를 가져오지 못했습니다.", true);
-          }
-        },
-        function(error) {
-          showModal("위치 정보를 가져오지 못했습니다:\n" + error.message, true);
+      google.script.run.withSuccessHandler(function(result) {
+        if (result.result === "success") {
+          document.getElementById("message").style.color = "green";
+          document.getElementById("message").innerText = "로그인 성공! 잠시 후 이동합니다...";
+          setTimeout(() => {
+            if (result.role === "RA") {
+              window.location.href = "https://a-domes.github.io/location-pwa/";
+            } else if (result.role === "RU") {
+              window.location.href = "https://a-domes.github.io/location-app/";
+            }
+          }, 1000);
+        } else if (result.result === "blocked") {
+          document.getElementById("message").style.color = "red";
+          document.getElementById("message").innerText = "계정이 비활성화되었습니다.";
+        } else {
+          document.getElementById("message").style.color = "red";
+          document.getElementById("message").innerText = "로그인 실패. 아이디/비밀번호 확인하세요.";
         }
-      );
+      }).checkPassword(id, pw);
     }
-  
-    /* ---------------------- 위치 전송 함수 ---------------------- */
-    function sendLocation() {
-      showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.", false);
-  
-      if (!cachedPosition || cachedPosition.latitude == null || cachedPosition.longitude == null) {
-        closeModal();
-        showModal("위치 정보가 아직 준비되지 않았습니다.", true);
-        return;
-      }
-  
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-  
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude);
-      params.append("lng", cachedPosition.longitude);
-      params.append("time", new Date().toISOString());
-  
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      })
-      .then(() => {
-        closeModal();
-        showModal("위치정보가\n성공적으로 전송되었습니다.", true);
-      })
-      .catch(err => {
-        closeModal();
-        showModal("위치 전송 실패:\n" + err.message, true);
-      });
-  
-      if (!intervalId) {
-        intervalId = setInterval(autoUpdate, 60000);
-      }
-    }
-  
-    /* ---------------------- 위치 해제 함수 ---------------------- */
-    function stopLocation() {
-      showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.", false);
-  
-      clearInterval(intervalId);
-      intervalId = null;
-  
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-  
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "해제");
-      params.append("time", new Date().toISOString());
-  
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      })
-      .then(() => {
-        closeModal();
-        showModal("위치정보가 해제되었습니다.", true);
-      })
-      .catch(err => {
-        closeModal();
-        showModal("처리 중 오류가 발생했습니다:\n" + err.message, true);
-      });
-    }
-  
-    /* ---------------------- 자동 갱신 함수 ---------------------- */
-    function autoUpdate() {
-      if (!cachedPosition || cachedPosition.latitude == null || cachedPosition.longitude == null) {
-        console.log("좌표 없음 → 자동 갱신 건너뜀");
-        return;
-      }
-  
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-  
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude);
-      params.append("lng", cachedPosition.longitude);
-      params.append("time", new Date().toISOString());
-      params.append("auto", "true");
-  
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      });
-    }
-  
-    /* ---------------------- 서비스워커 등록 ---------------------- */
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  
-    /* ---------------------- 앱 시작 시 최초 위치 요청 ---------------------- */
-    window.onload = initLocation;
   </script>
-  
-  
-  </body>
-  </html>
+</body>
+</html>
