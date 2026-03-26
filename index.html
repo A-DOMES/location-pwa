@@ -66,17 +66,26 @@
         document.getElementById("message").innerText = "아이디와 비밀번호를 입력하세요.";
         return;
       }
+
       google.script.run.withSuccessHandler(function(result) {
         if (result.result === "success") {
           document.getElementById("message").style.color = "green";
           document.getElementById("message").innerText = "로그인 성공! 잠시 후 이동합니다...";
+
+          // ✅ 로그인 상태 저장
+          sessionStorage.setItem("loggedIn", "true");
+          sessionStorage.setItem("role", result.role);
+
           setTimeout(() => {
             if (result.role === "RA") {
-              window.location.href = "https://a-domes.github.io/location-pwa/";
+              // 관리자 권한 → 관리자 서버로 이동
+              window.location.href = "https://a-domes.github.io/location-app/admin.html";
             } else if (result.role === "RU") {
-              window.location.href = "https://a-domes.github.io/location-app/";
+              // 사용자 권한 → 사용자 서버로 이동
+              window.location.href = "https://a-domes.github.io/location-pwa/user.html";
             }
           }, 1000);
+
         } else if (result.result === "blocked") {
           document.getElementById("message").style.color = "red";
           document.getElementById("message").innerText = "계정이 비활성화되었습니다.";
