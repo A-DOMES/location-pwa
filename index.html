@@ -77,17 +77,16 @@
 
   <script>
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwnGie67jJDaYXb2UFmxMlMPfp5FzBlhNphgz83rtmpdhebLSekheGk7Mxv6DK3iMKVxg/exec"; // GAS 웹앱 URL로 교체
-
     function login() {
       const id = document.getElementById("id").value.trim();
       const pw = document.getElementById("pw").value.trim();
-
+    
       if (!id || !pw) {
         alert("⚠️ 아이디와 비밀번호를 입력하세요.");
         return;
       }
-
-      fetch(`${ADMIN_WEBAPP_URL}?mode=checkAdmin&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
+    
+      fetch(`${ADMIN_WEBAPP_URL}?mode=authAdmin&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
         .then(response => response.json())
         .then(result => {
           if (result.result === "success") {
@@ -96,7 +95,7 @@
             sessionStorage.setItem("role", result.role);
             sessionStorage.setItem("userId", id);
             sessionStorage.setItem("userPw", pw);
-      
+    
             setTimeout(() => {
               if (result.role === "AD") {
                 window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
@@ -104,7 +103,7 @@
                 window.location.href = "https://a-domes.github.io/location-app/user.html";
               }
             }, 1000);
-      
+    
           } else if (result.result === "blocked") {
             alert("🚫 계정이 비활성화되었습니다.");
           } else {
