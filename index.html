@@ -76,16 +76,18 @@
   </div>
 
   <script>
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwnGie67jJDaYXb2UFmxMlMPfp5FzBlhNphgz83rtmpdhebLSekheGk7Mxv6DK3iMKVxg/exec"; // GAS 웹앱 URL로 교체
+    // ✅ 새로 배포한 관리자 웹앱 URL
+    const ADMIN_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwnGie67jJDaYXb2UFmxMlMPfp5FzBlhNphgz83rtmpdhebLSekheGk7Mxv6DK3iMKVxg/exec";
+
     function login() {
       const id = document.getElementById("id").value.trim();
       const pw = document.getElementById("pw").value.trim();
-    
+
       if (!id || !pw) {
         alert("⚠️ 아이디와 비밀번호를 입력하세요.");
         return;
       }
-    
+
       fetch(`${ADMIN_WEBAPP_URL}?mode=authAdmin&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
         .then(response => response.json())
         .then(result => {
@@ -95,15 +97,17 @@
             sessionStorage.setItem("role", result.role);
             sessionStorage.setItem("userId", id);
             sessionStorage.setItem("userPw", pw);
-    
+
             setTimeout(() => {
               if (result.role === "AD") {
+                // 관리자 계정 → 관리자 페이지
                 window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
               } else if (result.role === "RU") {
+                // 사용자 계정 → 사용자 페이지
                 window.location.href = "https://a-domes.github.io/location-app/user.html";
               }
             }, 1000);
-    
+
           } else if (result.result === "blocked") {
             alert("🚫 계정이 비활성화되었습니다.");
           } else {
@@ -111,9 +115,11 @@
           }
         })
         .catch(error => {
+          console.error(error);
           alert("❌ 서버 오류: " + error.message);
         });
     }
   </script>
 </body>
 </html>
+
