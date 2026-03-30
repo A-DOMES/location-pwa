@@ -87,29 +87,26 @@
         return;
       }
 
-      fetch(`${WEBAPP_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
+      fetch(`${ADMIN_WEBAPP_URL}?mode=checkAdmin&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
         .then(response => response.json())
         .then(result => {
           if (result.result === "success") {
             alert("✅ 로그인 성공! 잠시 후 이동합니다...");
-
             sessionStorage.setItem("loggedIn", "true");
             sessionStorage.setItem("role", result.role);
             sessionStorage.setItem("userId", id);
             sessionStorage.setItem("userPw", pw);
-
+      
             setTimeout(() => {
               if (result.role === "AD") {
-                // 관리자 계정 → 관리자 페이지
                 window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
               } else if (result.role === "RU") {
-                // 사용자 계정 → 사용자 페이지
                 window.location.href = "https://a-domes.github.io/location-app/user.html";
               }
             }, 1000);
-
+      
           } else if (result.result === "blocked") {
-            alert("🚫 계정이 비활성화되었습니다. 관리자에게 문의하세요.");
+            alert("🚫 계정이 비활성화되었습니다.");
           } else {
             alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
           }
