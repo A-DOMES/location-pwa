@@ -89,33 +89,36 @@
       }
 
       // 사용자 서버 API 호출
-      fetch(`${USER_WEBAPP_URL}?mode=login&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
-        .then(response => response.json())
-        .then(result => {
-          if (result.result === "success") {
-            if (result.role === "AD") {
-              alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
-              sessionStorage.setItem("loggedIn", "true");
-              sessionStorage.setItem("role", result.role);
-              sessionStorage.setItem("userId", id);
-              sessionStorage.setItem("userPw", pw);
-
-              setTimeout(() => {
-                window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-              }, 1000);
-            } else {
-              alert("🚫 관리자 권한이 없습니다.");
-            }
-          } else if (result.result === "blocked") {
-            alert("🚫 계정이 비활성화되었습니다.");
-          } else {
-            alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+    fetch(`${USER_WEBAPP_URL}?mode=login&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
+      .then(response => response.json())
+      .then(result => {
+        if (result.result === "success") {
+          sessionStorage.setItem("loggedIn", "true");
+          sessionStorage.setItem("role", result.role);
+          sessionStorage.setItem("userId", id);
+          sessionStorage.setItem("userPw", pw);
+    
+          if (result.role === "AD") {
+            alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
+            setTimeout(() => {
+              window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
+            }, 1000);
+          } else if (result.role === "RU") {
+            alert("✅ 사용자 로그인 성공! 잠시 후 이동합니다...");
+            setTimeout(() => {
+              window.location.href = "https://a-domes.github.io/location-app/user.html";
+            }, 1000);
           }
-        })
-        .catch(error => {
-          console.error(error);
-          alert("❌ 서버 오류: " + error.message);
-        });
+        } else if (result.result === "blocked") {
+          alert("🚫 계정이 비활성화되었습니다.");
+        } else {
+          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        alert("❌ 서버 오류: " + error.message);
+      });
     }
   </script>
 </body>
