@@ -5,7 +5,7 @@ let previousCoords = {}; // 이전 상태 저장용
 
 /* ---------------------- 데이터 로딩 ---------------------- */
 async function loadData() {
-  const response = await fetch("https://script.google.com/macros/s/AKfycbwsuVenZeWsYs3oaQJbGf8rramiwG1l4OKXqBw_eqP949iOqXvbjG-fniGjZbet-h-HsA/exec");
+  const response = await fetch("https://script.google.com/macros/s/AKfycbxqhIJwTwfkAdzYF6P0ZY_T9XprfVqu8FIjEHapYuh-dk4qD-t8VtpuX8xKidDntz9n_A/exec");
   allData = await response.json();
   showMap();
 }
