@@ -76,8 +76,8 @@
   </div>
 
   <script>
-    // ✅ 새로 배포한 관리자 웹앱 URL
-    const ADMIN_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwBFArO3NECuHR2xAj1nQ_Ea__AhNk8D3MOLXEUs8FMBuGL41GTicsSAwLrRy-Ni9hz/exec";
+    // ✅ 사용자 서버 웹앱 URL (로그인/권한 판별 담당)
+    const USER_WEBAPP_URL = "https://script.google.com/macros/s/사용자서버ID/exec";
 
     function login() {
       const id = document.getElementById("id").value.trim();
@@ -88,26 +88,24 @@
         return;
       }
 
-      fetch(`${ADMIN_WEBAPP_URL}?mode=authAdmin&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
+      // 사용자 서버 API 호출
+      fetch(`${USER_WEBAPP_URL}?mode=login&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
         .then(response => response.json())
         .then(result => {
           if (result.result === "success") {
-            alert("✅ 로그인 성공! 잠시 후 이동합니다...");
-            sessionStorage.setItem("loggedIn", "true");
-            sessionStorage.setItem("role", result.role);
-            sessionStorage.setItem("userId", id);
-            sessionStorage.setItem("userPw", pw);
+            if (result.role === "AD") {
+              alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
+              sessionStorage.setItem("loggedIn", "true");
+              sessionStorage.setItem("role", result.role);
+              sessionStorage.setItem("userId", id);
+              sessionStorage.setItem("userPw", pw);
 
-            setTimeout(() => {
-              if (result.role === "AD") {
-                // 관리자 계정 → 관리자 페이지
+              setTimeout(() => {
                 window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-              } else if (result.role === "RU") {
-                // 사용자 계정 → 사용자 페이지
-                window.location.href = "https://a-domes.github.io/location-app/user.html";
-              }
-            }, 1000);
-
+              }, 1000);
+            } else {
+              alert("🚫 관리자 권한이 없습니다.");
+            }
           } else if (result.result === "blocked") {
             alert("🚫 계정이 비활성화되었습니다.");
           } else {
@@ -122,4 +120,3 @@
   </script>
 </body>
 </html>
-
