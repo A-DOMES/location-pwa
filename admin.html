@@ -185,40 +185,6 @@
   
   
 <!-- ============================
-     위치 전송 폼 영역
-     ============================ -->
-<form id="locationForm"
-      action="https://script.google.com/macros/s/AKfycbxgZzy49PraiQBvZrYgpCdbdZzo9W12E2SInsRon4GbrcA0kMn6_abl_kO0xbiCAY2jCw/exec"
-      method="POST">
-
-  <div class="center-wrapper">
-    <div class="inner-group">
-      <!-- 사용자 입력 -->
-      <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
-
-      <!-- 버튼 그룹 -->
-      <div class="button-group">
-        <a href="client.html" target="_blank">
-          <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-        </a>
-        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-        <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-      </div>
-    </div>
-  </div>
-</form>
-
-<!-- ============================
-     모달창 영역
-     ============================ -->
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <p id="modalMessage"></p>
-    <button onclick="closeModal()">확인</button>
-  </div>
-</div>
-
-<!-- ============================
      기능 JS (관리자용 수정 버전)
      ============================ -->
 <script>
@@ -227,6 +193,7 @@
 
   /* ============================
      📌 로그인 여부 체크 (관리자 페이지 접근 제어)
+     - 세션에 로그인 상태와 토큰이 없으면 로그인 페이지로 이동
      ============================ */
   if (!sessionStorage.getItem("loggedIn") || !sessionStorage.getItem("token")) {
     window.location.href = "/login.html";
@@ -255,6 +222,7 @@
 
   /* ============================
      📌 최초 위치 요청 (앱 시작 시)
+     - 브라우저에서 현재 위치 좌표를 가져와 cachedPosition에 저장
      ============================ */
   function initLocation() {
     if (!navigator.geolocation) {
@@ -277,6 +245,8 @@
 
   /* ============================
      📌 관리자 서버 호출 (위치 전송)
+     - cachedPosition을 이용해 관리자 서버에 위치 기록 요청
+     - 세션에 저장된 사용자 서버 토큰을 함께 전송
      ============================ */
   async function sendLocation() {
     showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.", false);
@@ -317,6 +287,7 @@
 
   /* ============================
      📌 관리자 서버 호출 (위치 해제)
+     - interval 중지 후 관리자 서버에 해제 요청
      ============================ */
   async function stopLocation() {
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.", false);
@@ -348,6 +319,7 @@
 
   /* ============================
      📌 관리자 서버 호출 (자동 갱신)
+     - 일정 주기마다 cachedPosition을 관리자 서버에 전송
      ============================ */
   function autoUpdate() {
     if (!cachedPosition) return;
