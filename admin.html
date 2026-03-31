@@ -160,28 +160,57 @@
     </style>
   </head>
       
-  <body>
-  
-    <!-- 상단 헤더 -->
-    <header>
-      <h2>A-DOMES | 위치정보시스템</h2>
-    </header>
-  
-    <!-- 안내 박스 -->
-    <section class="info-box">
-      <h3>앱 목적(관리자)</h3>
-      <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
-  
-      <h3>사용 방법</h3>
-      <p>
-        먼저 전화번호 또는 이름을 입력하세요.<br>
-        위치 전송 버튼을 누르면 입력한 값과 현재 위치가 구글 시트에 기록됩니다.<br>
-        화면을 켜 두시면 1분마다 자동으로 위치가 갱신됩니다.
-      </p>
-  
-      <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
-    </section>
-  
+<body>
+  <!-- 상단 헤더 -->
+  <header>
+    <h2>A-DOMES | 관리자 페이지</h2>
+  </header>
+
+  <!-- 안내 박스 -->
+  <section class="info-box">
+    <h3>앱 목적(관리자)</h3>
+    <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
+    <h3>사용 방법</h3>
+    <p>
+      먼저 전화번호 또는 이름을 입력하세요.<br>
+      위치 전송 버튼을 누르면 입력한 값과 현재 위치가 구글 시트에 기록됩니다.<br>
+      화면을 켜 두시면 1분마다 자동으로 위치가 갱신됩니다.
+    </p>
+    <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
+  </section>
+
+  <!-- ============================
+       위치 전송 폼 영역 (관리자 서버 URL)
+       ============================ -->
+  <form id="locationForm"
+        action="https://script.google.com/macros/s/관리자서버ID/exec"
+        method="POST">
+    <div class="center-wrapper">
+      <div class="inner-group">
+        <!-- 사용자 입력 -->
+        <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
+
+        <!-- 버튼 그룹 -->
+        <div class="button-group">
+          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치 해제</button>
+          <button type="button" onclick="loadAll()">전체 조회</button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div id="result"></div>
+
+  <!-- ============================
+       모달창 영역
+       ============================ -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modalMessage"></p>
+      <button onclick="closeModal()">확인</button>
+    </div>
+  </div>
   
   
 <!-- ============================
