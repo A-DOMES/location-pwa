@@ -6,7 +6,6 @@
   <!-- 📌 폰트 로딩 -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
-    /* 📌 전체 화면 스타일 */
     body {
       display: flex;
       justify-content: center;
@@ -15,7 +14,6 @@
       background: linear-gradient(135deg, #74ebd5, #ACB6E5);
       font-family: 'Noto Sans KR', 'Roboto', sans-serif;
     }
-    /* 📌 로그인 박스 스타일 */
     .login-box {
       background: #fff;
       padding: 50px 40px;
@@ -68,25 +66,57 @@
       background: linear-gradient(to right, #2980b9, #1f6391);
       transform: scale(1.03);
     }
+
+    /* 📌 로그인 성공 모달 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.3);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 12% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .modal-content h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+    .modal-content p {
+      font-size: 18px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
   <!-- 📌 로그인 박스 -->
   <div class="login-box">
     <h2>📍 A-DOMES | 관리자 로그인</h2>
-    <!-- 📌 아이디 입력 -->
     <input type="text" id="id" placeholder="아이디">
-    <!-- 📌 비밀번호 입력 -->
     <input type="password" id="pw" placeholder="비밀번호">
-    <!-- 📌 로그인 버튼 -->
     <button onclick="login()">로그인</button>
   </div>
 
+  <!-- 📌 로그인 성공 모달 -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2>✅ 로그인 성공!</h2>
+      <p>잠시 후 이동합니다...</p>
+    </div>
+  </div>
+
   <script>
-    // ✅ 사용자 서버 웹앱 URL (로그인/권한 판별 담당)
     const USER_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzysQqG0sCmLFA6HmTooqsxcmBqYT-b_JyQ8-xNXefqS0qAgT1aR1W5pph4N-HLY3vLeg/exec";
 
-    // 📌 로그인 함수
     function login() {
       const id = document.getElementById("id").value.trim();
       const pw = document.getElementById("pw").value.trim();
@@ -96,28 +126,25 @@
         return;
       }
 
-      // 📌 사용자 서버 API 호출 (로그인 요청)
       fetch(`${USER_WEBAPP_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
         .then(response => response.json())
         .then(result => {
           if (result.result === "success") {
-            // 📌 로그인 성공 시 세션에 저장
+            // 📌 로그인 성공 모달 표시
+            document.getElementById("loginModal").style.display = "block";
+
             sessionStorage.setItem("loggedIn", "true");
             sessionStorage.setItem("role", result.role);
             sessionStorage.setItem("userId", id);
-            sessionStorage.setItem("token", result.token); // 📌 토큰 저장 (중요!)
+            sessionStorage.setItem("token", result.token);
 
-            if (result.role === "AD") {
-              alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
-              setTimeout(() => {
+            setTimeout(() => {
+              if (result.role === "AD") {
                 window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-              }, 1000);
-            } else if (result.role === "RU") {
-              alert("✅ 사용자 로그인 성공! 잠시 후 이동합니다...");
-              setTimeout(() => {
+              } else if (result.role === "RU") {
                 window.location.href = "https://a-domes.github.io/location-app/user.html";
-              }, 1000);
-            }
+              }
+            }, 1500);
           } else if (result.result === "blocked") {
             alert("🚫 계정이 비활성화되었습니다.");
           } else {
