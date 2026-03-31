@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>관리자 로그인</title>
+  <!-- 📌 폰트 로딩 -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
+    /* 📌 전체 화면 스타일 */
     body {
       display: flex;
       justify-content: center;
@@ -13,6 +15,7 @@
       background: linear-gradient(135deg, #74ebd5, #ACB6E5);
       font-family: 'Noto Sans KR', 'Roboto', sans-serif;
     }
+    /* 📌 로그인 박스 스타일 */
     .login-box {
       background: #fff;
       padding: 50px 40px;
@@ -68,10 +71,14 @@
   </style>
 </head>
 <body>
+  <!-- 📌 로그인 박스 -->
   <div class="login-box">
     <h2>📍 A-DOMES | 관리자 로그인</h2>
+    <!-- 📌 아이디 입력 -->
     <input type="text" id="id" placeholder="아이디">
+    <!-- 📌 비밀번호 입력 -->
     <input type="password" id="pw" placeholder="비밀번호">
+    <!-- 📌 로그인 버튼 -->
     <button onclick="login()">로그인</button>
   </div>
 
@@ -79,6 +86,7 @@
     // ✅ 사용자 서버 웹앱 URL (로그인/권한 판별 담당)
     const USER_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwbJspq4ylZXD8M7Zs5KDkGV4JxYiXuQcjyCbIidEZrWlq12W0aIeVl-CnBjlckPfipww/exec";
 
+    // 📌 로그인 함수
     function login() {
       const id = document.getElementById("id").value.trim();
       const pw = document.getElementById("pw").value.trim();
@@ -88,37 +96,38 @@
         return;
       }
 
-      // 사용자 서버 API 호출
-    fetch(`${USER_WEBAPP_URL}?mode=login&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
-      .then(response => response.json())
-      .then(result => {
-        if (result.result === "success") {
-          sessionStorage.setItem("loggedIn", "true");
-          sessionStorage.setItem("role", result.role);
-          sessionStorage.setItem("userId", id);
-          sessionStorage.setItem("userPw", pw);
-    
-          if (result.role === "AD") {
-            alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
-            setTimeout(() => {
-              window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-            }, 1000);
-          } else if (result.role === "RU") {
-            alert("✅ 사용자 로그인 성공! 잠시 후 이동합니다...");
-            setTimeout(() => {
-              window.location.href = "https://a-domes.github.io/location-app/user.html";
-            }, 1000);
+      // 📌 사용자 서버 API 호출 (로그인 요청)
+      fetch(`${USER_WEBAPP_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}`)
+        .then(response => response.json())
+        .then(result => {
+          if (result.result === "success") {
+            // 📌 로그인 성공 시 세션에 저장
+            sessionStorage.setItem("loggedIn", "true");
+            sessionStorage.setItem("role", result.role);
+            sessionStorage.setItem("userId", id);
+            sessionStorage.setItem("token", result.token); // 📌 토큰 저장 (중요!)
+
+            if (result.role === "AD") {
+              alert("✅ 관리자 로그인 성공! 잠시 후 이동합니다...");
+              setTimeout(() => {
+                window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
+              }, 1000);
+            } else if (result.role === "RU") {
+              alert("✅ 사용자 로그인 성공! 잠시 후 이동합니다...");
+              setTimeout(() => {
+                window.location.href = "https://a-domes.github.io/location-app/user.html";
+              }, 1000);
+            }
+          } else if (result.result === "blocked") {
+            alert("🚫 계정이 비활성화되었습니다.");
+          } else {
+            alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
           }
-        } else if (result.result === "blocked") {
-          alert("🚫 계정이 비활성화되었습니다.");
-        } else {
-          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        alert("❌ 서버 오류: " + error.message);
-      });
+        })
+        .catch(error => {
+          console.error(error);
+          alert("❌ 서버 오류: " + error.message);
+        });
     }
   </script>
 </body>
