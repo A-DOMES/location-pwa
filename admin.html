@@ -217,6 +217,8 @@
      기능 JS (관리자용 JSONP 버전)
      ============================ -->
 <script>
+  const ADMIN_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec"; // ✅ 관리자 서버 URL
+
   let intervalId;
   let cachedPosition = null; // 최초 위치 저장용
 
@@ -261,7 +263,7 @@
   }
 
   /* ============================
-     📌 관리자 서버 호출 (위치 전송, JSONP 방식)
+     📌 관리자 서버 호출 (위치 전송, JSONP)
      ============================ */
   function sendLocation() {
     showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
@@ -272,10 +274,8 @@
       return;
     }
 
-    const form = document.getElementById("locationForm");
     const callbackName = "jsonpCallback_" + Date.now();
 
-    // JSONP 응답 처리 함수
     window[callbackName] = function(result) {
       closeModal();
       if (result.result === "success") {
@@ -286,7 +286,6 @@
       if (!intervalId) intervalId = setInterval(autoUpdate, 60000); // 1분마다 자동 갱신
     };
 
-    // JSONP 호출 (script 태그 삽입)
     const params = new URLSearchParams();
     params.append("phone", document.getElementById("phone").value);
     params.append("status", "정상");
@@ -297,18 +296,17 @@
     params.append("callback", callbackName);
 
     const script = document.createElement("script");
-    script.src = form.action + "?" + params.toString();
+    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
     document.body.appendChild(script);
   }
 
   /* ============================
-     📌 관리자 서버 호출 (위치 해제, JSONP 방식)
+     📌 관리자 서버 호출 (위치 해제, JSONP)
      ============================ */
   function stopLocation() {
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
     clearInterval(intervalId); intervalId = null;
 
-    const form = document.getElementById("locationForm");
     const callbackName = "jsonpCallback_" + Date.now();
 
     window[callbackName] = function(result) {
@@ -328,17 +326,16 @@
     params.append("callback", callbackName);
 
     const script = document.createElement("script");
-    script.src = form.action + "?" + params.toString();
+    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
     document.body.appendChild(script);
   }
 
   /* ============================
-     📌 관리자 서버 호출 (자동 갱신, JSONP 방식)
+     📌 관리자 서버 호출 (자동 갱신, JSONP)
      ============================ */
   function autoUpdate() {
     if (!cachedPosition) return;
 
-    const form = document.getElementById("locationForm");
     const callbackName = "jsonpCallback_" + Date.now();
 
     window[callbackName] = function(result) {
@@ -356,7 +353,7 @@
     params.append("callback", callbackName);
 
     const script = document.createElement("script");
-    script.src = form.action + "?" + params.toString();
+    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
     document.body.appendChild(script);
   }
 
@@ -372,5 +369,6 @@
      ============================ */
   window.onload = initLocation;
 </script>
+
 </body>
 </html>
