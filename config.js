@@ -7,6 +7,9 @@ const CONFIG = {
   // ✅ 관리자 서버 URL
   ADMIN_URL: "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec",
 
+  // ✅ client.html (조회용 페이지)
+  CLIENT_URL: "client.html",
+  
   // ✅ 구글 지도 Map ID (환경별)
   mapIds: {
     android: "5bd2daaa37ebfc3fe0839614",
@@ -14,7 +17,4 @@ const CONFIG = {
     javascript: "5bd2daaa37ebfc3f6b7ad5e2",
     fixed: "5bd2daaa37ebfc3f466d5e4c"
   },
-
-  // ✅ 조회용 client.html URL (필요 시)
-  CLIENT_URL: "client.html"
 };
