@@ -115,7 +115,9 @@
   </div>
 
   <script>
-    const USER_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec";
+    // 📌 로그인 검증은 사용자 서버에서 처리해야 함
+    // ✅ 반드시 사용자 서버 URL을 넣어야 함 (관리자 서버 URL 아님!)
+    const USER_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyZLHG8TJYXdlvFacENYfFgW5tPPJ9XK0NznDQSxT9tTWAFPcmJshp2Ap8OQyNTf3zDLA/exec";
 
     function login() {
       const id = document.getElementById("id").value.trim();
