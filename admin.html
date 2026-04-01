@@ -161,12 +161,16 @@
   </head>
       
 <body>
-  <!-- 상단 헤더 -->
+  <!-- ============================
+       상단 헤더
+       ============================ -->
   <header>
     <h2>A-DOMES | 관리자 페이지</h2>
   </header>
 
-  <!-- 안내 박스 -->
+  <!-- ============================
+       안내 박스
+       ============================ -->
   <section class="info-box">
     <h3>앱 목적(관리자)</h3>
     <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
@@ -179,198 +183,206 @@
     <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
   </section>
 
-<!-- ============================
-     위치 전송 폼 영역 (관리자 서버 URL)
-     ============================ -->
-<form id="locationForm" action="" method="POST">
-  <div class="center-wrapper">
-    <div class="inner-group">
-      <!-- 사용자 입력 -->
-      <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
+  <!-- ============================
+       위치 전송 폼 영역 (관리자 서버 URL)
+       ============================ -->
+  <form id="locationForm" action="" method="POST">
+    <div class="center-wrapper">
+      <div class="inner-group">
+        <!-- 사용자 입력 -->
+        <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
 
-      <!-- 버튼 그룹 -->
-      <div class="button-group">
-        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-        <button type="button" id="stopBtn" onclick="stopLocation()">위치 해제</button>
-        <button type="button" onclick="loadAll()">전체 조회</button>
+        <!-- 버튼 그룹 -->
+        <div class="button-group">
+          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치 해제</button>
+          <button type="button" onclick="loadAll()">전체 조회</button>
+        </div>
       </div>
     </div>
+  </form>
+
+  <div id="result"></div>
+
+  <!-- ============================
+       모달창 영역 (공통 UI)
+       ============================ -->
+  <div id="modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p id="modalMessage"></p>
+      <button onclick="closeModal()">확인</button>
+    </div>
   </div>
-</form>
 
-<div id="result"></div>
+  <!-- ============================
+       기능 JS (관리자용 JSONP 버전)
+       ============================ -->
+  <script>
+    /* ✅ 관리자 서버 URL (한 곳에서만 관리) */
+    const ADMIN_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec";
 
-<!-- ============================
-     모달창 영역 (공통 UI)
-     ============================ -->
-<div id="modal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <p id="modalMessage"></p>
-    <button onclick="closeModal()">확인</button>
-  </div>
-</div>
+    /* ✅ 폼 action도 JS에서 설정 → 중복 제거 */
+    document.getElementById("locationForm").action = ADMIN_URL;
 
-  
-<!-- ============================
-     기능 JS (관리자용 JSONP 버전)
-     ============================ -->
-<script>
-  /* ✅ 관리자 서버 URL (한 곳에서만 관리) */
-  const ADMIN_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec";
+    let intervalId;
+    let cachedPosition = null; // 최초 위치 저장용
 
-  /* ✅ 폼 action도 JS에서 설정 → 중복 제거 */
-  document.getElementById("locationForm").action = ADMIN_URL;
-
-  let intervalId;
-  let cachedPosition = null; // 최초 위치 저장용
-
-  /* ============================
-     📌 로그인 여부 체크 (관리자 페이지 접근 제어)
-     ============================ */
-  if (!sessionStorage.getItem("loggedIn") || !sessionStorage.getItem("token")) {
-    window.location.href = "/login.html";
-  }
-
-  /* ============================
-     📌 모달창 표시/닫기 (공통 UI)
-     ============================ */
-  function showModal(message, autoClose = false) {
-    document.querySelectorAll(".modal").forEach(m => m.remove());
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    const content = document.createElement("div");
-    content.className = "modal-content";
-    content.innerText = message;
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-    modal.style.display = "block";
-    if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
-  }
-  function closeModal() {
-    document.querySelectorAll(".modal").forEach(m => m.remove());
-  }
-
-  /* ============================
-     📌 최초 위치 요청 (앱 시작 시)
-     ============================ */
-  function initLocation() {
-    if (!navigator.geolocation) {
-      showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => { cachedPosition = pos.coords; },
-      err => { showModal("위치 정보를 가져오지 못했습니다:\n" + err.message, true); }
-    );
-  }
-
-  /* ============================
-     📌 관리자 서버 호출 (위치 전송, JSONP)
-     ============================ */
-  function sendLocation() {
-    showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-
-    if (!cachedPosition) {
-      closeModal();
-      showModal("위치 정보가 아직 준비되지 않았습니다.", true);
-      return;
+    /* ============================
+       📌 로그인 여부 체크 (관리자 페이지 접근 제어)
+       ============================ */
+    if (!sessionStorage.getItem("loggedIn") || !sessionStorage.getItem("token")) {
+      window.location.href = "/login.html";
     }
 
-    const callbackName = "jsonpCallback_" + Date.now();
+    /* ============================
+       📌 모달창 표시/닫기 (공통 UI)
+       ============================ */
+    function showModal(message, autoClose = false) {
+      const modal = document.getElementById("modal");
+      const msg = document.getElementById("modalMessage");
+      msg.innerText = message;
+      modal.style.display = "block";
+      if (autoClose) setTimeout(() => { closeModal(); }, 2000);
+    }
+    function closeModal() {
+      const modal = document.getElementById("modal");
+      modal.style.display = "none";
+    }
 
-    window[callbackName] = function(result) {
-      closeModal();
-      if (result.result === "success") {
-        showModal("✅ 위치정보가 성공적으로 전송되었습니다.\n주소: " + result.address, true);
-      } else {
-        showModal("위치 전송 실패:\n" + result.message, true);
+    /* ============================
+       📌 최초 위치 요청 (앱 시작 시)
+       ============================ */
+    function initLocation() {
+      if (!navigator.geolocation) {
+        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+        return;
       }
-      if (!intervalId) intervalId = setInterval(autoUpdate, 60000); // 1분마다 자동 갱신
-    };
+      navigator.geolocation.getCurrentPosition(
+        pos => { cachedPosition = pos.coords; },
+        err => { showModal("위치 정보를 가져오지 못했습니다:\n" + err.message, true); }
+      );
+    }
 
-    const params = new URLSearchParams();
-    params.append("phone", document.getElementById("phone").value);
-    params.append("status", "정상");
-    params.append("lat", cachedPosition.latitude);
-    params.append("lng", cachedPosition.longitude);
-    params.append("time", new Date().toISOString());
-    params.append("token", sessionStorage.getItem("token"));
-    params.append("callback", callbackName);
+    /* ============================
+       📌 관리자 서버 호출 (위치 전송, JSONP)
+       ============================ */
+    function sendLocation() {
+      showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
 
-    const script = document.createElement("script");
-    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-    document.body.appendChild(script);
-  }
-
-  /* ============================
-     📌 관리자 서버 호출 (위치 해제, JSONP)
-     ============================ */
-  function stopLocation() {
-    showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-    clearInterval(intervalId); intervalId = null;
-
-    const callbackName = "jsonpCallback_" + Date.now();
-
-    window[callbackName] = function(result) {
-      closeModal();
-      if (result.result === "success") {
-        showModal("🛑 위치정보가 해제되었습니다.", true);
-      } else {
-        showModal("처리 중 오류 발생:\n" + result.message, true);
+      if (!cachedPosition) {
+        closeModal();
+        showModal("위치 정보가 아직 준비되지 않았습니다.", true);
+        return;
       }
-    };
 
-    const params = new URLSearchParams();
-    params.append("phone", document.getElementById("phone").value);
-    params.append("status", "해제");
-    params.append("time", new Date().toISOString());
-    params.append("token", sessionStorage.getItem("token"));
-    params.append("callback", callbackName);
+      const callbackName = "jsonpCallback_" + Date.now();
 
-    const script = document.createElement("script");
-    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-    document.body.appendChild(script);
-  }
+      window[callbackName] = function(result) {
+        closeModal();
+        if (result.result === "success") {
+          showModal("✅ 위치정보가 성공적으로 전송되었습니다.\n주소: " + result.address, true);
+        } else {
+          showModal("위치 전송 실패:\n" + result.message, true);
+        }
+        if (!intervalId) intervalId = setInterval(autoUpdate, 60000); // 1분마다 자동 갱신
+      };
 
-  /* ============================
-     📌 관리자 서버 호출 (자동 갱신, JSONP)
-     ============================ */
-  function autoUpdate() {
-    if (!cachedPosition) return;
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "정상");
+      params.append("lat", cachedPosition.latitude);
+      params.append("lng", cachedPosition.longitude);
+      params.append("time", new Date().toISOString());
+      params.append("token", sessionStorage.getItem("token"));
+      params.append("callback", callbackName);
 
-    const callbackName = "jsonpCallback_" + Date.now();
+      const script = document.createElement("script");
+      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
+      document.body.appendChild(script);
+    }
 
-    window[callbackName] = function(result) {
-      console.log("[DEBUG] autoUpdate 응답:", result);
-    };
+    /* ============================
+       📌 관리자 서버 호출 (위치 해제, JSONP)
+       ============================ */
+    function stopLocation() {
+      showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
+      clearInterval(intervalId); intervalId = null;
 
-    const params = new URLSearchParams();
-    params.append("phone", document.getElementById("phone").value);
-    params.append("status", "정상");
-    params.append("lat", cachedPosition.latitude);
-    params.append("lng", cachedPosition.longitude);
-    params.append("time", new Date().toISOString());
-    params.append("auto", "true");
-    params.append("token", sessionStorage.getItem("token"));
-    params.append("callback", callbackName);
+      const callbackName = "jsonpCallback_" + Date.now();
 
-    const script = document.createElement("script");
-    script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-    document.body.appendChild(script);
-  }
+      window[callbackName] = function(result) {
+        closeModal();
+        if (result.result === "success") {
+          showModal("🛑 위치정보가 해제되었습니다.", true);
+        } else {
+          showModal("처리 중 오류 발생:\n" + result.message, true);
+        }
+      };
 
-  /* ============================
-     📌 서비스워커 등록 (PWA 지원)
-     ============================ */
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js");
-  }
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "해제");
+      params.append("time", new Date().toISOString());
+      params.append("token", sessionStorage.getItem("token"));
+      params.append("callback", callbackName);
 
-  /* ============================
-     📌 앱 시작 시 최초 위치 요청
-     ============================ */
-  window.onload = initLocation;
-</script>
+      const script = document.createElement("script");
+      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
+      document.body.appendChild(script);
+    }
 
+    /* ============================
+       📌 관리자 서버 호출 (자동 갱신, JSONP)
+       ============================ */
+    function autoUpdate() {
+      if (!cachedPosition) return;
+
+      const callbackName = "jsonpCallback_" + Date.now();
+
+      window[callbackName] = function(result) {
+        console.log("[DEBUG] autoUpdate 응답:", result);
+      };
+
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "정상");
+      params.append("lat", cachedPosition.latitude);
+      params.append("lng", cachedPosition.longitude);
+      params.append("time", new Date().toISOString());
+      params.append("auto", "true");
+      params.append("token", sessionStorage.getItem("token"));
+      params.append("callback", callbackName);
+
+      const script = document.createElement("script");
+      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
+      document.body.appendChild(script);
+    }
+
+    /* ============================
+       📌 앱 시작 시 최초 위치 요청
+       ============================ */
+    function initLocation() {
+      if (!navigator.geolocation) {
+        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => { cachedPosition = pos.coords; },
+        err => { showModal("위치 정보를 가져오지 못했습니다:\n" + err.message, true); }
+      );
+    }
+
+    /* ============================
+       📌 서비스워커 등록 (PWA 지원)
+       ============================ */
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+
+    /* ============================
+       📌 앱 시작 시 최초 위치 요청 실행
+       ============================ */
+    window.onload = initLocation;
+  </script>
 </body>
 </html>
