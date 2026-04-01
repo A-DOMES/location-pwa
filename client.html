@@ -175,7 +175,7 @@
           const marker = new google.maps.Marker({
             position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
             map: map,
-            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // ✅ HTTPS 적용
             title: `${user.name} (${user.status}, ${user.time})`
           });
           markers.push(marker);
@@ -212,8 +212,8 @@
           map: map,
           title: `${d.name} / ${d.time}`,
           icon: idx === data.length - 1
-            ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png" // 마지막 위치
-            : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"   // 이전 위치
+            ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png" // ✅ HTTPS 적용
+            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"   // ✅ HTTPS 적용
         });
         markers.push(marker);
       });
@@ -226,7 +226,6 @@
     panel.innerHTML = "";
   
     if (viewMode === "current") {
-      // 👉 여기서는 timeChanged 조건을 써서 "새로 갱신된 사용자만" 표시
       const latestByUser = {};
       allData.forEach(item => {
         if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
@@ -252,7 +251,6 @@
               <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
             </div>
           `;
-          // 👉 표시한 뒤에 갱신
           previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
         }
       });
@@ -263,7 +261,6 @@
     }
   
     if (viewMode === "all") {
-      // 👉 여기서는 정상 상태인 사용자라면 모두 표시
       let hasUser = false;
       allData.forEach(user => {
         if (user.status === "정상") {
@@ -286,7 +283,6 @@
       }
     }
   }
-
 
   /* ---------------------- 갱신 주기 설정 ---------------------- */
   function setCustomInterval() {
@@ -383,4 +379,3 @@
 </script>
 </body>
 </html>
-
