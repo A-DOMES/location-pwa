@@ -1,388 +1,297 @@
-  <!DOCTYPE html>
-  <html lang="ko">
-  <head>
-    <meta charset="UTF-8">
-    <title>A-DOMES | 위치정보시스템</title>
-    <link rel="manifest" href="manifest.json">
-  
-    <style>
-      /* ============================
-         전체 페이지 기본 설정
-         ============================ */
-      body {
-        font-family: Arial, sans-serif;
-        font-size: 18px;
-        background-color: #f9f9f9;
-        margin: 0;
-        color: #333;
-      }
-  
-      /* ============================
-         상단 헤더
-         ============================ */
-      header {
-        background-color: #2196F3;
-        padding: 20px;
-        text-align: center;
-      }
-  
-      header h2 {
-        font-size: 36px;
-        margin: 0;
-        font-weight: bold;
-        color: #fff;
-      }
-  
-      /* ============================
-         안내 박스
-         ============================ */
-      .info-box {
-        border: 2px solid #2196F3;
-        border-radius: 10px;
-        background-color: #e3f2fd;
-        padding: 20px;
-        margin: 40px auto;
-        max-width: 620px;
-        text-align: left;
-        font-size: 20px;
-        line-height: 1.4;
-      }
-  
-      .info-box h3 {
-        margin: 10px 0 5px 0;
-        color: #1976d2;
-      }
-  
-      .warning {
-        display: block;
-        margin-top: 10px;
-        font-size: 20px;
-        color: #d32f2f;
-        font-weight: bold;
-      }
-  
-      /* ============================
-         중앙정렬 컨테이너
-         ============================ */
-      .center-wrapper {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-      }
-  
-      .inner-group {
-        text-align: left;
-      }
-  
-      /* ============================
-         전화번호 입력창
-         ============================ */
-      input[type="text"] {
-        width: 400px;
-        height: 30px;
-        font-size: 20px;
-        padding: 8px;
-        margin-left: 140px;
-        margin-bottom: 5px;
-        border: 2px solid #2196F3;
-        border-radius: 6px;
-        display: block;
-      }
-  
-      /* ============================
-         버튼 그룹
-         ============================ */
-      .button-group {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        margin-left: 1px;
-        margin-top: 10px;
-        gap: 40px;
-      }
-  
-      .map-btn {
-        width: 100px;
-        height: 100px;
-        cursor: pointer;
-      }
-  
-      #sendBtn {
-        width: 200px;
-        height: 50px;
-        font-size: 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: linear-gradient(to bottom, #66bb6a, #4CAF50);
-        color: white;
-      }
-  
-      #stopBtn {
-        width: 200px;
-        height: 50px;
-        font-size: 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: linear-gradient(to bottom, #ef5350, #f44336);
-        color: white;
-      }
-  
-      /* ============================
-         모달창
-         ============================ */
-      /* 모달 전체 배경 */
-      .modal {
-        display: none; /* 기본은 숨김 */
-        position: fixed;
-        z-index: 999;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.4); /* 반투명 검정 배경 */
-      }
-      
-      /* 모달 내용 박스 */
-      .modal-content {
-        background-color: #fefefe; /* 흰색 대신 원하는 색 */
-        margin: 15% auto;
-        padding: 20px;
-        border: 2px solid #2196F3;
-        border-radius: 10px;
-        width: 80%;
-        max-width: 400px;
-        text-align: center;
-        font-size: 18px;
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb); /* 파스텔 블루 그라데이션 */
-      }
-    </style>
-  </head>
-      
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>A-DOMES | 위치정보시스템</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ✅ 구글 지도 API 로드 -->
+  <script async 
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap&libraries=marker">
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background-color: #f9f9f9;
+      margin: 0;
+      color: #333;
+    }
+    header {
+      background-color: #2196F3;
+      padding: 20px;
+      text-align: center;
+    }
+    header h2 {
+      font-size: 36px;
+      margin: 0;
+      font-weight: bold;
+      color: #fff;
+    }
+    .info-box {
+      border: 2px solid #2196F3;
+      border-radius: 10px;
+      background-color: #e3f2fd;
+      padding: 20px;
+      margin: 40px auto;
+      max-width: 620px;
+      text-align: left;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+    .info-box h3 { margin: 10px 0 5px 0; color: #1976d2; }
+    .warning { display: block; margin-top: 10px; font-size: 20px; color: #d32f2f; font-weight: bold; }
+    .center-wrapper { display: flex; justify-content: center; margin-top: 20px; }
+    .inner-group { text-align: left; }
+    input[type="text"] {
+      width: 400px; height: 30px; font-size: 20px;
+      padding: 8px; margin-left: 140px; margin-bottom: 5px;
+      border: 2px solid #2196F3; border-radius: 6px; display: block;
+    }
+    .button-group {
+      display: flex; justify-content: flex-start; align-items: center;
+      margin-left: 1px; margin-top: 10px; gap: 40px;
+    }
+    .map-btn { width: 100px; height: 100px; cursor: pointer; }
+    #sendBtn, #stopBtn {
+      width: 200px; height: 50px; font-size: 20px;
+      border: none; border-radius: 8px; cursor: pointer; color: white;
+    }
+    #sendBtn { background: linear-gradient(to bottom, #66bb6a, #4CAF50); }
+    #stopBtn { background: linear-gradient(to bottom, #ef5350, #f44336); }
+    .modal {
+      display: none; position: fixed; z-index: 999;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; padding: 20px;
+      border: 2px solid #2196F3; border-radius: 10px;
+      width: 80%; max-width: 400px; text-align: center; font-size: 18px;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    }
+  </style>
+</head>
+
 <body>
-  <!-- ============================
-       상단 헤더
-       ============================ -->
   <header>
-    <h2>A-DOMES | 관리자 페이지</h2>
+    <h2>A-DOMES | 위치정보시스템</h2>
   </header>
 
-  <!-- ============================
-       안내 박스
-       ============================ -->
   <section class="info-box">
-    <h3>앱 목적(관리자)</h3>
+    <h3>앱 목적</h3>
     <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
     <h3>사용 방법</h3>
     <p>
-      먼저 전화번호 또는 이름을 입력하세요.<br>
+      전화번호 또는 이름을 입력하세요.<br>
       위치 전송 버튼을 누르면 입력한 값과 현재 위치가 구글 시트에 기록됩니다.<br>
-      화면을 켜 두시면 1분마다 자동으로 위치가 갱신됩니다.
+      화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
     </p>
     <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
   </section>
 
-  <!-- ============================
-       위치 전송 폼 영역 (관리자 서버 URL)
-       ============================ -->
-  <form id="locationForm" action="" method="POST">
+  <!-- ✅ 사용자 입력창 (전화번호 또는 이름만) -->
+  <form id="locationForm"
+        action="https://script.google.com/macros/s/AKfycbyZLHG8TJYXdlvFacENYfFgW5tPPJ9XK0NznDQSxT9tTWAFPcmJshp2Ap8OQyNTf3zDLA/exec"
+        method="POST">
     <div class="center-wrapper">
       <div class="inner-group">
-        <!-- 사용자 입력 -->
         <input type="text" name="phone" id="phone" placeholder="전화번호 또는 이름 입력">
-
-        <!-- 버튼 그룹 -->
         <div class="button-group">
+          <a href="client.html" target="_blank">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+          </a>
           <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-          <button type="button" id="stopBtn" onclick="stopLocation()">위치 해제</button>
-          <button type="button" onclick="loadAll()">전체 조회</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
         </div>
       </div>
     </div>
   </form>
 
-  <div id="result"></div>
+  <div id="map"></div>
+  
+  <!-- config.js 불러오기 -->
+  <script src="config.js"></script>
 
-  <!-- ============================
-       모달창 영역 (공통 UI)
-       ============================ -->
-  <div id="modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <p id="modalMessage"></p>
-      <button onclick="closeModal()">확인</button>
-    </div>
-  </div>
+  
+<script>
+  let intervalId;
 
-  <!-- ============================
-       기능 JS (관리자용 JSONP 버전)
-       ============================ -->
-  <script>
-    /* ✅ 관리자 서버 URL (한 곳에서만 관리) */
-    const ADMIN_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec";
+  function showModal(message, autoClose = false) {
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    const content = document.createElement("div");
+    content.className = "modal-content";
+    content.innerText = message;
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    modal.style.display = "block";
+    if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
+  }
+  function closeModal() {
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+  }
 
-    /* ✅ 폼 action도 JS에서 설정 → 중복 제거 */
-    document.getElementById("locationForm").action = ADMIN_URL;
+  function sendLocation() {
+    showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
 
-    let intervalId;
-    let cachedPosition = null; // 최초 위치 저장용
+    const userUrl = "https://script.google.com/macros/s/AKfycbyZLHG8TJYXdlvFacENYfFgW5tPPJ9XK0NznDQSxT9tTWAFPcmJshp2Ap8OQyNTf3zDLA/exec";
+    const callbackName = "jsonpCallback_" + Date.now();
 
-    /* ============================
-       📌 로그인 여부 체크 (관리자 페이지 접근 제어)
-       ============================ */
-    if (!sessionStorage.getItem("loggedIn") || !sessionStorage.getItem("token")) {
-      window.location.href = "/login.html";
-    }
-
-    /* ============================
-       📌 모달창 표시/닫기 (공통 UI)
-       ============================ */
-    function showModal(message, autoClose = false) {
-      const modal = document.getElementById("modal");
-      const msg = document.getElementById("modalMessage");
-      msg.innerText = message;
-      modal.style.display = "block";
-      if (autoClose) setTimeout(() => { closeModal(); }, 2000);
-    }
-    function closeModal() {
-      const modal = document.getElementById("modal");
-      modal.style.display = "none";
-    }
-
-    /* ============================
-       📌 최초 위치 요청 (앱 시작 시)
-       ============================ */
-    function initLocation() {
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+    window[callbackName] = function(loginResult) {
+      if (loginResult.result !== "success") {
+        closeModal();
+        showModal("사용자 인증 실패:\n" + (loginResult.message || ""), true);
         return;
       }
-      navigator.geolocation.getCurrentPosition(
-        pos => { cachedPosition = pos.coords; },
-        err => { showModal("위치 정보를 가져오지 못했습니다:\n" + err.message, true); }
-      );
-    }
+      sessionStorage.setItem("token", loginResult.token);
 
-    /* ============================
-       📌 관리자 서버 호출 (위치 전송, JSONP)
-       ============================ */
-    function sendLocation() {
-      showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const adminCallback = "jsonpAdmin_" + Date.now();
+        window[adminCallback] = function(result) {
+          closeModal();
+          if (result.result === "success") {
+            showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
+          } else {
+            showModal("위치 전송 실패:\n" + result.message, true);
+          }
+          if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
+        };
 
-      if (!cachedPosition) {
+        const params = new URLSearchParams();
+        params.append("phone", document.getElementById("phone").value);
+        params.append("status", "정상");
+        params.append("lat", position.coords.latitude || 0);
+        params.append("lng", position.coords.longitude || 0);
+        params.append("time", new Date().toISOString());
+        params.append("token", loginResult.token);
+        params.append("callback", adminCallback);
+
+        const script = document.createElement("script");
+        script.src = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec?" + params.toString();
+        document.body.appendChild(script);
+      }, function(error) {
         closeModal();
-        showModal("위치 정보가 아직 준비되지 않았습니다.", true);
-        return;
+        showModal("위치 정보를 가져오지 못했습니다:\n" + error.message, true);
+      });
+    };
+
+    // JSONP 호출 (사용자 서버 로그인)
+    const script = document.createElement("script");
+    script.src = `${userUrl}?mode=checkPassword&id=${document.getElementById("phone").value}&callback=${callbackName}`;
+    document.body.appendChild(script);
+  }
+
+  function stopLocation() {
+    showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
+    clearInterval(intervalId); intervalId = null;
+
+    const callbackName = "jsonpStop_" + Date.now();
+    window[callbackName] = function(result) {
+      closeModal();
+      if (result.result === "success") {
+        showModal("🛑 위치정보가 해제되었습니다.", true);
+      } else {
+        showModal("처리 중 오류 발생:\n" + result.message, true);
       }
+    };
 
-      const callbackName = "jsonpCallback_" + Date.now();
+    const params = new URLSearchParams();
+    params.append("phone", document.getElementById("phone").value);
+    params.append("status", "해제");
+    params.append("time", new Date().toISOString());
+    params.append("token", sessionStorage.getItem("token"));
+    params.append("callback", callbackName);
 
-      window[callbackName] = function(result) {
-        closeModal();
-        if (result.result === "success") {
-          showModal("✅ 위치정보가 성공적으로 전송되었습니다.\n주소: " + result.address, true);
-        } else {
-          showModal("위치 전송 실패:\n" + result.message, true);
-        }
-        if (!intervalId) intervalId = setInterval(autoUpdate, 60000); // 1분마다 자동 갱신
-      };
+    const script = document.createElement("script");
+    script.src = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec?" + params.toString();
+    document.body.appendChild(script);
+  }
 
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude);
-      params.append("lng", cachedPosition.longitude);
-      params.append("time", new Date().toISOString());
-      params.append("token", sessionStorage.getItem("token"));
-      params.append("callback", callbackName);
-
-      const script = document.createElement("script");
-      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-      document.body.appendChild(script);
-    }
-
-    /* ============================
-       📌 관리자 서버 호출 (위치 해제, JSONP)
-       ============================ */
-    function stopLocation() {
-      showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-      clearInterval(intervalId); intervalId = null;
-
-      const callbackName = "jsonpCallback_" + Date.now();
-
-      window[callbackName] = function(result) {
-        closeModal();
-        if (result.result === "success") {
-          showModal("🛑 위치정보가 해제되었습니다.", true);
-        } else {
-          showModal("처리 중 오류 발생:\n" + result.message, true);
-        }
-      };
-
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "해제");
-      params.append("time", new Date().toISOString());
-      params.append("token", sessionStorage.getItem("token"));
-      params.append("callback", callbackName);
-
-      const script = document.createElement("script");
-      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-      document.body.appendChild(script);
-    }
-
-    /* ============================
-       📌 관리자 서버 호출 (자동 갱신, JSONP)
-       ============================ */
     function autoUpdate() {
-      if (!cachedPosition) return;
-
-      const callbackName = "jsonpCallback_" + Date.now();
-
-      window[callbackName] = function(result) {
-        console.log("[DEBUG] autoUpdate 응답:", result);
-      };
-
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "정상");
-      params.append("lat", cachedPosition.latitude);
-      params.append("lng", cachedPosition.longitude);
-      params.append("time", new Date().toISOString());
-      params.append("auto", "true");
-      params.append("token", sessionStorage.getItem("token"));
-      params.append("callback", callbackName);
-
-      const script = document.createElement("script");
-      script.src = ADMIN_URL + "?" + params.toString(); // ✅ 관리자 서버 URL
-      document.body.appendChild(script);
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const newPos = { lat: position.coords.latitude, lng: position.coords.longitude };
+  
+        // ✅ 마커 위치 갱신
+        if (window.carMarker) {
+          window.carMarker.position = newPos;
+        }
+  
+        // ✅ 지도 중심도 차량 위치로 이동
+        if (window.map) {
+          window.map.setCenter(newPos);
+        }
+  
+        // ✅ 서버 전송 로직 (기존 유지)
+        const callbackName = "jsonpAuto_" + Date.now();
+        window[callbackName] = function(result) {
+          console.log("[DEBUG] autoUpdate 응답:", result);
+        };
+  
+        const params = new URLSearchParams();
+        params.append("phone", document.getElementById("phone").value);
+        params.append("status", "정상");
+        params.append("lat", position.coords.latitude || 0);
+        params.append("lng", position.coords.longitude || 0);
+        params.append("time", new Date().toISOString());
+        params.append("auto", "true");
+        params.append("token", sessionStorage.getItem("token"));
+        params.append("callback", callbackName);
+  
+        const script = document.createElement("script");
+        script.src = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec?" + params.toString();
+        document.body.appendChild(script);
+      });
     }
-
-    /* ============================
-       📌 앱 시작 시 최초 위치 요청
-       ============================ */
-    function initLocation() {
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
-        return;
+    
+    
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js");
       }
-      navigator.geolocation.getCurrentPosition(
-        pos => { cachedPosition = pos.coords; },
-        err => { showModal("위치 정보를 가져오지 못했습니다:\n" + err.message, true); }
-      );
+
+    function getPlatformMapId() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes("android")) return CONFIG.mapIds.android;
+      if (ua.includes("iphone") || ua.includes("ipad")) return CONFIG.mapIds.ios;
+      if (ua.includes("chrome") || ua.includes("firefox") || ua.includes("safari")) return CONFIG.mapIds.javascript;
+      return CONFIG.mapIds.fixed;
     }
 
-    /* ============================
-       📌 서비스워커 등록 (PWA 지원)
-       ============================ */
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
+    function initMap() {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const mapId = getPlatformMapId();
+
+        window.map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: position.coords.latitude, lng: position.coords.longitude },
+          zoom: 15,
+          mapId: mapId   // ✅ 환경에 맞는 Map ID 적용
+        });
+
+        // ✅ 최신 권장 방식: AdvancedMarkerElement 사용
+        window.carMarker = new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: position.coords.latitude, lng: position.coords.longitude },
+          map: window.map,
+          title: "현재 위치"
+        });
+      });
     }
 
-    /* ============================
-       📌 앱 시작 시 최초 위치 요청 실행
-       ============================ */
-    window.onload = initLocation;
-  </script>
+  window.onload = function() {
+    // ✅ 지도 초기화
+    initMap();
+
+    // ✅ 로그인한 아이디 자동 입력
+    const savedId = sessionStorage.getItem("userId");
+    if (savedId) {
+      document.getElementById("phone").value = savedId;
+    }
+  };
+</script>
 </body>
 </html>
