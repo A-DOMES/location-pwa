@@ -128,32 +128,26 @@
       document.querySelectorAll(".modal").forEach(m => m.remove());
     }
 
-    /* 초기화: 서버에서 F열(Name)과 토큰을 받아와서 자동 채움 */
-    let userToken = "";
-    function initUser(name, token) {
-      userToken = token;                 // UUID 토큰 저장
-      document.getElementById("phone").value = name; // F열 값 자동 입력
-    }
-    
-    // 📌 사용자 서버에 로그인 요청 (id, pw 전달 필요)
-    const userId = "사용자ID";      // 실제 사용자 ID
-    const userPw = "사용자PW";      // 실제 사용자 PW
+/* 초기화: 서버에서 F열(Name)과 토큰을 받아와서 자동 채움 */
+let userToken = "";
+function initUser(name, token) {
+  userToken = token;                 
+  document.getElementById("phone").value = name; 
+}
 
-    // 사용자서버 웹 앱 URL
-    fetch("https://script.google.com/macros/s/AKfycbyZLHG8TJYXdlvFacENYfFgW5tPPJ9XK0NznDQSxT9tTWAFPcmJshp2Ap8OQyNTf3zDLA/exec"
-          + "?mode=checkPassword&id=" + encodeURIComponent(userId)
-          + "&pw=" + encodeURIComponent(userPw))
-      .then(res => res.json())
-      .then(data => {
-        if (data.result === "success") {
-          initUser(data.name, data.token); // ✅ F열 값과 토큰 반영
-        } else {
-          console.error("로그인 실패:", data);
-        }
-      })
-      .catch(err => {
-        console.error("서버 오류:", err);
-      });
+// 📌 관리자 서버에 로그인 요청 (관리자 서버가 사용자 서버와 연결되어 있음)
+fetch("https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec?mode=login&id=" + encodeURIComponent(userId) + "&pw=" + encodeURIComponent(userPw))
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      initUser(data.name, data.token); // ✅ 관리자 서버가 사용자 서버에서 받은 F열 값과 토큰을 전달
+    } else {
+      console.error("로그인 실패:", data);
+    }
+  })
+  .catch(err => {
+    console.error("서버 오류:", err);
+  });
 
     
     function sendLocation() {
