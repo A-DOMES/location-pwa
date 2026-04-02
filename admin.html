@@ -80,13 +80,22 @@
     <p>이 앱은 현장의 위치 정보를 기록하고 공유하기 위해 만들어졌습니다.</p>
     <h3>사용 방법</h3>
     <p>
-      먼저 전화번호 또는 이름을 입력하세요.<br>
-      위치 전송 버튼을 누르면 입력한 값과 현재 위치가 구글 시트에 기록됩니다.<br>
+      먼저 ID와 Password로 로그인하세요.<br>
+      로그인 성공 시 사용자관리 시트의 이름(F열)이 자동으로 입력됩니다.<br>
+      위치 전송 버튼을 누르면 현재 위치가 구글 시트에 기록됩니다.<br>
       화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
     </p>
     <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
   </section>
 
+  <!-- 로그인 영역 -->
+  <section class="login-box">
+    <input type="text" id="loginId" placeholder="ID 입력">
+    <input type="password" id="loginPw" placeholder="Password 입력">
+    <button type="button" id="loginBtn" onclick="loginUser()">로그인</button>
+  </section>
+
+  <!-- 위치 전송 영역 -->
   <form id="locationForm"
         action="https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec"
         method="POST">
@@ -108,8 +117,9 @@
 
   <script>
     let intervalId;
-    let userToken = ""; // 로그인 성공 시 서버에서 받아온 토큰 저장
-    
+    let userToken = ""; 
+    let userName = "";
+
     function showModal(message, autoClose = false) {
       document.querySelectorAll(".modal").forEach(m => m.remove());
       const modal = document.createElement("div");
@@ -125,65 +135,57 @@
     function closeModal() {
       document.querySelectorAll(".modal").forEach(m => m.remove());
     }
-    
-    /* ============================
-       📌 로그인 → 토큰 획득
-       ============================ */
-    function loginUser(id, password) {
+
+    /* 로그인 → 토큰 + 이름(F열) 획득 */
+    function loginUser() {
+      const id = document.getElementById("loginId").value;
+      const pw = document.getElementById("loginPw").value;
+
       fetch("사용자인증서버URL", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ id, password }).toString()
+        body: new URLSearchParams({ id, password: pw }).toString()
       })
       .then(res => res.json())
       .then(data => {
         if (data.result === "success") {
-          userToken = data.token; // 서버가 돌려준 토큰 저장
-          showModal("로그인 성공: " + data.name, true);
+          userToken = data.token;   // UUID 토큰
+          userName = data.name;     // 사용자관리 시트 F열 값
+          document.getElementById("phone").value = userName; // 텍스트박스 자동 채움
+          showModal("로그인 성공: " + userName, true);
         } else {
           showModal("로그인 실패: " + data.message, true);
         }
       })
       .catch(err => showModal("로그인 오류: " + err.message, true));
     }
-    
-    /* ============================
-       📌 위치 전송
-       ============================ */
+
     function sendLocation() {
       showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-    
       if (!navigator.geolocation) {
         showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
         return;
       }
-    
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          const form = document.getElementById("locationForm");
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date().toISOString());
-          params.append("token", userToken); // 로그인에서 받은 토큰 자동 포함
-    
-          fetch(form.action, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          })
-          .then(() => { closeModal(); showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); })
-          .catch(err => { closeModal(); showModal("위치 전송 실패:\n" + err.message, true); });
-    
-          if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
-        },
-        function(error) {
-          closeModal();
-          showModal("위치 정보를 가져오지 못했습니다:\n" + error.message, true);
-        }
-      );
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const form = document.getElementById("locationForm");
+        const params = new URLSearchParams();
+        params.append("phone", document.getElementById("phone").value);
+        params.append("status", "정상");
+        params.append("lat", position.coords.latitude || 0);
+        params.append("lng", position.coords.longitude || 0);
+        params.append("time", new Date().toISOString());
+        params.append("token", userToken);
+
+        fetch(form.action, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString()
+        })
+        .then(() => { closeModal(); showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); })
+        .catch(err => { closeModal(); showModal("위치 전송 실패:\n" + err.message, true); });
+
+        if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
+      });
     }
     
     /* ============================
