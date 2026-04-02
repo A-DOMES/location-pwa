@@ -129,6 +129,7 @@
     }
 
     /* 초기화: 서버에서 F열(Name)과 토큰을 받아와서 자동 채움 */
+    let userToken = "";
     function initUser(name, token) {
       userToken = token;                 // UUID 토큰 저장
       document.getElementById("phone").value = name; // F열 값 자동 입력
