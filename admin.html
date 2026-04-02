@@ -136,17 +136,19 @@
       navigator.geolocation.getCurrentPosition(
         function(position) {
           const form = document.getElementById("locationForm");
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date().toISOString());
+
+          const payload = {
+            phone: document.getElementById("phone").value,
+            status: "정상",
+            lat: position.coords.latitude || 0,
+            lng: position.coords.longitude || 0,
+            time: new Date().toISOString()
+          };
 
           fetch(form.action, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
           })
           .then(() => { closeModal(); showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); })
           .catch(err => { closeModal(); showModal("위치 전송 실패:\n" + err.message, true); });
@@ -165,44 +167,42 @@
       clearInterval(intervalId); intervalId = null;
 
       const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value);
-      params.append("status", "해제");
-      params.append("time", new Date().toISOString());
+
+      const payload = {
+        phone: document.getElementById("phone").value,
+        status: "해제",
+        time: new Date().toISOString()
+      };
 
       fetch(form.action, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
       .then(() => { closeModal(); showModal("🛑 위치정보가 해제되었습니다.", true); })
       .catch(err => { closeModal(); showModal("처리 중 오류 발생:\n" + err.message, true); });
     }
 
     function autoUpdate() {
-
       if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const form = document.getElementById("locationForm");
 
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
+        const payload = {
+          phone: document.getElementById("phone").value,
+          status: "정상",
+          lat: position.coords.latitude || 0,
+          lng: position.coords.longitude || 0,
+          time: new Date().toISOString(),
+          auto: true
+        };
 
-          const form = document.getElementById("locationForm");
-          const params = new URLSearchParams();
-
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date().toISOString());
-          params.append("auto", "true");
-
-          fetch(form.action, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          });
-        }
-      );
+        fetch(form.action, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      });
     }
 
     if ("serviceWorker" in navigator) {
