@@ -4,6 +4,7 @@ const urlsToCache = [
   "manifest.json",
   "icon-192.png",
   "icon-512.png"
+  "config.js"   // ✅ 새로 추가된 파일
 ];
 
 self.addEventListener("install", (event) => {
