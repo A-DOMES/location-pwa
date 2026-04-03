@@ -2,14 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="common.css">
-  <link rel="stylesheet" href="client.css">
-  /* <script type="module" src="config.js"></script> */
-  <script type="module" src="client.js"></script>
-
   <title>A-DOMES 위치정보시스템</title>
 
-  <!-- Google Maps API -->
+  <!-- CSS -->
+  <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="client.css">
+
+  <!-- Google Maps API (먼저 로드) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <!-- 마커 클러스터링 -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
@@ -64,5 +63,8 @@
 
   <!-- ---------------------- 지도 ---------------------- -->
   <div id="map"></div>
+
+  <!-- client.js는 마지막에 -->
+  <script type="module" src="client.js"></script>
 </body>
 </html>
