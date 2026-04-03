@@ -187,7 +187,6 @@ function closeUserPanel() {
   document.getElementById("user-panel").style.display = "none";
 }
 
-
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 function setCustomInterval() {
   const value = parseInt(document.getElementById("intervalValue").value);
@@ -199,8 +198,8 @@ function setCustomInterval() {
   alert("갱신 주기가 변경되었습니다.");
 }
 
-
-  /* ---------------------- 패널 동작 ---------------------- */
+/* ---------------------- 패널 동작 ---------------------- */
+document.addEventListener("DOMContentLoaded", () => {
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -219,67 +218,54 @@ function setCustomInterval() {
     settingsPanel.style.display = settingsPanel.style.display === "block" ? "none" : "block";
   };
 
-  function openUserPanel(viewMode) {
-    connectionPanel.style.display = "none";
-    userPanel.style.display = "block";
-    updateUserPanelContent(viewMode);
-  }
+  const closeBtn = document.getElementById("close-user-panel");
+  if (closeBtn) closeBtn.addEventListener("click", closeUserPanel);
 
-  function closeUserPanel() { userPanel.style.display = "none"; }
-  
-  /* ---------------------- 화면 복귀 시 갱신 ---------------------- */
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      console.log("화면 복귀 → 데이터 갱신 실행");
-      loadData(); // ✅ 패널과 지도 즉시 갱신
-    }
-  });
-  
-  /* ---------------------- 닫기 버튼 이벤트 ---------------------- */
-  document.addEventListener("DOMContentLoaded", () => {
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) closeBtn.addEventListener("click", closeUserPanel);
-  });
-
-  /* ---------------------- 바깥 클릭 시 패널 닫기 ---------------------- */
   document.addEventListener("click", function(e) {
     if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) connectionPanel.style.display = "none";
     if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) settingsPanel.style.display = "none";
   });
+});
 
-  /* ---------------------- 위치 전송 ---------------------- */
-  async function sendLocation() {
-    if (!navigator.geolocation) {
-      alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      await fetch("https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec", {
-        method: "POST",
-        body: JSON.stringify({
-          name: document.getElementById("username")?.value || "익명",
-          lat: lat,
-          lng: lng,
-          status: "정상",
-          time: new Date().toISOString()
-        })
-      });
-    });
+/* ---------------------- 화면 복귀 시 갱신 ---------------------- */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    console.log("화면 복귀 → 데이터 갱신 실행");
+    loadData(); // ✅ 패널과 지도 즉시 갱신
   }
+});
 
-  /* ---------------------- 자동 갱신 ---------------------- */
-  setInterval(sendLocation, 60000); // ✅ 1분마다 위치 갱신
-
-  /* ---------------------- 초기 실행 ---------------------- */
-  window.onload = () => {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7
+/* ---------------------- 위치 전송 ---------------------- */
+async function sendLocation() {
+  if (!navigator.geolocation) {
+    alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    await fetch("https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec", {
+      method: "POST",
+      body: JSON.stringify({
+        name: document.getElementById("username")?.value || "익명",
+        lat: lat,
+        lng: lng,
+        status: "정상",
+        time: new Date().toISOString()
+      })
     });
-    loadData();
-    intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
-  };
+  });
+}
 
+/* ---------------------- 자동 갱신 ---------------------- */
+setInterval(sendLocation, 60000); // ✅ 1분마다 위치 갱신
 
+/* ---------------------- 초기 실행 ---------------------- */
+window.onload = () => {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 36.5, lng: 127.5 },
+    zoom: 7
+  });
+  loadData();
+  intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
+};
