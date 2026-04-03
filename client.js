@@ -1,9 +1,6 @@
 // config.js에서 값 가져오기
 import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
 
-// ✅ MarkerClusterer 최신 버전 import
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
-
 /* ---------------------- 전역 변수 ---------------------- */
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
@@ -17,12 +14,31 @@ window.onload = () => {
   loadData();
 };
 
-/* ---------------------- 데이터 로딩 ---------------------- */
-async function loadData() {
-  const response = await fetch(API_URL);
-  allData = await response.json();
-  showMap();
+/* ---------------------- 데이터 로드 후 마커 클러스터링 ---------------------- */
+function renderMarkers(data) {
+  // 기존 마커 제거
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+
+  // 새 마커 생성
+  data.forEach(item => {
+    const marker = new google.maps.Marker({
+      position: { lat: item.lat, lng: item.lng },
+      map: map,
+      title: item.name
+    });
+    markers.push(marker);
+  });
+
+  // 기존 클러스터 제거
+  if (markerCluster) {
+    markerCluster.clearMarkers();
+  }
+
+  // ✅ CDN으로 불러온 MarkerClusterer 사용
+  markerCluster = new MarkerClusterer({ map, markers });
 }
+
 
 /* ---------------------- 지도 초기화 ---------------------- */
 function clearMap() {
