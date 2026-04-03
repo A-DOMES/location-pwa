@@ -30,10 +30,6 @@ function clearMap() {
 
 function showMap() {
   clearMap();
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: DEFAULT_CENTER,
-    zoom: 7
-  });
 
   if (mode === "current") {
     drawCurrentMarkers();
@@ -49,6 +45,7 @@ function showMap() {
 
   updateUserPanelContent(mode);
 }
+
 
 /* ---------------------- 현재 위치 표시 ---------------------- */
 function drawCurrentMarkers() {
