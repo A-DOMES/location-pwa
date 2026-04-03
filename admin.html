@@ -97,7 +97,7 @@
         <input type="text" name="phone" id="phone" placeholder=" 회원가입 닉네임 또는 전화번호를 입력하세요">
         <div class="button-group">
           <a href="client.html" target="_blank">
-            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn style="display:none;">
           </a>
           <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
           <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
@@ -149,7 +149,9 @@
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params.toString()
         })
-        .then(() => { closeModal(); showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); })
+        .then(() => { closeModal(); showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
+        document.getElementById("mapBtn").style.display = "inline-block"; // 지도 버튼 활성화
+        })
         .catch(err => { closeModal(); showModal("위치 전송 실패:\n" + err.message, true); });
 
         if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
