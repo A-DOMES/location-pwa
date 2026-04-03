@@ -35,10 +35,9 @@ function renderMarkers(data) {
     markerCluster.clearMarkers();
   }
 
-  // ✅ CDN으로 불러온 MarkerClusterer 사용
+  // ✅ CDN으로 불러온 MarkerClusterer 사용 (최신 방식)
   markerCluster = new MarkerClusterer({ map, markers });
 }
-
 
 /* ---------------------- 지도 초기화 ---------------------- */
 function clearMap() {
@@ -57,14 +56,12 @@ function showMap() {
   }
 
   if (document.getElementById("clusterOption").checked) {
-    markerCluster = new MarkerClusterer(map, markers, {
-      imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-    });
+    // ✅ MarkerClusterer 전역 객체 사용
+    markerCluster = new MarkerClusterer({ map, markers });
   }
 
   updateUserPanelContent(mode);
 }
-
 
 /* ---------------------- 현재 위치 표시 ---------------------- */
 function drawCurrentMarkers() {
