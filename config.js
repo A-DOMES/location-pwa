@@ -17,9 +17,11 @@ const CONFIG = {
     javascript: "5bd2daaa37ebfc3f6b7ad5e2",
     fixed: "5bd2daaa37ebfc3f466d5e4c"
   },
-
-  // ✅ 관리자용 admin.html 분할 공통 설정
-  export const API_URL = "https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec";
-  export const DEFAULT_CENTER = { lat: 36.5, lng: 127.5 }; // 대한민국 중앙
-  export const DEFAULT_INTERVAL = 300000; // 5분
 };
+  // ✅ 개별 export (client.js에서 import 가능)  관리자용 admin.html 분할 공통 설정
+  export const API_URL = CONFIG.ADMIN_URL;
+  export const DEFAULT_CENTER = { lat: 36.5, lng: 127.5 }; // 대한민국 중앙 좌표
+  export const DEFAULT_INTERVAL = 300000; // 5분 (밀리초)
+  
+  // ✅ 필요하다면 CONFIG 전체도 export 가능
+  export default CONFIG;
