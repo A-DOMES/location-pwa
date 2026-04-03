@@ -1,6 +1,9 @@
 // config.js에서 값 가져오기
 import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
 
+// ✅ MarkerClusterer 최신 버전 import
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
+
 /* ---------------------- 전역 변수 ---------------------- */
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
@@ -183,6 +186,7 @@ function openUserPanel(viewMode) {
 function closeUserPanel() {
   document.getElementById("user-panel").style.display = "none";
 }
+
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 function setCustomInterval() {
