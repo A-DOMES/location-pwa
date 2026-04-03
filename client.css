@@ -13,7 +13,7 @@ html, body {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 50px;
-  background: #1a237e;
+  background: #1a237e;   /* ✅ 청색 상단바 */
   color: white;
   display: flex;
   justify-content: space-between;
@@ -39,11 +39,11 @@ html, body {
 }
 
 .icon { font-size: 16px; }
-#title { font-size: 20px; font-weight: bold; margin-right: 50px; }
+#title { font-size: 20px; font-weight: bold; }
 
 /* ---------------------- 지도 ---------------------- */
 #map {
-  position: fixed;        /* ✅ absolute 대신 fixed로 */
+  position: fixed;        /* ✅ 화면에 고정 */
   top: 50px; left: 0;
   width: 100%;
   height: calc(100% - 50px);  /* ✅ 상단바 제외한 전체 높이 */
@@ -71,12 +71,11 @@ html, body {
   font-size: 16px;
   font-weight: 500;
 }
-
 .dropdown-item:hover { background: #f0f0f0; }
 
 /* ---------------------- 사용자 정보 패널 ---------------------- */
 #user-panel {
-  position: fixed;        /* ✅ absolute 대신 fixed로 */
+  position: fixed;
   top: 50px; right: 0;
   width: 320px;
   height: calc(100% - 50px);
@@ -103,6 +102,5 @@ html, body {
   border-radius: 4px;
   font-size: 14px;
 }
-
 #close-user-panel:hover { background: #c62828; }
 #user-panel h3 { margin: 0; }
