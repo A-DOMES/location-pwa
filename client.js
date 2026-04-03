@@ -1,49 +1,114 @@
 // config.js에서 값 가져오기
 import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
 
+/* ---------------------- 전역 변수 ---------------------- */
+let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
+const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
 
-  /* ---------------------- 전역 변수 ---------------------- */
-  let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
-  const previousCoords = {}; // ✅ 사용자별 이전 좌표/시간 저장
+/* ---------------------- 데이터 로딩 ---------------------- */
+async function loadData() {
+  const response = await fetch(API_URL);
+  allData = await response.json();
+  showMap();
+}
 
-  /* ---------------------- 데이터 로딩 ---------------------- */
-  async function loadData() {
-    const response = await fetch("https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec");
-    allData = await response.json();
-    showMap();
+/* ---------------------- 지도 초기화 ---------------------- */
+function clearMap() {
+  markers.forEach(m => m.setMap(null)); markers = [];
+  polylines.forEach(p => p.setMap(null)); polylines = [];
+  if (markerCluster) markerCluster.clearMarkers();
+}
+
+function showMap() {
+  clearMap();
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: DEFAULT_CENTER,
+    zoom: 7
+  });
+
+  if (mode === "current") {
+    drawCurrentMarkers();
+  } else if (mode === "paths") {
+    drawPaths();
   }
 
-  /* ---------------------- 지도 초기화 ---------------------- */
-  function clearMap() {
-    markers.forEach(m => m.setMap(null)); markers = [];
-    polylines.forEach(p => p.setMap(null)); polylines = [];
-    if (markerCluster) markerCluster.clearMarkers();
-  }
-
-  function showMap() {
-    clearMap();
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 36.5, lng: 127.5 },  // 대한민국 중앙 좌표
-      zoom: 7                             // 국가 단위 확대
+  if (document.getElementById("clusterOption").checked) {
+    markerCluster = new MarkerClusterer(map, markers, {
+      imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
     });
-
-    if (mode === "current") {
-      drawCurrentMarkers();   // ✅ 갱신된 사용자만 표시
-    } else if (mode === "paths") {
-      drawPaths();            // ✅ 경로 표시
-    }
-
-    if (document.getElementById("clusterOption").checked) {
-      markerCluster = new MarkerClusterer(map, markers, {
-        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-      });
-    }
-
-    updateUserPanelContent(mode);
   }
 
-  /* ---------------------- 현재 위치 표시 ---------------------- */
-  function drawCurrentMarkers() {
+  updateUserPanelContent(mode);
+}
+
+/* ---------------------- 현재 위치 표시 ---------------------- */
+function drawCurrentMarkers() {
+  const latestByUser = {};
+  allData.forEach(item => {
+    if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
+      latestByUser[item.name] = item;
+    }
+  });
+
+  Object.values(latestByUser).forEach(user => {
+    if (user.status === "정상") {
+      const prev = previousCoords[user.name];
+      const timeChanged = !prev || prev.time !== user.time;
+      if (timeChanged) {
+        const marker = new google.maps.Marker({
+          position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
+          map: map,
+          icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: `${user.name} (${user.status}, ${user.time})`
+        });
+        markers.push(marker);
+      }
+      previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
+    }
+  });
+}
+
+/* ---------------------- 경로 표시 ---------------------- */
+function drawPaths() {
+  const grouped = {};
+  allData.forEach(item => {
+    if (!grouped[item.name]) grouped[item.name] = [];
+    grouped[item.name].push(item);
+  });
+
+  Object.values(grouped).forEach(records => {
+    records.sort((a, b) => new Date(a.time) - new Date(b.time));
+    let data = records;
+    if (document.getElementById("limitOption").checked) data = data.slice(-50);
+
+    const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
+    const polyline = new google.maps.Polyline({
+      path: pathCoords, geodesic: true,
+      strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+      strokeOpacity: 1.0, strokeWeight: 2, map: map
+    });
+    polylines.push(polyline);
+
+    data.forEach((d, idx) => {
+      const marker = new google.maps.Marker({
+        position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
+        map: map,
+        title: `${d.name} / ${d.time}`,
+        icon: idx === data.length - 1
+          ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+      });
+      markers.push(marker);
+    });
+  });
+}
+
+/* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
+function updateUserPanelContent(viewMode = "current") {
+  const panel = document.getElementById("user-content");
+  panel.innerHTML = "";
+
+  if (viewMode === "current") {
     const latestByUser = {};
     allData.forEach(item => {
       if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
@@ -51,133 +116,79 @@ import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
       }
     });
 
+    let hasCurrent = false;
+
     Object.values(latestByUser).forEach(user => {
-      if (user.status === "정상") {
-        const prev = previousCoords[user.name];
-        const timeChanged = !prev || prev.time !== user.time;
-        if (timeChanged) {
-          const marker = new google.maps.Marker({
-            position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
-            map: map,
-            icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // ✅ HTTPS 적용
-            title: `${user.name} (${user.status}, ${user.time})`
-          });
-          markers.push(marker);
-        }
+      const prev = previousCoords[user.name];
+      const timeChanged = !prev || prev.time !== user.time;
+
+      if (user.status === "정상" && timeChanged) {
+        hasCurrent = true;
+        panel.innerHTML += `
+          <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+            <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+            <div>📍 위치: ${user.location}</div>
+            <div>🕒 최초 입력(A열): ${user.connectTime}</div>
+            <div>🕒 마지막 갱신(F열): ${user.time}</div>
+            <div>✅ 상태: ${user.status}</div>
+            <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+          </div>
+        `;
         previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
       }
     });
-  }
 
-  /* ---------------------- 경로 표시 ---------------------- */
-  function drawPaths() {
-    const grouped = {};
-    allData.forEach(item => {
-      if (!grouped[item.name]) grouped[item.name] = [];
-      grouped[item.name].push(item);
-    });
-
-    Object.values(grouped).forEach(records => {
-      records.sort((a, b) => new Date(a.time) - new Date(b.time));
-      let data = records;
-      if (document.getElementById("limitOption").checked) data = data.slice(-50);
-
-      const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
-      const polyline = new google.maps.Polyline({
-        path: pathCoords, geodesic: true,
-        strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-        strokeOpacity: 1.0, strokeWeight: 2, map: map
-      });
-      polylines.push(polyline);
-
-      data.forEach((d, idx) => {
-        const marker = new google.maps.Marker({
-          position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
-          map: map,
-          title: `${d.name} / ${d.time}`,
-          icon: idx === data.length - 1
-            ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png" // ✅ HTTPS 적용
-            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"   // ✅ HTTPS 적용
-        });
-        markers.push(marker);
-      });
-    });
-  }
-
-  /* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode = "current") {
-    const panel = document.getElementById("user-content");
-    panel.innerHTML = "";
-  
-    if (viewMode === "current") {
-      const latestByUser = {};
-      allData.forEach(item => {
-        if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-          latestByUser[item.name] = item;
-        }
-      });
-  
-      let hasCurrent = false;
-  
-      Object.values(latestByUser).forEach(user => {
-        const prev = previousCoords[user.name];
-        const timeChanged = !prev || prev.time !== user.time;
-  
-        if (user.status === "정상" && timeChanged) {
-          hasCurrent = true;
-          panel.innerHTML += `
-            <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
-              <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
-              <div>📍 위치: ${user.location}</div>
-              <div>🕒 최초 입력(A열): ${user.connectTime}</div>
-              <div>🕒 마지막 갱신(F열): ${user.time}</div>
-              <div>✅ 상태: ${user.status}</div>
-              <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
-            </div>
-          `;
-          previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
-        }
-      });
-  
-      if (!hasCurrent) {
-        panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
-      }
-    }
-  
-    if (viewMode === "all") {
-      let hasUser = false;
-      allData.forEach(user => {
-        if (user.status === "정상") {
-          hasUser = true;
-          panel.innerHTML += `
-            <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
-              <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
-              <div>📍 위치: ${user.location}</div>
-              <div>🕒 최초 입력(A열): ${user.connectTime}</div>
-              <div>🕒 마지막 갱신(F열): ${user.time}</div>
-              <div>✅ 상태: ${user.status}</div>
-              <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
-            </div>
-          `;
-        }
-      });
-  
-      if (!hasUser) {
-        panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
-      }
+    if (!hasCurrent) {
+      panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
     }
   }
 
-  /* ---------------------- 갱신 주기 설정 ---------------------- */
-  function setCustomInterval() {
-    const value = parseInt(document.getElementById("intervalValue").value);
-    const unit = document.getElementById("intervalUnit").value;
-    if (isNaN(value) || value <= 0) { alert("1 이상의 값을 입력하세요."); return; }
-    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-    clearInterval(intervalId);
-    intervalId = setInterval(loadData, newInterval);
-    alert("갱신 주기가 변경되었습니다.");
+  if (viewMode === "all") {
+    let hasUser = false;
+    allData.forEach(user => {
+      if (user.status === "정상") {
+        hasUser = true;
+        panel.innerHTML += `
+          <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+            <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+            <div>📍 위치: ${user.location}</div>
+            <div>🕒 최초 입력(A열): ${user.connectTime}</div>
+            <div>🕒 마지막 갱신(F열): ${user.time}</div>
+            <div>✅ 상태: ${user.status}</div>
+            <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+          </div>
+        `;
+      }
+    });
+
+    if (!hasUser) {
+      panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+    }
   }
+}
+
+/* ---------------------- 패널 열기/닫기 ---------------------- */
+function openUserPanel(viewMode) {
+  document.getElementById("connection-panel").style.display = "none";
+  document.getElementById("user-panel").style.display = "block";
+  updateUserPanelContent(viewMode);
+}
+
+function closeUserPanel() {
+  document.getElementById("user-panel").style.display = "none";
+}
+
+/* ---------------------- 갱신 주기 설정 ---------------------- */
+function setCustomInterval() {
+  const value = parseInt(document.getElementById("intervalValue").value);
+  const unit = document.getElementById("intervalUnit").value;
+  if (isNaN(value) || value <= 0) { alert("1 이상의 값을 입력하세요."); return; }
+  let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+  clearInterval(intervalId);
+  intervalId = setInterval(loadData, newInterval);
+  alert("갱신 주기가 변경되었습니다.");
+}
+
 
   /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
