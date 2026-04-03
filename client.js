@@ -259,6 +259,7 @@ async function sendLocation() {
     const lng = pos.coords.longitude;
     await fetch("https://script.google.com/macros/s/AKfycby5VaIp1jOdxVjt1ZJKH31I-Dg8pK5URUIAHaKgbGDAEa6_IO5vCiosjMnpxcd943ekMQ/exec", {
       method: "POST",
+      headers: { "Content-Type": "application/json" }, // ✅ 안정성을 위해 추가
       body: JSON.stringify({
         name: document.getElementById("username")?.value || "익명",
         lat: lat,
@@ -270,15 +271,32 @@ async function sendLocation() {
   });
 }
 
-/* ---------------------- 자동 갱신 ---------------------- */
-setInterval(sendLocation, 60000); // ✅ 1분마다 위치 갱신
+/* ---------------------- 데이터 로드 ---------------------- */
+async function loadData() {
+  try {
+    const res = await fetch(`${API_URL}/data`);
+    const data = await res.json();
+    allData = data;
+    showMap();
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+  }
+}
 
 /* ---------------------- 초기 실행 ---------------------- */
 window.onload = () => {
+  // 지도 초기화
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 36.5, lng: 127.5 },
+    center: DEFAULT_CENTER,
     zoom: 7
   });
+
+  // 첫 데이터 로드
   loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
+
+  // 데이터 주기적 갱신 (기본 5분)
+  intervalId = setInterval(loadData, DEFAULT_INTERVAL);
+
+  // 위치 자동 전송 (1분마다)
+  setInterval(sendLocation, 60000);
 };
