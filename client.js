@@ -261,3 +261,4 @@ import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
     intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
   };
 
+
