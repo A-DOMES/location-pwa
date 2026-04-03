@@ -1,7 +1,7 @@
+// config.js에서 값 가져오기
 import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
 
 
-<script>
   /* ---------------------- 전역 변수 ---------------------- */
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
   const previousCoords = {}; // ✅ 사용자별 이전 좌표/시간 저장
@@ -260,4 +260,4 @@ import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
     loadData();
     intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
   };
-</script>
+
