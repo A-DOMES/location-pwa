@@ -95,14 +95,14 @@
     <div class="inner-group">
       <!-- F열 값이 자동으로 채워짐 -->
       <input type="text" name="phone" id="phone" placeholder=" 회원가입 닉네임 또는 전화번호를 입력하세요">
-      <div class="button-group">
-        <a href="client.html" target="_blank">
-          <!-- ✅ 지도 버튼은 처음엔 숨김 -->
-          <img src="btn-current.png" alt="지도 버튼" class="map-btn" id="mapBtn" style="display:none;">
-        </a>
-        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-        <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-      </div>
+        <div class="button-group">
+          <a href="client.html" target="_blank">
+            <!-- ✅ 처음엔 숨김 처리, 자리 유지 -->
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn" id="mapBtn" style="visibility:hidden;">
+          </a>
+          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+        </div>
     </div>
   </div>
 </form>
@@ -153,8 +153,8 @@
       .then(() => { 
         closeModal(); 
         showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); 
-        // ✅ 위치 전송 성공 시 지도 버튼 활성화
-        document.getElementById("mapBtn").style.display = "inline-block";
+        // ✅ 위치 전송 성공 시 지도 버튼 표시
+        document.getElementById("mapBtn").style.visibility = "visible";
       })
       .catch(err => { 
         closeModal(); 
