@@ -10,11 +10,9 @@
   <title>A-DOMES 위치정보시스템</title>
 
   <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <!-- 마커 클러스터링 -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
-
-
 </head>
 
 <body>
@@ -33,15 +31,15 @@
 
   <!-- ---------------------- 접속현황 패널 ---------------------- -->
   <div id="connection-panel" class="dropdown-panel">
-    <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
-    <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
-    <div class="dropdown-item" onclick="openUserPanel('detail')">사용자별 상세 보기</div>
+    <div class="dropdown-item" id="view-current">현재 접속자 보기</div>
+    <div class="dropdown-item" id="view-all">전체 사용자 보기</div>
+    <div class="dropdown-item" id="view-detail">사용자별 상세 보기</div>
   </div>
 
   <!-- ---------------------- 환경설정 패널 ---------------------- -->
   <div id="settings-panel" class="dropdown-panel">
-    <div class="dropdown-item" onclick="mode='current'; showMap(); openUserPanel('current')">현재 위치 보기</div>
-    <div class="dropdown-item" onclick="mode='paths'; showMap(); openUserPanel('detail')">경로 보기</div>
+    <div class="dropdown-item" id="view-current-location">현재 위치 보기</div>
+    <div class="dropdown-item" id="view-paths">경로 보기</div>
     <div class="dropdown-item">
       <strong>갱신 주기 설정</strong><br>
       <input type="number" id="intervalValue" value="5" min="1" style="width:80px;">
@@ -49,7 +47,7 @@
         <option value="minutes">분</option>
         <option value="seconds">초</option>
       </select>
-      <button onclick="setCustomInterval()">적용</button>
+      <button id="apply-interval">적용</button>
     </div>
     <div class="dropdown-item"><label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label></div>
     <div class="dropdown-item"><label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label></div>
@@ -59,13 +57,12 @@
   <div id="user-panel">
     <div class="panel-header">
       <h3>사용자 정보</h3>
-      <button id="close-user-panel" onclick="closeUserPanel()">✖ 닫기</button>
+      <button id="close-user-panel">✖ 닫기</button>
     </div>
     <div id="user-content"></div>
   </div>
 
   <!-- ---------------------- 지도 ---------------------- -->
   <div id="map"></div>
-
 </body>
 </html>
