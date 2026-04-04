@@ -112,7 +112,10 @@
     <script type="module">
       // ✅ config.js에서 관리자 서버 URL 가져오기
       import { ADMIN_API_URL } from "./config.js";
-    
+
+     // ✅ 페이지 로드 시 form.action을 config.js 값으로 설정
+      document.getElementById("locationForm").action = ADMIN_API_URL;   
+      
       let intervalId;
       // ✅ 로그인 시 저장된 토큰 불러오기 (관리자 서버 시트 H열과 매칭)
       let userToken = sessionStorage.getItem("token") || "";
