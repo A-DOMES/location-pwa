@@ -115,10 +115,10 @@
   // ✅ 로그인 시 발급받은 토큰 불러오기 (세션에 저장된 값)
   let userToken = sessionStorage.getItem("token") || "";
 
-  // ✅ DOM이 다 로드된 후 실행 (form.action 설정)
+  // ✅ DOM 로드 후 관리자 서버 URL 설정
   window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("locationForm").action = "./admin_api.php"; 
-    // 👉 실제 관리자 서버 URL로 교체 필요 (config.js 사용 가능)
+    // 👉 실제 관리자 서버 URL로 교체 필요
+    document.getElementById("locationForm").action = "https://script.google.com/macros/s/관리자서버ID/exec";
   });
 
   // 📌 모달창 표시 함수
@@ -226,4 +226,5 @@
 </script>
 </body>
 </html>
+
 
