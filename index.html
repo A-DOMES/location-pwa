@@ -150,11 +150,10 @@
     </div>
 
 
-<!-- 📌 config.js 먼저 불러오기 -->
+<!-- config.js 먼저 불러오기 -->
 <script src="config.js"></script>
 
 <script>
-  // ✅ 관리자 서버 URL 가져오기
   const ADMIN_API_URL = CONFIG.ADMIN_URL;
 
   function login() {
@@ -171,16 +170,11 @@
     modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-    // ✅ 관리자 서버를 통해 사용자 서버에 로그인 요청
     fetch(ADMIN_API_URL, {
       method: "POST",
-      body: new URLSearchParams({
-        mode: "checkPassword",
-        id: id,
-        pw: pw
-      })
+      body: new URLSearchParams({ mode: "checkPassword", id, pw })
     })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(result => {
         if (result.result === "success") {
           modal.querySelector("h2").innerText = "✅ 로그인 성공!";
@@ -198,7 +192,6 @@
               window.location.href = "user.html";
             }
           }, 1500);
-
         } else if (result.result === "blocked") {
           modal.style.display = "none";
           alert("🚫 계정이 비활성화되었습니다.");
@@ -213,7 +206,6 @@
       });
   }
 
-  // 📌 버튼에서 접근 가능하도록 전역 바인딩
   window.login = login;
 </script>
 </body>
