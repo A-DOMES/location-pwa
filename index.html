@@ -150,69 +150,71 @@
     </div>
 
 
-    <!-- 📌 config.js 불러오기 -->
-    <script type="module">
-      import { ADMIN_API_URL } from "./config.js";
-    
-      function login() {
-        const id = document.getElementById("id").value.trim();
-        const pw = document.getElementById("pw").value.trim();
-    
-        if (!id || !pw) {
-          alert("⚠️ 아이디와 비밀번호를 입력하세요.");
-          return;
-        }
-    
-        const modal = document.getElementById("loginModal");
-        modal.style.display = "block";
-        modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
-        modal.querySelector("p").innerText = "잠시만 기다려주세요.";
-    
-        // ✅ 관리자 서버로 로그인 요청 (POST 방식)
-        fetch(ADMIN_API_URL, {
-          method: "POST",
-          body: new URLSearchParams({
-            mode: "checkPassword",
-            id: id,
-            pw: pw
-          })
-        })
-          .then(response => response.json())
-          .then(result => {
-            if (result.result === "success") {
-              modal.querySelector("h2").innerText = "✅ 로그인 성공!";
-              modal.querySelector("p").innerText = "잠시 후 이동합니다...";
-    
-              sessionStorage.setItem("loggedIn", "true");
-              sessionStorage.setItem("role", result.role);
-              sessionStorage.setItem("userId", id);
-              sessionStorage.setItem("token", result.token);
-    
-              setTimeout(() => {
-                if (result.role === "AD") {
-                  window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-                } else if (result.role === "RU") {
-                  window.location.href = "https://a-domes.github.io/location-app/user.html";
-                }
-              }, 1500);
-    
-            } else if (result.result === "blocked") {
-              modal.style.display = "none";
-              alert("🚫 계정이 비활성화되었습니다.");
-            } else {
-              modal.style.display = "none";
-              alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
-            }
-          })
-          .catch(error => {
-            modal.style.display = "none";
-            alert("❌ 서버 오류: " + error.message);
-          });
-      }
-    
-      // 📌 버튼에서 접근 가능하도록 전역 바인딩
-      window.login = login;
-    </script>
+<!-- 📌 config.js 먼저 불러오기 -->
+<script src="config.js"></script>
 
+<script>
+  // ✅ config.js에서 관리자 서버 URL 가져오기
+  const ADMIN_API_URL = CONFIG.ADMIN_URL;
+
+  function login() {
+    const id = document.getElementById("id").value.trim();
+    const pw = document.getElementById("pw").value.trim();
+
+    if (!id || !pw) {
+      alert("⚠️ 아이디와 비밀번호를 입력하세요.");
+      return;
+    }
+
+    const modal = document.getElementById("loginModal");
+    modal.style.display = "block";
+    modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
+    modal.querySelector("p").innerText = "잠시만 기다려주세요.";
+
+    // ✅ 관리자 서버로 로그인 요청 (POST 방식)
+    fetch(ADMIN_API_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        mode: "checkPassword",
+        id: id,
+        pw: pw
+      })
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result.result === "success") {
+          modal.querySelector("h2").innerText = "✅ 로그인 성공!";
+          modal.querySelector("p").innerText = "잠시 후 이동합니다...";
+
+          sessionStorage.setItem("loggedIn", "true");
+          sessionStorage.setItem("role", result.role);
+          sessionStorage.setItem("userId", id);
+          sessionStorage.setItem("token", result.token);
+
+          setTimeout(() => {
+            if (result.role === "AD") {
+              window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
+            } else if (result.role === "RU") {
+              window.location.href = "https://a-domes.github.io/location-app/user.html";
+            }
+          }, 1500);
+
+        } else if (result.result === "blocked") {
+          modal.style.display = "none";
+          alert("🚫 계정이 비활성화되었습니다.");
+        } else {
+          modal.style.display = "none";
+          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+        }
+      })
+      .catch(error => {
+        modal.style.display = "none";
+        alert("❌ 서버 오류: " + error.message);
+      });
+  }
+
+  // 📌 버튼에서 접근 가능하도록 전역 바인딩
+  window.login = login;
+</script>
 </body>
 </html>
