@@ -170,9 +170,11 @@
     modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-    // ✅ 관리자 서버로 로그인 요청 (GET 방식으로 변경)
-    //    서버 코드가 doGet(e) 기반이므로 GET 요청을 사용해야 정상 동작함
-    const url = ADMIN_API_URL + "?mode=checkPassword&id=" + encodeURIComponent(id) + "&pw=" + encodeURIComponent(pw);
+    // ✅ 관리자 서버로 로그인 요청 (GET 방식)
+    //    서버 코드가 doGet(e) 기반이므로 반드시 GET 요청을 사용해야 함
+    const url = ADMIN_API_URL 
+      + "?mode=checkPassword&id=" + encodeURIComponent(id) 
+      + "&pw=" + encodeURIComponent(pw);
 
     fetch(url)
       .then(response => response.json())
