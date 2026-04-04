@@ -150,76 +150,69 @@
     </div>
 
 
-<!-- 📌 config.js 불러오기 -->
-<script type="module">
-  // ✅ 관리자 서버 URL을 config.js에서 가져옴
-  import { ADMIN_API_URL } from "./config.js";
+  <!-- 📌 config.js 불러오기 -->
+  <script type="module">
+    // ✅ 관리자 서버 URL을 config.js에서 가져옴
+    import { ADMIN_API_URL } from "./config.js";
 
-  function login() {
-    const id = document.getElementById("id").value.trim();
-    const pw = document.getElementById("pw").value.trim();
+    function login() {
+      const id = document.getElementById("id").value.trim();
+      const pw = document.getElementById("pw").value.trim();
 
-    if (!id || !pw) {
-      alert("⚠️ 아이디와 비밀번호를 입력하세요.");
-      return;
+      if (!id || !pw) {
+        alert("⚠️ 아이디와 비밀번호를 입력하세요.");
+        return;
+      }
+
+      const modal = document.getElementById("loginModal");
+      modal.style.display = "block";
+      modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
+      modal.querySelector("p").innerText = "잠시만 기다려주세요.";
+
+      // ✅ 서버로 로그인 요청 (POST 방식)
+      fetch(ADMIN_API_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          mode: "checkPassword",
+          id: id,
+          pw: pw
+        })
+      })
+        .then(response => response.json())
+        .then(result => {
+          if (result.result === "success") {
+            modal.querySelector("h2").innerText = "✅ 로그인 성공!";
+            modal.querySelector("p").innerText = "잠시 후 이동합니다...";
+
+            sessionStorage.setItem("loggedIn", "true");
+            sessionStorage.setItem("role", result.role);
+            sessionStorage.setItem("userId", id);
+            sessionStorage.setItem("token", result.token);
+
+            setTimeout(() => {
+              if (result.role === "AD") {
+                window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
+              } else if (result.role === "RU") {
+                window.location.href = "https://a-domes.github.io/location-app/user.html";
+              }
+            }, 1500);
+
+          } else if (result.result === "blocked") {
+            modal.style.display = "none";
+            alert("🚫 계정이 비활성화되었습니다.");
+          } else {
+            modal.style.display = "none";
+            alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+          }
+        })
+        .catch(error => {
+          modal.style.display = "none";
+          alert("❌ 서버 오류: " + error.message);
+        });
     }
 
-    // 📌 로그인 모달 표시
-    const modal = document.getElementById("loginModal");
-    modal.style.display = "block";
-    modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
-    modal.querySelector("p").innerText = "잠시만 기다려주세요.";
-
-    // ✅ 관리자 서버로 로그인 요청 (GET 방식)
-    //    서버 코드가 doGet(e) 기반이므로 반드시 GET 요청을 사용해야 함
-    const url = ADMIN_API_URL 
-      + "?mode=checkPassword&id=" + encodeURIComponent(id) 
-      + "&pw=" + encodeURIComponent(pw);
-
-    fetch(url)
-      .then(response => response.json())
-      .then(result => {
-        // 📌 로그인 성공 처리
-        if (result.result === "success") {
-          modal.querySelector("h2").innerText = "✅ 로그인 성공!";
-          modal.querySelector("p").innerText = "잠시 후 이동합니다...";
-
-          // ✅ 세션 저장
-          sessionStorage.setItem("loggedIn", "true");
-          sessionStorage.setItem("role", result.role);
-          sessionStorage.setItem("userId", id);
-          sessionStorage.setItem("token", result.token);
-
-          // ✅ 역할에 따라 페이지 이동
-          setTimeout(() => {
-            if (result.role === "AD") {
-              window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
-            } else if (result.role === "RU") {
-              window.location.href = "https://a-domes.github.io/location-app/user.html";
-            }
-          }, 1500);
-
-        } else if (result.result === "blocked") {
-          // 📌 계정이 차단된 경우
-          modal.style.display = "none";
-          alert("🚫 계정이 비활성화되었습니다.");
-
-        } else {
-          // 📌 로그인 실패
-          modal.style.display = "none";
-          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
-        }
-      })
-      .catch(error => {
-        modal.style.display = "none";
-        alert("❌ 서버 오류: " + error.message);
-      });
-  }
-
-  // 📌 전역에서 접근 가능하도록 window에 바인딩
-  window.login = login;
-</script>
-
+    // 📌 전역에서 접근 가능하도록 window에 바인딩
+    window.login = login;
+  </script>
 </body>
 </html>
-
