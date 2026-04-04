@@ -5,7 +5,7 @@ const CONFIG = {
   USER_URL: "https://script.google.com/macros/s/AKfycbwvx9cEQUrcSmMBzRAZpXScv0bs5cSDRnTZNEPTCPniV7v_sPG2hfG6mpy4ZyiztAM_5g/exec",
 
   // ✅ 관리자 서버 URL
-  ADMIN_URL: "https://script.google.com/macros/s/AKfycbwIBwYURzDjbpIdEqYBbrgKgIXQw-AhBpc3gZBlxuzxhGzmt6JLNN5za7vrLveD-3WPpA/exec",
+  ADMIN_URL: "https://script.google.com/macros/s/AKfycbzGxiBDjQvhqER31FW8W31e8FVjP7zik752lrw8Zl9RhxvCSougX7_UTskoq-qe5Buqcw/exec",
 
   // ✅ client.html (조회용 페이지)
   CLIENT_URL: "client.html",
