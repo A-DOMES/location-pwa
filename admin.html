@@ -109,118 +109,128 @@
 
   
     
-    <script type="module">
-      // ✅ config.js에서 관리자 서버 URL 가져오기
-      import { ADMIN_API_URL } from "./config.js";
+<script type="module">
+  // ✅ config.js에서 관리자 서버 URL 가져오기
+  import { ADMIN_API_URL } from "./config.js";
 
-     // ✅ 페이지 로드 시 form.action을 config.js 값으로 설정
-      document.getElementById("locationForm").action = ADMIN_API_URL;   
-      
-      let intervalId;
-      // ✅ 로그인 시 저장된 토큰 불러오기 (관리자 서버 시트 H열과 매칭)
-      let userToken = sessionStorage.getItem("token") || "";
-    
-      function showModal(message, autoClose = false) {
-        // 📌 모달 표시 함수
-        document.querySelectorAll(".modal").forEach(m => m.remove());
-        const modal = document.createElement("div");
-        modal.className = "modal";
-        const content = document.createElement("div");
-        content.className = "modal-content";
-        content.innerText = message;
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-        modal.style.display = "block";
-        if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
-      }
-    
-      function closeModal() {
-        // 📌 모달 닫기 함수
-        document.querySelectorAll(".modal").forEach(m => m.remove());
-      }
-    
-      function sendLocation() {
-        // 📌 위치 전송 버튼 클릭 시 실행
-        showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-        if (!navigator.geolocation) {
-          showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date().toISOString());
-          params.append("token", userToken); // ✅ 토큰 반드시 포함
-    
-          fetch(ADMIN_API_URL, { // 📌 config.js에서 가져온 관리자 서버 URL 사용
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          })
-          .then(() => { 
-            closeModal(); 
-            showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); 
-            document.getElementById("mapBtn").style.visibility = "visible"; 
-          })
-          .catch(err => { 
-            closeModal(); 
-            showModal("위치 전송 실패:\n" + err.message, true); 
-          });
-    
-          if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
-        });
-      }
-    
-      function stopLocation() {
-        // 📌 위치정보 해제 버튼 클릭 시 실행
-        showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-        clearInterval(intervalId); intervalId = null;
-        const params = new URLSearchParams();
-        params.append("phone", document.getElementById("phone").value);
-        params.append("status", "해제");
-        params.append("time", new Date().toISOString());
-        params.append("token", userToken);
-    
-        fetch(ADMIN_API_URL, { // 📌 config.js에서 가져온 관리자 서버 URL 사용
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: params.toString()
-        })
-        .then(() => { closeModal(); showModal("🛑 위치정보가 해제되었습니다.", true); })
-        .catch(err => { closeModal(); showModal("처리 중 오류 발생:\n" + err.message, true); });
-      }
-    
-      function autoUpdate() {
-        // 📌 자동 위치 갱신 (5분마다 실행)
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const params = new URLSearchParams();
-          params.append("phone", document.getElementById("phone").value);
-          params.append("status", "정상");
-          params.append("lat", position.coords.latitude || 0);
-          params.append("lng", position.coords.longitude || 0);
-          params.append("time", new Date().toISOString());
-          params.append("auto", "true");
-          params.append("token", userToken);
-    
-          fetch(ADMIN_API_URL, { // 📌 config.js에서 가져온 관리자 서버 URL 사용
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-          });
-        });
-      }
-    
-      // 📌 PWA 서비스워커 등록
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("service-worker.js");
-      }
-    </script>
+  // ✅ 페이지 로드 시 form.action을 config.js 값으로 설정
+  document.getElementById("locationForm").action = ADMIN_API_URL;   
 
+  let intervalId;
+  // ✅ 로그인 시 저장된 토큰 불러오기 (관리자 서버 시트 H열과 매칭)
+  let userToken = sessionStorage.getItem("token") || "";
+
+  // ✅ 관리자 권한 체크 (role이 AD가 아니면 접근 차단)
+  if (sessionStorage.getItem("role") !== "AD") {
+    alert("관리자 권한이 필요합니다.");
+    window.location.href = "user.html";
+  }
+
+  function showModal(message, autoClose = false) {
+    // 📌 모달 표시 함수
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    const content = document.createElement("div");
+    content.className = "modal-content";
+    content.innerText = message;
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    modal.style.display = "block";
+    if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
+  }
+
+  function closeModal() {
+    // 📌 모달 닫기 함수
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+  }
+
+  function sendLocation() {
+    // 📌 위치 전송 버튼 클릭 시 실행
+    showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
+    if (!navigator.geolocation) {
+      showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
+      params.append("time", new Date().toISOString());
+      params.append("token", userToken); // ✅ 토큰 반드시 포함
+
+      fetch(ADMIN_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString()
+      })
+      .then(() => { 
+        closeModal(); 
+        showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); 
+        document.getElementById("mapBtn").style.visibility = "visible"; 
+      })
+      .catch(err => { 
+        closeModal(); 
+        showModal("위치 전송 실패:\n" + err.message, true); 
+      });
+
+      if (!intervalId) intervalId = setInterval(autoUpdate, 5 * 60 * 1000);
+    });
+  }
+
+  function stopLocation() {
+    // 📌 위치정보 해제 버튼 클릭 시 실행
+    showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
+    clearInterval(intervalId); intervalId = null;
+    const params = new URLSearchParams();
+    params.append("phone", document.getElementById("phone").value);
+    params.append("status", "해제");
+    params.append("time", new Date().toISOString());
+    params.append("token", userToken);
+
+    fetch(ADMIN_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString()
+    })
+    .then(() => { closeModal(); showModal("🛑 위치정보가 해제되었습니다.", true); })
+    .catch(err => { closeModal(); showModal("처리 중 오류 발생:\n" + err.message, true); });
+  }
+
+  function autoUpdate() {
+    // 📌 자동 위치 갱신 (5분마다 실행)
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
+      params.append("time", new Date().toISOString());
+      params.append("auto", "true");
+      params.append("token", userToken);
+
+      fetch(ADMIN_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString()
+      });
+    });
+  }
+
+  // 📌 로그아웃 버튼 처리
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  }
+
+  // 📌 PWA 서비스워커 등록
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+  }
+</script>
 </body>
 </html>
-
 
