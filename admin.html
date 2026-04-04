@@ -108,22 +108,22 @@
     <div id="map"></div>
 
   
-    
-<script type="module">
-  // ✅ 관리자 서버 URL을 config.js에서 가져오기
-  import { ADMIN_API_URL } from "./config.js";
+<script>
+  // ✅ 자동 위치 갱신 setInterval을 저장할 변수
+  let intervalId;
 
-  let intervalId; // 자동 위치 갱신 setInterval을 저장할 변수
-  let userToken = sessionStorage.getItem("token") || ""; // 로그인 시 발급받은 토큰 불러오기
+  // ✅ 로그인 시 발급받은 토큰 불러오기 (세션에 저장된 값)
+  let userToken = sessionStorage.getItem("token") || "";
 
   // ✅ DOM이 다 로드된 후 실행 (form.action 설정)
   window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("locationForm").action = ADMIN_API_URL;
+    document.getElementById("locationForm").action = "./admin_api.php"; 
+    // 👉 실제 관리자 서버 URL로 교체 필요 (config.js 사용 가능)
   });
 
   // 📌 모달창 표시 함수
   window.showModal = function(message, autoClose = false) {
-    document.querySelectorAll(".modal").forEach(m => m.remove()); // 기존 모달 제거
+    document.querySelectorAll(".modal").forEach(m => m.remove());
     const modal = document.createElement("div");
     modal.className = "modal";
     const content = document.createElement("div");
@@ -132,7 +132,7 @@
     modal.appendChild(content);
     document.body.appendChild(modal);
     modal.style.display = "block";
-    if (autoClose) setTimeout(() => { modal.remove(); }, 2000); // 자동 닫기 옵션
+    if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
   };
 
   // 📌 모달창 닫기 함수
@@ -148,16 +148,16 @@
       return;
     }
     navigator.geolocation.getCurrentPosition(function(position) {
+      const form = document.getElementById("locationForm");
       const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value); // 입력한 전화번호/닉네임
-      params.append("status", "정상"); // 상태값
-      params.append("lat", position.coords.latitude || 0); // 위도
-      params.append("lng", position.coords.longitude || 0); // 경도
-      params.append("time", new Date().toISOString()); // 현재 시간
-      params.append("token", userToken); // 로그인 토큰 반드시 포함
+      params.append("phone", document.getElementById("phone").value);
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
+      params.append("time", new Date().toISOString());
+      params.append("token", userToken); // ✅ 토큰 반드시 포함
 
-      // 관리자 서버에 위치정보 전송
-      fetch(ADMIN_API_URL, {
+      fetch(form.action, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString()
@@ -180,15 +180,15 @@
   // 📌 위치정보 해제 버튼 클릭 시 실행
   window.stopLocation = function() {
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-    clearInterval(intervalId); intervalId = null; // 자동 갱신 중지
+    clearInterval(intervalId); intervalId = null;
+    const form = document.getElementById("locationForm");
     const params = new URLSearchParams();
     params.append("phone", document.getElementById("phone").value);
-    params.append("status", "해제"); // 상태값 해제
+    params.append("status", "해제");
     params.append("time", new Date().toISOString());
     params.append("token", userToken);
 
-    // 관리자 서버에 해제 요청
-    fetch(ADMIN_API_URL, {
+    fetch(form.action, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params.toString()
@@ -201,6 +201,7 @@
   function autoUpdate() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function(position) {
+      const form = document.getElementById("locationForm");
       const params = new URLSearchParams();
       params.append("phone", document.getElementById("phone").value);
       params.append("status", "정상");
@@ -210,7 +211,7 @@
       params.append("auto", "true"); // 자동 갱신 표시
       params.append("token", userToken);
 
-      fetch(ADMIN_API_URL, {
+      fetch(form.action, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString()
@@ -223,7 +224,6 @@
     navigator.serviceWorker.register("service-worker.js");
   }
 </script>
-
 </body>
 </html>
 
