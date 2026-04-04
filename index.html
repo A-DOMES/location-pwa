@@ -154,7 +154,7 @@
 <script src="config.js"></script>
 
 <script>
-  // ✅ config.js에서 관리자 서버 URL 가져오기
+  // ✅ 관리자 서버 URL 가져오기
   const ADMIN_API_URL = CONFIG.ADMIN_URL;
 
   function login() {
@@ -168,10 +168,10 @@
 
     const modal = document.getElementById("loginModal");
     modal.style.display = "block";
-    modal.querySelector("h2").innerText = "🔑 서버에 로그인 중입니다...";
+    modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-    // ✅ 관리자 서버로 로그인 요청 (POST 방식)
+    // ✅ 관리자 서버를 통해 사용자 서버에 로그인 요청
     fetch(ADMIN_API_URL, {
       method: "POST",
       body: new URLSearchParams({
@@ -193,9 +193,9 @@
 
           setTimeout(() => {
             if (result.role === "AD") {
-              window.location.href = "https://a-domes.github.io/location-pwa/admin.html";
+              window.location.href = "admin.html";
             } else if (result.role === "RU") {
-              window.location.href = "https://a-domes.github.io/location-app/user.html";
+              window.location.href = "user.html";
             }
           }, 1500);
 
