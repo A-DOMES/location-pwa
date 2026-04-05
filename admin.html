@@ -118,7 +118,7 @@
   // ✅ DOM 로드 후 관리자 서버 URL 설정
   window.addEventListener("DOMContentLoaded", () => {
     // 👉 실제 관리자 서버 URL로 교체 필요
-    document.getElementById("locationForm").action = ADMIN_URL;
+    document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
   });
 
   // 📌 모달창 표시 함수
