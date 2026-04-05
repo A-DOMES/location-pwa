@@ -109,19 +109,14 @@
 
   
 <script>
-  // ✅ 자동 위치 갱신 setInterval을 저장할 변수
   let intervalId;
-
-  // ✅ 로그인 시 발급받은 토큰 불러오기 (세션에 저장된 값)
   let userToken = sessionStorage.getItem("token") || "";
 
-  // ✅ DOM 로드 후 관리자 서버 URL 설정
   window.addEventListener("DOMContentLoaded", () => {
-    // 👉 실제 관리자 서버 URL로 교체 필요
     document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
   });
 
-  // 📌 모달창 표시 함수
+  // 📌 모달창 표시/닫기
   window.showModal = function(message, autoClose = false) {
     document.querySelectorAll(".modal").forEach(m => m.remove());
     const modal = document.createElement("div");
@@ -134,17 +129,15 @@
     modal.style.display = "block";
     if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
   };
-
-  // 📌 모달창 닫기 함수
   window.closeModal = function() {
     document.querySelectorAll(".modal").forEach(m => m.remove());
   };
 
-  // 📌 위치 전송 버튼 클릭 시 실행
+  // 📌 위치 전송 버튼 클릭 (새 행 추가 or 갱신)
   window.sendLocation = function() {
     const phone = document.getElementById("phone").value.trim();
     if (!phone) {
-      showModal("📌 입력값이 없습니다. \ns위치전송에 사용 할 고유값을 입력하세요.", true);
+      showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
       return;
     }
 
@@ -153,6 +146,7 @@
       showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
       return;
     }
+
     navigator.geolocation.getCurrentPosition(function(position) {
       const form = document.getElementById("locationForm");
       const params = new URLSearchParams();
@@ -161,7 +155,10 @@
       params.append("lat", position.coords.latitude || 0);
       params.append("lng", position.coords.longitude || 0);
       params.append("time", new Date().toISOString());
-      params.append("token", userToken); // ✅ 토큰 반드시 포함
+      params.append("token", userToken);
+
+      // ✅ 새 행 추가 여부 확인을 위해 mode 전달
+      params.append("mode", "checkOrInsert");
 
       fetch(form.action, {
         method: "POST",
@@ -171,9 +168,7 @@
       .then(() => { 
         closeModal(); 
         showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); 
-        if (phone) { // ✅ phone 값이 있을 때만 지도 버튼 활성화
-          document.getElementById("mapBtn").style.visibility = "visible";
-        }
+        if (phone) document.getElementById("mapBtn").style.visibility = "visible";
       })
       .catch(err => { 
         closeModal(); 
@@ -185,7 +180,31 @@
     });
   };
 
-  // 📌 위치정보 해제 버튼 클릭 시 실행
+  // 📌 자동 위치 갱신 (5분마다 실행 → A/B/C/H는 그대로 두고 나머지 갱신)
+  function autoUpdate() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const form = document.getElementById("locationForm");
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value.trim());
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
+      const nowKST = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      params.append("time", nowKST);
+      params.append("auto", "true"); // 자동 갱신 표시
+      params.append("token", userToken);
+      params.append("mode", "autoUpdate");
+
+      fetch(form.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString()
+      });
+    });
+  }
+
+  // 📌 위치정보 해제 버튼
   window.stopLocation = function() {
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
     clearInterval(intervalId); intervalId = null;
@@ -195,6 +214,7 @@
     params.append("status", "해제");
     params.append("time", new Date().toISOString());
     params.append("token", userToken);
+    params.append("mode", "stop");
 
     fetch(form.action, {
       method: "POST",
@@ -205,30 +225,6 @@
     .catch(err => { closeModal(); showModal("처리 중 오류 발생:\n" + err.message, true); });
   };
 
-  // 📌 자동 위치 갱신 (5분마다 실행 → F열 갱신용)
-  function autoUpdate() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(function(position) {
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value.trim());
-      params.append("status", "정상");
-      params.append("lat", position.coords.latitude || 0);
-      params.append("lng", position.coords.longitude || 0);
-      // ✅ 한국시간으로 기록
-      const nowKST = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
-      params.append("time", nowKST);
-      params.append("auto", "true"); // 자동 갱신 표시
-      params.append("token", userToken);
-
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      });
-    });
-  }
-
   // 📌 PWA 서비스워커 등록
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
@@ -236,6 +232,7 @@
 </script>
 </body>
 </html>
+
 
 
 
