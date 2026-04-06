@@ -2,10 +2,10 @@
 
 // ✅ 사용자 서버 URL
 const CONFIG = {
-  USER_URL: "https://script.google.com/macros/s/AKfycbzIWmQ9yCCUPRP1cCSkLTVtoCWZelyLycirVZflGNwtKsQ_X8aKLN77l9XUyL6dqnS4eA/exec",
+  USER_URL: "https://script.google.com/macros/s/AKfycbwBNN0tKHyS87uQBQLk6saVYMMFwLjHzaWvIdZqjlVto99M-MW2BvCVsflUeN4GuM52zw/exec",
 
   // ✅ 관리자 서버 URL
-  ADMIN_URL: "https://script.google.com/macros/s/AKfycbwcyueoysTcXmu9aZZFNEKyVb7IlmtURPRlOLDUYy6eMmHhFoyqcjZEAT9H0mIdtHx8/exec",
+  ADMIN_URL: "https://script.google.com/macros/s/AKfycbynGE7FQR7Y6g7BmewMW4NC1Ze2ZXmtr8j8bja82acsYiIiKvekt8YrNujCT8WQcxbwVw/exec",
 
   // ✅ client.html (조회용 페이지)
   CLIENT_URL: "client.html",
