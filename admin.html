@@ -204,26 +204,43 @@
     });
   }
 
-  // 📌 위치정보 해제 버튼
-  window.stopLocation = function() {
-    showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-    clearInterval(intervalId); intervalId = null;
-    const form = document.getElementById("locationForm");
-    const params = new URLSearchParams();
-    params.append("phone", document.getElementById("phone").value.trim());
-    params.append("status", "해제");
-    params.append("time", new Date().toISOString());
-    params.append("token", userToken);
-    params.append("mode", "stop");
+// 📌 위치정보 해제 버튼
+window.stopLocation = function() {
+  const phone = document.getElementById("phone").value.trim();
+  if (!phone) {
+    showModal("📌 입력값이 없습니다.\n위치해제에 사용 할 고유값을 입력하세요.", true);
+    return;
+  }
 
-    fetch(form.action, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString()
-    })
-    .then(() => { closeModal(); showModal("🛑 위치정보가 해제되었습니다.", true); })
-    .catch(err => { closeModal(); showModal("처리 중 오류 발생:\n" + err.message, true); });
-  };
+  showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
+  clearInterval(intervalId); intervalId = null;
+  const form = document.getElementById("locationForm");
+  const params = new URLSearchParams();
+  params.append("phone", phone);
+  params.append("status", "해제");
+  params.append("time", new Date().toISOString());
+  params.append("token", userToken);
+  params.append("mode", "stop");
+
+  fetch(form.action, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString()
+  })
+  .then(response => response.json())
+  .then(result => {
+    closeModal();
+    if (result.result === "success") {
+      showModal("🛑 위치정보가 해제되었습니다.", true);
+    } else {
+      showModal("❌ " + result.message, true);
+    }
+  })
+  .catch(err => { 
+    closeModal(); 
+    showModal("처리 중 오류 발생:\n" + err.message, true); 
+  });
+};
 
   // 📌 PWA 서비스워커 등록
   if ("serviceWorker" in navigator) {
