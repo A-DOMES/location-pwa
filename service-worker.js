@@ -1,17 +1,15 @@
 const CACHE_NAME = "adomes-cache-v1";
 const urlsToCache = [
-  "./index.html",      // ✅ 상대경로로 명확히
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./config.js"
+  "index.html",
+  "manifest.json",
+  "icon-192.png",
+  "icon-512.png",
+  "config.js"   // ✅ 새로 추가된 파일
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
@@ -37,4 +35,3 @@ self.addEventListener("activate", (event) => {
     )
   );
 });
-
