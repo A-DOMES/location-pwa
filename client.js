@@ -257,7 +257,7 @@ async function sendLocation() {
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
-    await fetch("https://script.google.com/macros/s/AKfycbw5XR2U4jhFIH38kfTiN3I44iooUiBgZTy982ZuTceB13xS6rfIH6wkC08Kt4Sta_huOg/exec", {
+    await fetch("https://script.google.com/macros/s/AKfycbx8rn2M6mm1rZSJobhYvHShjiVUpzlP5OqBkGdhE0sev_36GCssWboSbt0_V61yueQbmw/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" }, // ✅ 안정성을 위해 추가
       body: JSON.stringify({
