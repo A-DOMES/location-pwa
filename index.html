@@ -154,7 +154,7 @@
 <script src="config.js"></script>
 
 <script>
-  const ADMIN_API_URL = CONFIG.ADMIN_URL;
+  const USER_API_URL = CONFIG.USER_URL; // 사용자 서버 URL
 
   function login() {
     const id = document.getElementById("id").value.trim();
@@ -167,7 +167,7 @@
 
     const modal = document.getElementById("loginModal");
     modal.style.display = "block";
-    modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
+    modal.querySelector("h2").innerText = "🔑 사용자 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
     // ✅ JSONP 방식: script 태그를 동적으로 생성
@@ -199,7 +199,7 @@
     };
 
     const script = document.createElement("script");
-    script.src = `${ADMIN_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
+    script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
     document.body.appendChild(script);
   }
 
