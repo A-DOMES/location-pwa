@@ -153,7 +153,6 @@
 <!-- config.js 먼저 불러오기 -->
 <script src="config.js"></script>
 
-<!-- 로그인 스크립트 -->
 <script>
   const ADMIN_API_URL = CONFIG.ADMIN_URL;
 
@@ -171,40 +170,37 @@
     modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-    fetch(ADMIN_API_URL, {
-      method: "POST",
-      body: new URLSearchParams({ mode: "checkPassword", id, pw })
-    })
-      .then(res => res.json())
-      .then(result => {
-        if (result.result === "success") {
-          modal.querySelector("h2").innerText = "✅ 로그인 성공!";
-          modal.querySelector("p").innerText = "잠시 후 이동합니다...";
+    // ✅ JSONP 방식: script 태그를 동적으로 생성
+    const callbackName = "handleLoginResponse";
+    window[callbackName] = function(result) {
+      if (result.result === "success") {
+        modal.querySelector("h2").innerText = "✅ 로그인 성공!";
+        modal.querySelector("p").innerText = "잠시 후 이동합니다...";
 
-          sessionStorage.setItem("loggedIn", "true");
-          sessionStorage.setItem("role", result.role);
-          sessionStorage.setItem("userId", id);
-          sessionStorage.setItem("token", result.token);
+        sessionStorage.setItem("loggedIn", "true");
+        sessionStorage.setItem("role", result.role);
+        sessionStorage.setItem("userId", id);
+        sessionStorage.setItem("token", result.token);
 
-          setTimeout(() => {
-            if (result.role === "AD") {
-              window.location.href = "admin.html";
-            } else if (result.role === "RU") {
-              window.location.href = "user.html";
-            }
-          }, 1500);
-        } else if (result.result === "blocked") {
-          modal.style.display = "none";
-          alert("🚫 계정이 비활성화되었습니다.");
-        } else {
-          modal.style.display = "none";
-          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
-        }
-      })
-      .catch(error => {
+        setTimeout(() => {
+          if (result.role === "AD") {
+            window.location.href = "admin.html";
+          } else if (result.role === "RU") {
+            window.location.href = "user.html";
+          }
+        }, 1500);
+      } else if (result.result === "blocked") {
         modal.style.display = "none";
-        alert("❌ 서버 오류: " + error.message);
-      });
+        alert("🚫 계정이 비활성화되었습니다.");
+      } else {
+        modal.style.display = "none";
+        alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+      }
+    };
+
+    const script = document.createElement("script");
+    script.src = `${ADMIN_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
+    document.body.appendChild(script);
   }
 
   window.login = login;
