@@ -111,95 +111,58 @@
 <div id="map"></div>
   
 
-  <!-- ✅ CONFIG 불러오기 -->
-  <script src="config.js"></script>
-  <script>
-    let intervalId;
-    let userToken = sessionStorage.getItem("token") || "";
+<!-- ✅ CONFIG 불러오기 -->
+<script src="config.js"></script>
+<script>
+  let intervalId;
+  let userToken = sessionStorage.getItem("token") || "";
 
-    window.addEventListener("DOMContentLoaded", () => {
-      // ✅ 반드시 GAS 웹앱 URL로 설정
-      document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
-    });
+  window.addEventListener("DOMContentLoaded", () => {
+    // ✅ 반드시 GAS 웹앱 URL로 설정
+    document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
+  });
 
-    // 📌 모달창 표시/닫기
-    window.showModal = function(message, autoClose = false) {
-      document.querySelectorAll(".modal").forEach(m => m.remove());
-      const modal = document.createElement("div");
-      modal.className = "modal";
-      const content = document.createElement("div");
-      content.className = "modal-content";
-      content.innerText = message;
-      modal.appendChild(content);
-      document.body.appendChild(modal);
-      modal.style.display = "block";
-      if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
-    };
-    window.closeModal = function() {
-      document.querySelectorAll(".modal").forEach(m => m.remove());
-    };
+  // 📌 모달창 표시/닫기
+  window.showModal = function(message, autoClose = false) {
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    const content = document.createElement("div");
+    content.className = "modal-content";
+    content.innerText = message;
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    modal.style.display = "block";
+    if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
+  };
+  window.closeModal = function() {
+    document.querySelectorAll(".modal").forEach(m => m.remove());
+  };
 
-    // 📌 위치 전송 버튼
-    window.sendLocation = function() {
-      const phone = document.getElementById("phone").value.trim();
-      if (!phone) {
-        showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
-        return; // ✅ 빈값이면 서버 호출 안 함
-      }
+  // 📌 위치 전송 버튼
+  window.sendLocation = function() {
+    const phone = document.getElementById("phone").value.trim();
+    if (!phone) {
+      showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
+      return; // ✅ 빈값이면 서버 호출 안 함
+    }
 
-      showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-      if (!navigator.geolocation) {
-        showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
-        return;
-      }
+    showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
+    if (!navigator.geolocation) {
+      showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+      return;
+    }
 
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const form = document.getElementById("locationForm");
-        const params = new URLSearchParams();
-        params.append("phone", phone);
-        params.append("status", "정상");
-        params.append("lat", position.coords.latitude || 0);
-        params.append("lng", position.coords.longitude || 0);
-        params.append("time", new Date().toISOString());
-        params.append("token", userToken);
-        params.append("mode", "checkOrInsert");
-
-        fetch(form.action, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: params.toString()
-        })
-        .then(() => { 
-          closeModal(); 
-          showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true); 
-          document.getElementById("mapBtn").style.visibility = "visible";
-        })
-        .catch(err => { 
-          closeModal(); 
-          showModal("위치 전송 실패:\n" + err.message, true); 
-        });
-
-        if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
-      });
-    };
-
-    // 📌 위치정보 해제 버튼
-    window.stopLocation = function() {
-      const phone = document.getElementById("phone").value.trim();
-      if (!phone) {
-        showModal("📌 입력값이 없습니다.\n위치해제에 사용 할 고유값을 입력하세요.", true);
-        return; // ✅ 빈값이면 서버 호출 안 함
-      }
-
-      showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
-      clearInterval(intervalId); intervalId = null;
+    navigator.geolocation.getCurrentPosition(function(position) {
       const form = document.getElementById("locationForm");
       const params = new URLSearchParams();
       params.append("phone", phone);
-      params.append("status", "해제");
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
       params.append("time", new Date().toISOString());
       params.append("token", userToken);
-      params.append("mode", "stop");
+      params.append("mode", "checkOrInsert");
 
       fetch(form.action, {
         method: "POST",
@@ -210,45 +173,88 @@
       .then(result => {
         closeModal();
         if (result.result === "success") {
-          showModal("🛑 위치정보가 해제되었습니다.", true);
+          showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
+          document.getElementById("mapBtn").style.visibility = "visible";
         } else {
+          // 🚫 OR 조건 등 실패 메시지 처리
           showModal("❌ " + result.message, true);
         }
       })
       .catch(err => { 
         closeModal(); 
-        showModal("처리 중 오류 발생:\n" + err.message, true); 
+        showModal("위치 전송 실패:\n" + err.message, true); 
       });
-    };
 
-    // 📌 자동 위치 갱신
-    function autoUpdate() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const form = document.getElementById("locationForm");
-        const params = new URLSearchParams();
-        params.append("phone", document.getElementById("phone").value.trim());
-        params.append("status", "정상");
-        params.append("lat", position.coords.latitude || 0);
-        params.append("lng", position.coords.longitude || 0);
-        const nowKST = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
-        params.append("time", nowKST);
-        params.append("auto", "true");
-        params.append("token", userToken);
-        params.append("mode", "autoUpdate");
+      if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
+    });
+  };
 
-        fetch(form.action, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: params.toString()
-        });
-      });
+  // 📌 위치정보 해제 버튼
+  window.stopLocation = function() {
+    const phone = document.getElementById("phone").value.trim();
+    if (!phone) {
+      showModal("📌 입력값이 없습니다.\n위치해제에 사용 할 고유값을 입력하세요.", true);
+      return; // ✅ 빈값이면 서버 호출 안 함
     }
 
-    // 📌 PWA 서비스워커 등록
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  </script>
+    showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
+    clearInterval(intervalId); intervalId = null;
+    const form = document.getElementById("locationForm");
+    const params = new URLSearchParams();
+    params.append("phone", phone);
+    params.append("status", "해제");
+    params.append("time", new Date().toISOString());
+    params.append("token", userToken);
+    params.append("mode", "stop");
+
+    fetch(form.action, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString()
+    })
+    .then(response => response.json())
+    .then(result => {
+      closeModal();
+      if (result.result === "success") {
+        showModal("🛑 위치정보가 해제되었습니다.", true);
+      } else {
+        showModal("❌ " + result.message, true);
+      }
+    })
+    .catch(err => { 
+      closeModal(); 
+      showModal("처리 중 오류 발생:\n" + err.message, true); 
+    });
+  };
+
+  // 📌 자동 위치 갱신
+  function autoUpdate() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const form = document.getElementById("locationForm");
+      const params = new URLSearchParams();
+      params.append("phone", document.getElementById("phone").value.trim());
+      params.append("status", "정상");
+      params.append("lat", position.coords.latitude || 0);
+      params.append("lng", position.coords.longitude || 0);
+      const nowKST = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      params.append("time", nowKST);
+      params.append("auto", "true");
+      params.append("token", userToken);
+      params.append("mode", "autoUpdate");
+
+      fetch(form.action, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString()
+      });
+    });
+  }
+
+  // 📌 PWA 서비스워커 등록
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+  }
+</script>
 </body>
 </html>
