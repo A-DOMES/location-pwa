@@ -2,7 +2,7 @@
 
 // ✅ 사용자 서버 URL
 const CONFIG = {
-  USER_URL: "https://script.google.com/macros/s/AKfycbzjpTZ2a3cSvUvN-yuDJSiv9YayeNaFgVuP0YCIRGQ9R0WkYx2jDEY5M5J1Vp7qZ_dXoQ/exec",
+  USER_URL: "https://script.google.com/macros/s/AKfycbyKFrH-zUDV2P5QDk5VhG7eZ7TgrnfhXgp0UZqEozNT27X-VgnBmY0oAK-PXIuNTkRpDQ/exec",
 
   // ✅ 관리자 서버 URL
   ADMIN_URL: "https://script.google.com/macros/s/AKfycbxuMMBgPm22U6sb3j6t06WwqXdesLDnBFop98QvqImqCEE4wfC8wJx4R28jki806I4CZg/exec",
