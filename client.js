@@ -283,25 +283,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (viewCurrentBtn) {
     viewCurrentBtn.addEventListener("click", () => {
-      mode = "current";
-      showMap();
-      openUserPanel("current");
+      mode = "current";          // 현재 접속자 보기 모드
+      showMap();                 // 지도 갱신
+      openUserPanel("current");  // 사용자 패널 열기
     });
   }
 
   if (viewAllBtn) {
     viewAllBtn.addEventListener("click", () => {
-      mode = "all";
-      showMap();
-      openUserPanel("all");
+      mode = "all";              // 전체 사용자 보기 모드
+      showMap();                 // 지도 갱신
+      openUserPanel("all");      // 사용자 패널 열기
     });
   }
 
   if (viewDetailBtn) {
     viewDetailBtn.addEventListener("click", () => {
-      mode = "paths";
-      showMap();
-      openUserPanel("paths");
+      mode = "paths";            // 사용자별 상세 보기 (경로 모드)
+      showMap();                 // 지도 갱신
+      openUserPanel("paths");    // 사용자 패널 열기
     });
   }
 });
@@ -351,15 +351,15 @@ async function loadData() {
 
 /* ---------------------- 초기 실행 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // 지도 초기화
+  // ✅ 지도 초기화 직접 실행
   initMap();
 
-  // 첫 데이터 로드
+  // ✅ 첫 데이터 로드
   loadData();
 
-  // 데이터 주기적 갱신 (기본 5분)
+  // ✅ 데이터 주기적 갱신 (기본 5분)
   intervalId = setInterval(loadData, DEFAULT_INTERVAL);
 
-  // 위치 자동 전송 (1분마다)
+  // ✅ 위치 자동 전송 (1분마다)
   setInterval(sendLocation, 60000);
 });
