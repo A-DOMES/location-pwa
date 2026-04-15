@@ -5,22 +5,11 @@ import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
 
-/* ---------------------- 초기화 ---------------------- */
-window.onload = () => {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: DEFAULT_CENTER,
-    zoom: 7
-  });
-  loadData();
-};
-
 /* ---------------------- 데이터 로드 후 마커 클러스터링 ---------------------- */
 function renderMarkers(data) {
-  // 기존 마커 제거
   markers.forEach(m => m.setMap(null));
   markers = [];
 
-  // 새 마커 생성
   data.forEach(item => {
     const marker = new google.maps.Marker({
       position: { lat: item.lat, lng: item.lng },
@@ -30,16 +19,11 @@ function renderMarkers(data) {
     markers.push(marker);
   });
 
-  // 기존 클러스터 제거
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-  }
-
-  // ✅ CDN으로 불러온 MarkerClusterer 사용 (최신 방식)
+  if (markerCluster) markerCluster.clearMarkers();
   markerCluster = new MarkerClusterer({ map, markers });
 }
 
-/* ---------------------- 지도 초기화 ---------------------- */
+/* ---------------------- 지도 초기화 관련 ---------------------- */
 function clearMap() {
   markers.forEach(m => m.setMap(null)); markers = [];
   polylines.forEach(p => p.setMap(null)); polylines = [];
@@ -56,7 +40,6 @@ function showMap() {
   }
 
   if (document.getElementById("clusterOption").checked) {
-    // ✅ MarkerClusterer 전역 객체 사용
     markerCluster = new MarkerClusterer({ map, markers });
   }
 
@@ -147,13 +130,13 @@ function updateUserPanelContent(viewMode = "current") {
       if (user.status === "정상" && timeChanged) {
         hasCurrent = true;
         panel.innerHTML += `
-          <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
-            <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+          <div class="user-card">
+            <div class="user-name">👤 ${user.name}</div>
             <div>📍 위치: ${user.location}</div>
             <div>🕒 최초 입력(A열): ${user.connectTime}</div>
             <div>🕒 마지막 갱신(F열): ${user.time}</div>
             <div>✅ 상태: ${user.status}</div>
-            <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+            <div class="coords">좌표: (${user.lat}, ${user.lng})</div>
           </div>
         `;
         previousCoords[user.name] = { lat: user.lat, lng: user.lng, time: user.time };
@@ -161,7 +144,7 @@ function updateUserPanelContent(viewMode = "current") {
     });
 
     if (!hasCurrent) {
-      panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+      panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
     }
   }
 
@@ -171,20 +154,20 @@ function updateUserPanelContent(viewMode = "current") {
       if (user.status === "정상") {
         hasUser = true;
         panel.innerHTML += `
-          <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
-            <div style="font-weight:bold; font-size:16px; color:#333;">👤 ${user.name}</div>
+          <div class="user-card">
+            <div class="user-name">👤 ${user.name}</div>
             <div>📍 위치: ${user.location}</div>
             <div>🕒 최초 입력(A열): ${user.connectTime}</div>
             <div>🕒 마지막 갱신(F열): ${user.time}</div>
             <div>✅ 상태: ${user.status}</div>
-            <div style="font-family:monospace; color:#444;">좌표: (${user.lat}, ${user.lng})</div>
+            <div class="coords">좌표: (${user.lat}, ${user.lng})</div>
           </div>
         `;
       }
     });
 
     if (!hasUser) {
-      panel.innerHTML = `<div style="color:#999; text-align:center; margin-top:20px;">현재 접속자가 없습니다</div>`;
+      panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
     }
   }
 }
@@ -217,7 +200,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
 
   btnConnection.onclick = () => {
     settingsPanel.style.display = "none";
@@ -235,8 +217,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (closeBtn) closeBtn.addEventListener("click", closeUserPanel);
 
   document.addEventListener("click", function(e) {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) connectionPanel.style.display = "none";
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) settingsPanel.style.display = "none";
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.style.display = "none";
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.style.display = "none";
+    }
   });
 });
 
@@ -257,9 +243,9 @@ async function sendLocation() {
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
-    await fetch("https://script.google.com/macros/s/AKfycbxHggbDGg9_ujeL-6CCzKdkhhxzAH1QC-FgXOLcwWOaJK8gxO9NNVjoLHZCH_KK5odtJA/exec", {
+    await fetch(`${API_URL}/send`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" }, // ✅ 안정성을 위해 추가
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: document.getElementById("username")?.value || "익명",
         lat: lat,
@@ -284,13 +270,7 @@ async function loadData() {
 }
 
 /* ---------------------- 초기 실행 ---------------------- */
-window.onload = () => {
-  // 지도 초기화
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: DEFAULT_CENTER,
-    zoom: 7
-  });
-
+document.addEventListener("DOMContentLoaded", () => {
   // 첫 데이터 로드
   loadData();
 
@@ -299,4 +279,4 @@ window.onload = () => {
 
   // 위치 자동 전송 (1분마다)
   setInterval(sendLocation, 60000);
-};
+});
