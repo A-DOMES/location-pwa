@@ -37,24 +37,6 @@ function initMap() {
   }
 }
 
-/* ---------------------- 데이터 로드 후 마커 클러스터링 ---------------------- */
-function renderMarkers(data) {
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-
-  data.forEach(item => {
-    const marker = new google.maps.Marker({
-      position: { lat: item.lat, lng: item.lng },
-      map: map,
-      title: item.name
-    });
-    markers.push(marker);
-  });
-
-  if (markerCluster) markerCluster.clearMarkers();
-  markerCluster = new MarkerClusterer({ map, markers });
-}
-
 /* ---------------------- 지도 표시 ---------------------- */
 function clearMap() {
   markers.forEach(m => m.setMap(null)); markers = [];
@@ -262,6 +244,35 @@ document.addEventListener("DOMContentLoaded", () => {
       settingsPanel.style.display = "none";
     }
   });
+
+  // ✅ connection-panel 내부 버튼 동작
+  const viewCurrentBtn = document.getElementById("view-current");
+  const viewAllBtn = document.getElementById("view-all");
+  const viewDetailBtn = document.getElementById("view-detail");
+
+  if (viewCurrentBtn) {
+    viewCurrentBtn.addEventListener("click", () => {
+      mode = "current";
+      showMap();
+      openUserPanel("current");
+    });
+  }
+
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener("click", () => {
+      mode = "all";
+      showMap();
+      openUserPanel("all");
+    });
+  }
+
+  if (viewDetailBtn) {
+    viewDetailBtn.addEventListener("click", () => {
+      mode = "paths";
+      showMap();
+      openUserPanel("paths");
+    });
+  }
 });
 
 /* ---------------------- 화면 복귀 시 갱신 ---------------------- */
