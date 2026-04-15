@@ -6,34 +6,64 @@ let map, mode = "current", markers = [], polylines = [], markerCluster, interval
 const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
 
 /* ---------------------- 지도 초기화 ---------------------- */
+// ✅ 기기 환경에 따라 mapId 선택
 function getMapIdByDevice() {
   const ua = navigator.userAgent.toLowerCase();
   if (/android/.test(ua)) return mapIds.android;
   if (/iphone|ipad|ipod/.test(ua)) return mapIds.ios;
   if (/windows|macintosh|linux/.test(ua)) return mapIds.javascript;
-  return mapIds.fixed;
+  return mapIds.fixed; // 기본값
 }
 
+// ✅ 구글맵 초기화
 function initMap() {
   const mapId = getMapIdByDevice();
+
+  // 기본 지도 생성 (대한민국 중앙 좌표)
   map = new google.maps.Map(document.getElementById("map"), {
     center: DEFAULT_CENTER,
-    zoom: 7,
-    mapTypeId: "roadmap",
+    zoom: 7,                       // ✅ 위성에서 보는 듯한 높이
+    mapTypeId: "roadmap",          // ✅ 기본 지도 모드
     mapId: mapId
   });
 
-  // 내 위치 마커 표시
+  // ✅ 내 위치 가져오기
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        new google.maps.Marker({ position: myPos, map, title: "내 위치" });
+      (position) => {
+        const myPos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        // 지도 중심을 내 위치로 이동 (옵션)
+        // map.setCenter(myPos);
+        // map.setZoom(15);
+
+        // 내 위치 마커 표시
+        new google.maps.Marker({
+          position: myPos,
+          map: map,
+          title: "내 위치"
+        });
       },
-      () => {
-        new google.maps.Marker({ position: DEFAULT_CENTER, map, title: "기본 위치" });
+      (error) => {
+        console.warn("위치 정보를 가져오지 못했습니다:", error.message);
+        // 실패 시 기본 좌표에 마커 표시
+        new google.maps.Marker({
+          position: DEFAULT_CENTER,
+          map: map,
+          title: "기본 위치"
+        });
       }
     );
+  } else {
+    console.warn("이 브라우저는 Geolocation을 지원하지 않습니다.");
+    new google.maps.Marker({
+      position: DEFAULT_CENTER,
+      map: map,
+      title: "기본 위치"
+    });
   }
 }
 
