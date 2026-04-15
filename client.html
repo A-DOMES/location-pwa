@@ -63,33 +63,49 @@
     <div id="user-content"></div>
   </div>
 
-  <!-- ---------------------- 지도 ---------------------- -->
-  <div id="map"></div>
+<!-- ---------------------- 지도 ---------------------- -->
+<div id="map"></div>
 
-  <!-- 지도 초기화 함수 -->
-  <script>
-    let map;
+<script>
+let map;
 
-    function initMap() {
-      // 기본 좌표 (서울시청)
-      const centerPos = { lat: 37.5665, lng: 126.9780 };
+// ✅ 기기 환경에 따라 mapId 선택
+function getMapIdByDevice() {
+  const ua = navigator.userAgent.toLowerCase();
 
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: centerPos,
-        zoom: 14,
-        mapTypeId: CONFIG.MAP_TYPE || "roadmap" // config.js에서 선택된 유형 사용
-      });
+  if (/android/.test(ua)) {
+    return CONFIG.mapIds.android;
+  } else if (/iphone|ipad|ipod/.test(ua)) {
+    return CONFIG.mapIds.ios;
+  } else if (/windows|macintosh|linux/.test(ua)) {
+    return CONFIG.mapIds.javascript;
+  } else {
+    return CONFIG.mapIds.fixed; // 기본값
+  }
+}
 
-      // 기본 마커 표시
-      new google.maps.Marker({
-        position: centerPos,
-        map: map,
-        title: "기본 위치"
-      });
-    }
-  </script>
+// ✅ 구글맵 초기화
+function initMap() {
+  const mapId = getMapIdByDevice();
 
-  <!-- client.js는 마지막에 -->
-  <script type="module" src="client.js"></script>
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: CONFIG.DEFAULT_CENTER,   // 대한민국 중앙 좌표
+    zoom: 7,
+    mapTypeId: "roadmap",
+    mapId: mapId
+  });
+
+  // 기본 마커 표시
+  new google.maps.Marker({
+    position: CONFIG.DEFAULT_CENTER,
+    map: map,
+    title: "기본 위치"
+  });
+}
+</script>
+
+<!-- client.js는 마지막에 -->
+<script type="module" src="client.js"></script>
+
 </body>
 </html>
