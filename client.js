@@ -53,7 +53,7 @@ function showMap() {
     drawPaths();
   }
 
-  if (document.getElementById("clusterOption").checked) {
+  if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new MarkerClusterer({ map, markers });
   }
 
@@ -98,7 +98,7 @@ function drawPaths() {
   Object.values(grouped).forEach(records => {
     records.sort((a, b) => new Date(a.time) - new Date(b.time));
     let data = records;
-    if (document.getElementById("limitOption").checked) data = data.slice(-50);
+    if (document.getElementById("limitOption")?.checked) data = data.slice(-50);
 
     const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
     const polyline = new google.maps.Polyline({
@@ -125,6 +125,7 @@ function drawPaths() {
 /* ---------------------- 우측 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
   const panel = document.getElementById("user-content");
+  if (!panel) return;
   panel.innerHTML = "";
 
   if (viewMode === "current") {
