@@ -87,8 +87,8 @@
     // 기본 지도 생성 (대한민국 중앙 좌표)
     map = new google.maps.Map(document.getElementById("map"), {
       center: CONFIG.DEFAULT_CENTER,
-      zoom: 7,
-      mapTypeId: "roadmap",
+      zoom: 5,                       // ✅ 위성에서 보는 듯한 높이
+      mapTypeId: "roadmap",          // ✅ 위성 지도 모드
       mapId: mapId
     });
   
