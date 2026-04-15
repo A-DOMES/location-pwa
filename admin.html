@@ -144,7 +144,7 @@
     const phone = document.getElementById("phone").value.trim();
     if (!phone) {
       showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
-      return; // ✅ 빈값이면 서버 호출 안 함
+      return;
     }
 
     showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
@@ -160,9 +160,9 @@
       params.append("status", "정상");
       params.append("lat", position.coords.latitude || 0);
       params.append("lng", position.coords.longitude || 0);
-      params.append("time", new Date().toISOString());
       params.append("token", userToken);
-      params.append("mode", "checkOrInsert");
+      // ✅ 수정: checkOrInsert → location
+      params.append("mode", "location");
 
       fetch(form.action, {
         method: "POST",
@@ -176,7 +176,6 @@
           showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
           document.getElementById("mapBtn").style.visibility = "visible";
         } else {
-          // 🚫 OR 조건 등 실패 메시지 처리
           showModal("❌ " + result.message, true);
         }
       })
@@ -194,7 +193,7 @@
     const phone = document.getElementById("phone").value.trim();
     if (!phone) {
       showModal("📌 입력값이 없습니다.\n위치해제에 사용 할 고유값을 입력하세요.", true);
-      return; // ✅ 빈값이면 서버 호출 안 함
+      return;
     }
 
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
@@ -203,7 +202,6 @@
     const params = new URLSearchParams();
     params.append("phone", phone);
     params.append("status", "해제");
-    params.append("time", new Date().toISOString());
     params.append("token", userToken);
     params.append("mode", "stop");
 
@@ -237,9 +235,6 @@
       params.append("status", "정상");
       params.append("lat", position.coords.latitude || 0);
       params.append("lng", position.coords.longitude || 0);
-      const nowKST = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
-      params.append("time", nowKST);
-      params.append("auto", "true");
       params.append("token", userToken);
       params.append("mode", "autoUpdate");
 
@@ -258,3 +253,4 @@
 </script>
 </body>
 </html>
+
