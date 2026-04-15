@@ -139,6 +139,20 @@
     document.querySelectorAll(".modal").forEach(m => m.remove());
   };
 
+  // ✅ JSONP 요청 함수
+  function jsonpRequest(url, callbackName, onSuccess, onError) {
+    const script = document.createElement("script");
+    script.src = url + "&callback=" + callbackName;
+    script.onerror = () => { onError && onError(new Error("네트워크 오류")); };
+    document.body.appendChild(script);
+
+    window[callbackName] = function(data) {
+      onSuccess && onSuccess(data);
+      delete window[callbackName];
+      script.remove();
+    };
+  }
+
   // 📌 위치 전송 버튼
   window.sendLocation = function() {
     const phone = document.getElementById("phone").value.trim();
@@ -154,23 +168,15 @@
     }
 
     navigator.geolocation.getCurrentPosition(function(position) {
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-      params.append("phone", phone);
-      params.append("status", "정상");
-      params.append("lat", position.coords.latitude || 0);
-      params.append("lng", position.coords.longitude || 0);
-      params.append("token", userToken);
-      // ✅ 수정: checkOrInsert → location
-      params.append("mode", "location");
+      const url = CONFIG.ADMIN_URL +
+        "?mode=location" +
+        "&phone=" + encodeURIComponent(phone) +
+        "&status=정상" +
+        "&lat=" + (position.coords.latitude || 0) +
+        "&lng=" + (position.coords.longitude || 0) +
+        "&token=" + encodeURIComponent(userToken);
 
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
-      })
-      .then(response => response.json())
-      .then(result => {
+      jsonpRequest(url, "sendLocationCallback", function(result) {
         closeModal();
         if (result.result === "success") {
           showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
@@ -178,11 +184,11 @@
         } else {
           showModal("❌ " + result.message, true);
         }
-      })
-      .catch(err => { 
-        closeModal(); 
-        showModal("위치 전송 실패:\n" + err.message, true); 
-      });
+      }, .catch(err => { 
+          closeModal(); 
+          showModal("위치 전송 실패:\n" + err.message, true); 
+        });
+
 
       if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
     });
@@ -198,28 +204,21 @@
 
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
     clearInterval(intervalId); intervalId = null;
-    const form = document.getElementById("locationForm");
-    const params = new URLSearchParams();
-    params.append("phone", phone);
-    params.append("status", "해제");
-    params.append("token", userToken);
-    params.append("mode", "stop");
 
-    fetch(form.action, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString()
-    })
-    .then(response => response.json())
-    .then(result => {
+    const url = CONFIG.ADMIN_URL +
+      "?mode=stop" +
+      "&phone=" + encodeURIComponent(phone) +
+      "&status=해제" +
+      "&token=" + encodeURIComponent(userToken);
+
+    jsonpRequest(url, "stopLocationCallback", function(result) {
       closeModal();
       if (result.result === "success") {
         showModal("🛑 위치정보가 해제되었습니다.", true);
       } else {
         showModal("❌ " + result.message, true);
       }
-    })
-    .catch(err => { 
+    }, function(err) { 
       closeModal(); 
       showModal("처리 중 오류 발생:\n" + err.message, true); 
     });
@@ -229,19 +228,18 @@
   function autoUpdate() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function(position) {
-      const form = document.getElementById("locationForm");
-      const params = new URLSearchParams();
-      params.append("phone", document.getElementById("phone").value.trim());
-      params.append("status", "정상");
-      params.append("lat", position.coords.latitude || 0);
-      params.append("lng", position.coords.longitude || 0);
-      params.append("token", userToken);
-      params.append("mode", "autoUpdate");
+      const url = CONFIG.ADMIN_URL +
+        "?mode=autoUpdate" +
+        "&phone=" + encodeURIComponent(document.getElementById("phone").value.trim()) +
+        "&status=정상" +
+        "&lat=" + (position.coords.latitude || 0) +
+        "&lng=" + (position.coords.longitude || 0) +
+        "&token=" + encodeURIComponent(userToken);
 
-      fetch(form.action, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
+      jsonpRequest(url, "autoUpdateCallback", function(result) {
+        // 필요시 응답 처리
+      }, function(err) {
+        console.error("자동 갱신 실패:\n" + err.message);
       });
     });
   }
@@ -253,4 +251,5 @@
 </script>
 </body>
 </html>
+
 
