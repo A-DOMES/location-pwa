@@ -14,6 +14,8 @@
   </script>
   <!-- MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+  <!-- config.js 반드시 먼저 로드 -->
+  <script src="config.js"></script>
 </head>
 
 <body>
@@ -63,49 +65,42 @@
     <div id="user-content"></div>
   </div>
 
-<!-- ---------------------- 지도 ---------------------- -->
-<div id="map"></div>
+  <!-- ---------------------- 지도 ---------------------- -->
+  <div id="map"></div>
 
-<script>
-let map;
+  <script>
+  let map;
 
-// ✅ 기기 환경에 따라 mapId 선택
-function getMapIdByDevice() {
-  const ua = navigator.userAgent.toLowerCase();
-
-  if (/android/.test(ua)) {
-    return CONFIG.mapIds.android;
-  } else if (/iphone|ipad|ipod/.test(ua)) {
-    return CONFIG.mapIds.ios;
-  } else if (/windows|macintosh|linux/.test(ua)) {
-    return CONFIG.mapIds.javascript;
-  } else {
+  // ✅ 기기 환경에 따라 mapId 선택
+  function getMapIdByDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android/.test(ua)) return CONFIG.mapIds.android;
+    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
     return CONFIG.mapIds.fixed; // 기본값
   }
-}
 
-// ✅ 구글맵 초기화
-function initMap() {
-  const mapId = getMapIdByDevice();
+  // ✅ 구글맵 초기화
+  function initMap() {
+    const mapId = getMapIdByDevice();
 
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: CONFIG.DEFAULT_CENTER,   // 대한민국 중앙 좌표
-    zoom: 7,
-    mapTypeId: "roadmap",
-    mapId: mapId
-  });
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: CONFIG.DEFAULT_CENTER,   // 대한민국 중앙 좌표
+      zoom: 7,
+      mapTypeId: "roadmap",
+      mapId: mapId
+    });
 
-  // 기본 마커 표시
-  new google.maps.Marker({
-    position: CONFIG.DEFAULT_CENTER,
-    map: map,
-    title: "기본 위치"
-  });
-}
-</script>
+    // 기본 마커 표시
+    new google.maps.Marker({
+      position: CONFIG.DEFAULT_CENTER,
+      map: map,
+      title: "기본 위치"
+    });
+  }
+  </script>
 
-<!-- client.js는 마지막에 -->
-<script type="module" src="client.js"></script>
-
+  <!-- client.js는 마지막에 -->
+  <script type="module" src="client.js"></script>
 </body>
 </html>
