@@ -1,9 +1,41 @@
 // config.js에서 값 가져오기
-import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL } from './config.js';
+import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL, mapIds } from './config.js';
 
 /* ---------------------- 전역 변수 ---------------------- */
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 const previousCoords = {}; // 사용자별 이전 좌표/시간 저장
+
+/* ---------------------- 지도 초기화 ---------------------- */
+function getMapIdByDevice() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/android/.test(ua)) return mapIds.android;
+  if (/iphone|ipad|ipod/.test(ua)) return mapIds.ios;
+  if (/windows|macintosh|linux/.test(ua)) return mapIds.javascript;
+  return mapIds.fixed;
+}
+
+function initMap() {
+  const mapId = getMapIdByDevice();
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: DEFAULT_CENTER,
+    zoom: 7,
+    mapTypeId: "roadmap",
+    mapId: mapId
+  });
+
+  // 내 위치 마커 표시
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        new google.maps.Marker({ position: myPos, map, title: "내 위치" });
+      },
+      () => {
+        new google.maps.Marker({ position: DEFAULT_CENTER, map, title: "기본 위치" });
+      }
+    );
+  }
+}
 
 /* ---------------------- 데이터 로드 후 마커 클러스터링 ---------------------- */
 function renderMarkers(data) {
@@ -23,7 +55,7 @@ function renderMarkers(data) {
   markerCluster = new MarkerClusterer({ map, markers });
 }
 
-/* ---------------------- 지도 초기화 관련 ---------------------- */
+/* ---------------------- 지도 표시 ---------------------- */
 function clearMap() {
   markers.forEach(m => m.setMap(null)); markers = [];
   polylines.forEach(p => p.setMap(null)); polylines = [];
@@ -277,6 +309,9 @@ async function loadData() {
 
 /* ---------------------- 초기 실행 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
+  // 지도 초기화
+  initMap();
+
   // 첫 데이터 로드
   loadData();
 
@@ -286,4 +321,3 @@ document.addEventListener("DOMContentLoaded", () => {
   // 위치 자동 전송 (1분마다)
   setInterval(sendLocation, 60000);
 });
-
