@@ -117,12 +117,17 @@
   let intervalId;
   let userToken = sessionStorage.getItem("token") || "";
 
+  // ============================
+  // 📌 초기 설정
+  // ============================
   window.addEventListener("DOMContentLoaded", () => {
     // ✅ 반드시 GAS 웹앱 URL로 설정
     document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
   });
 
+  // ============================
   // 📌 모달창 표시/닫기
+  // ============================
   window.showModal = function(message, autoClose = false) {
     document.querySelectorAll(".modal").forEach(m => m.remove());
     const modal = document.createElement("div");
@@ -139,21 +144,9 @@
     document.querySelectorAll(".modal").forEach(m => m.remove());
   };
 
-  // ✅ JSONP 요청 함수
-  function jsonpRequest(url, callbackName, onSuccess, onError) {
-    const script = document.createElement("script");
-    script.src = url + "&callback=" + callbackName;
-    script.onerror = () => { onError && onError(new Error("네트워크 오류")); };
-    document.body.appendChild(script);
-
-    window[callbackName] = function(data) {
-      onSuccess && onSuccess(data);
-      delete window[callbackName];
-      script.remove();
-    };
-  }
-
-  // 📌 위치 전송 버튼
+  // ============================
+  // 📌 위치 전송 (POST 요청)
+  // ============================
   window.sendLocation = function() {
     const phone = document.getElementById("phone").value.trim();
     if (!phone) {
@@ -168,15 +161,20 @@
     }
 
     navigator.geolocation.getCurrentPosition(function(position) {
-      const url = CONFIG.ADMIN_URL +
-        "?mode=location" +
-        "&phone=" + encodeURIComponent(phone) +
-        "&status=정상" +
-        "&lat=" + (position.coords.latitude || 0) +
-        "&lng=" + (position.coords.longitude || 0) +
-        "&token=" + encodeURIComponent(userToken);
-
-      jsonpRequest(url, "sendLocationCallback", function(result) {
+      // ✅ POST 요청으로 doPost 실행
+      fetch(CONFIG.ADMIN_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          mode: "location",
+          phone: phone,
+          status: "정상",
+          lat: position.coords.latitude || 0,
+          lng: position.coords.longitude || 0,
+          token: userToken
+        })
+      })
+      .then(res => res.json())
+      .then(result => {
         closeModal();
         if (result.result === "success") {
           showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
@@ -184,16 +182,20 @@
         } else {
           showModal("❌ " + result.message, true);
         }
-      }, function() { 
-        closeModal(); 
-        showModal("위치 전송 실패: 네트워크 오류 또는 응답 없음", true); 
+      })
+      .catch(err => {
+        closeModal();
+        showModal("위치 전송 실패:\n" + err.message, true);
       });
 
+      // ✅ 자동 갱신 시작
       if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
     });
   };
 
-  // 📌 위치정보 해제 버튼
+  // ============================
+  // 📌 위치 해제 (POST 요청)
+  // ============================
   window.stopLocation = function() {
     const phone = document.getElementById("phone").value.trim();
     if (!phone) {
@@ -204,51 +206,63 @@
     showModal("위치정보 해제 처리 중입니다...\n잠시만 기다려주세요.");
     clearInterval(intervalId); intervalId = null;
 
-    const url = CONFIG.ADMIN_URL +
-      "?mode=stop" +
-      "&phone=" + encodeURIComponent(phone) +
-      "&status=해제" +
-      "&token=" + encodeURIComponent(userToken);
-
-    jsonpRequest(url, "stopLocationCallback", function(result) {
+    fetch(CONFIG.ADMIN_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        mode: "stop",
+        phone: phone,
+        status: "해제",
+        token: userToken
+      })
+    })
+    .then(res => res.json())
+    .then(result => {
       closeModal();
       if (result.result === "success") {
         showModal("🛑 위치정보가 해제되었습니다.", true);
       } else {
         showModal("❌ " + result.message, true);
       }
-    }, function(err) { 
-      closeModal(); 
-      showModal("처리 중 오류 발생:\n" + err.message, true); 
+    })
+    .catch(err => {
+      closeModal();
+      showModal("처리 중 오류 발생:\n" + err.message, true);
     });
   };
 
-  // 📌 자동 위치 갱신
+  // ============================
+  // 📌 자동 위치 갱신 (POST 요청)
+  // ============================
   function autoUpdate() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function(position) {
-      const url = CONFIG.ADMIN_URL +
-        "?mode=autoUpdate" +
-        "&phone=" + encodeURIComponent(document.getElementById("phone").value.trim()) +
-        "&status=정상" +
-        "&lat=" + (position.coords.latitude || 0) +
-        "&lng=" + (position.coords.longitude || 0) +
-        "&token=" + encodeURIComponent(userToken);
-
-      jsonpRequest(url, "autoUpdateCallback", function(result) {
+      fetch(CONFIG.ADMIN_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          mode: "autoUpdate",
+          phone: document.getElementById("phone").value.trim(),
+          status: "정상",
+          lat: position.coords.latitude || 0,
+          lng: position.coords.longitude || 0,
+          token: userToken
+        })
+      })
+      .then(res => res.json())
+      .then(result => {
         // 필요시 응답 처리
-      }, function(err) {
+      })
+      .catch(err => {
         console.error("자동 갱신 실패:\n" + err.message);
       });
     });
   }
 
+  // ============================
   // 📌 PWA 서비스워커 등록
+  // ============================
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
   }
 </script>
 </body>
 </html>
-
-
