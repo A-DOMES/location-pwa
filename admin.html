@@ -184,11 +184,10 @@
         } else {
           showModal("❌ " + result.message, true);
         }
-      }, function(err) { 
-          closeModal(); 
-          showModal("위치 전송 실패:\n" + err.message, true); 
+      }, function() { 
+        closeModal(); 
+        showModal("위치 전송 실패: 네트워크 오류 또는 응답 없음", true); 
       });
-
 
       if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
     });
