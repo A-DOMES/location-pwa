@@ -200,23 +200,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
+  const closeBtn = document.getElementById("close-user-panel");
 
-  btnConnection.onclick = () => {
-    settingsPanel.style.display = "none";
+  // 접속현황 버튼 클릭
+  btnConnection.addEventListener("click", () => {
+    settingsPanel.style.display = "none"; // 다른 패널 닫기
     connectionPanel.style.left = btnConnection.getBoundingClientRect().left + "px";
     connectionPanel.style.display = connectionPanel.style.display === "block" ? "none" : "block";
-  };
+  });
 
-  btnSettings.onclick = () => {
-    connectionPanel.style.display = "none";
+  // 환경설정 버튼 클릭
+  btnSettings.addEventListener("click", () => {
+    connectionPanel.style.display = "none"; // 다른 패널 닫기
     settingsPanel.style.left = btnSettings.getBoundingClientRect().left + "px";
     settingsPanel.style.display = settingsPanel.style.display === "block" ? "none" : "block";
-  };
+  });
 
-  const closeBtn = document.getElementById("close-user-panel");
-  if (closeBtn) closeBtn.addEventListener("click", closeUserPanel);
+  // 사용자 패널 닫기 버튼
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeUserPanel);
+  }
 
-  document.addEventListener("click", function(e) {
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", (e) => {
     if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
       connectionPanel.style.display = "none";
     }
@@ -280,3 +286,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // 위치 자동 전송 (1분마다)
   setInterval(sendLocation, 60000);
 });
+
