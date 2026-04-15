@@ -8,8 +8,10 @@
   <link rel="stylesheet" href="common.css">
   <link rel="stylesheet" href="client.css">
 
-  <!-- Google Maps API (먼저 로드) -->
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY"></script>
+  <!-- Google Maps API (callback=initMap 추가) -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
+  </script>
   <!-- MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 </head>
@@ -63,6 +65,29 @@
 
   <!-- ---------------------- 지도 ---------------------- -->
   <div id="map"></div>
+
+  <!-- 지도 초기화 함수 -->
+  <script>
+    let map;
+
+    function initMap() {
+      // 기본 좌표 (서울시청)
+      const centerPos = { lat: 37.5665, lng: 126.9780 };
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: centerPos,
+        zoom: 14,
+        mapTypeId: CONFIG.MAP_TYPE || "roadmap" // config.js에서 선택된 유형 사용
+      });
+
+      // 기본 마커 표시
+      new google.maps.Marker({
+        position: centerPos,
+        map: map,
+        title: "기본 위치"
+      });
+    }
+  </script>
 
   <!-- client.js는 마지막에 -->
   <script type="module" src="client.js"></script>
