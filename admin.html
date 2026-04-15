@@ -184,10 +184,10 @@
         } else {
           showModal("❌ " + result.message, true);
         }
-      }, .catch(err => { 
+      }, function(err) { 
           closeModal(); 
           showModal("위치 전송 실패:\n" + err.message, true); 
-        });
+      });
 
 
       if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
