@@ -363,3 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ 위치 자동 전송 (1분마다)
   setInterval(sendLocation, 60000);
 });
+
+window.initMap = initMap;
+
