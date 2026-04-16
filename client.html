@@ -437,6 +437,14 @@
   }
 
   /* ---------------------- 초기 실행 ---------------------- */
+  // ✅ 기기 환경에 따라 mapId 선택 (initMap보다 위에 위치)
+  function getMapIdByDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android/.test(ua)) return CONFIG.mapIds.android;
+    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
+    return CONFIG.mapIds.fixed; // 기본값
+    
   function initMap() {
     // 기기 판별
     let deviceType = "javascript";
