@@ -102,10 +102,9 @@
         <input type="text" name="phone" id="phone" 
                placeholder="회원가입 닉네임 또는 전화번호를 입력하세요">
         <div class="button-group">
-          <a href="client.html" target="_blank">
-            <!-- ✅ 처음엔 숨김 처리 + 클릭 불가 -->
-            <img src="btn-current.png" alt="지도 버튼" 
-                 class="map-btn hidden" id="mapBtn">
+          <!-- ✅ 처음엔 링크 자체를 숨김 처리 -->
+          <a href="client.html" target="_blank" id="mapBtn" style="display:none;">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
           </a>
           <!-- ✅ 버튼 클릭 시 admin.html에서 빈값 검증 후 서버 호출 -->
           <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
@@ -115,7 +114,7 @@
     </div>
   </form>
 
-  <div id="map">
+  <div id="map"></div>
 
   
 
