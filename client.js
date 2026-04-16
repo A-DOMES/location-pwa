@@ -1,5 +1,11 @@
 // config.js에서 값 가져오기
-import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL, mapIds } from './config.js';
+// import { API_URL, DEFAULT_CENTER, DEFAULT_INTERVAL, mapIds } from './config.js';
+
+// ✅ 대신 CONFIG 객체에서 값 가져오기
+const API_URL = CONFIG.USER_URL;          // 사용자 서버 URL
+const DEFAULT_CENTER = CONFIG.DEFAULT_CENTER;
+const DEFAULT_INTERVAL = CONFIG.DEFAULT_INTERVAL;
+const mapIds = CONFIG.mapIds;
 
 /* ---------------------- 전역 변수 ---------------------- */
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
