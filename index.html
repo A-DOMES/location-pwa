@@ -182,9 +182,11 @@
         sessionStorage.setItem("role", result.role);
         sessionStorage.setItem("userId", id);
         sessionStorage.setItem("token", result.token);
-    
+
         // ✅ 닉네임도 저장 (admin.html에서 자동 입력용)
-        localStorage.setItem("nickname", result.nickname);
+        if (result.nickname && result.nickname !== "undefined") {
+          localStorage.setItem("nickname", result.nickname);
+        }
     
         setTimeout(() => {
           if (result.role === "AD") {
@@ -202,7 +204,6 @@
       }
     };
 
-
     const script = document.createElement("script");
     script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
     document.body.appendChild(script);
@@ -210,6 +211,5 @@
 
   window.login = login;
 </script>
-
 </body>
 </html>
