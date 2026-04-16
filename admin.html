@@ -50,7 +50,7 @@
     }
     .map-btn { width: 100px; height: 100px; cursor: pointer; }
 
-    /* ✅ 지도맵 버튼 숨김 상태: 보이지 않고 클릭도 불가 */
+    /* ✅ 지도맵 버튼 숨김 상태: 보이지 않고 클릭도 불가, 공간은 유지 */
     .map-btn.hidden {
       visibility: hidden;
       pointer-events: none;
@@ -98,7 +98,7 @@
   <form id="locationForm" method="POST">
     <div class="center-wrapper">
       <div class="inner-group">
-        <!-- 📌 F열 값이 자동으로 채워짐 -->
+        <!-- 📌 닉네임이 자동으로 채워짐 -->
         <input type="text" name="phone" id="phone" 
                placeholder="회원가입 닉네임 또는 전화번호를 입력하세요">
         <div class="button-group">
@@ -115,37 +115,36 @@
     </div>
   </form>
 
-  <div id="map"></div>
+  <div id="map">
+
   
 
-<!-- ✅ CONFIG 불러오기 -->
-<script src="config.js"></script>
-<script>
-  let intervalId;
-  let userToken = sessionStorage.getItem("token") || "";
+  <!-- ✅ CONFIG 불러오기 -->
+  <script src="config.js"></script>
+  <script>
+    let intervalId;
+    let userToken = sessionStorage.getItem("token") || "";
 
-  // ============================
-  // 📌 초기 설정
-  // ============================
-  window.addEventListener("DOMContentLoaded", () => {
-    // ✅ 반드시 GAS 웹앱 URL로 설정
-    document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
-  
-    // ✅ 닉네임 자동 입력
-    const nickname = localStorage.getItem("nickname");
-    if (nickname) {
-      const nicknameBox = document.getElementById("nicknameBox");
-      if (nicknameBox) nicknameBox.value = nickname;
-    }
-  
-    // ✅ 토큰은 이미 sessionStorage에서 불러옴
-    const tokenBox = document.getElementById("tokenBox");
-    if (tokenBox) tokenBox.value = userToken;
+    // ============================
+    // 📌 초기 설정
+    // ============================
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
+    
+      // ✅ 닉네임을 phone 입력란에 자동 입력
+      const nickname = localStorage.getItem("nickname");
+      const phoneBox = document.getElementById("phone");
+      if (nickname && phoneBox) {
+        phoneBox.value = nickname;
+      }
+    
+      // ✅ 토큰은 sessionStorage에서 불러와 내부 변수로만 사용
+      const tokenBox = document.getElementById("tokenBox");
+      if (tokenBox) tokenBox.value = userToken;
 
-    // ✅ 지도맵 버튼은 초기에는 숨김 + 클릭 불가 (.hidden 클래스 적용)
-    const mapBtn = document.getElementById("mapBtn");
-    if (mapBtn) mapBtn.classList.add("hidden");
-  });
+      const mapBtn = document.getElementById("mapBtn");
+      if (mapBtn) mapBtn.classList.add("hidden");
+    });
 
 
   // ============================
