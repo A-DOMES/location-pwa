@@ -5,7 +5,7 @@
       <title>A-DOMES 위치정보시스템</title>
     
       <!-- Google Maps API 불러오기 -->
-      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
+      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
       <!-- 마커 클러스터링 라이브러리 -->
       <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     
@@ -443,44 +443,44 @@
     userPanel.style.display = "none";
   }
 
-  /* ---------------------- 초기 실행 ---------------------- */
-  function initMap() {
-    // 기기 판별 (userAgent 기반)
-    let deviceType = "javascript"; // 기본값: 웹
-    const ua = navigator.userAgent.toLowerCase();
-    if (ua.includes("android")) deviceType = "android";
-    else if (ua.includes("iphone") || ua.includes("ipad")) deviceType = "ios";
+/* ---------------------- 초기 실행 ---------------------- */
+function initMap() {
+  // 기기 판별
+  let deviceType = "javascript";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("android")) deviceType = "android";
+  else if (ua.includes("iphone") || ua.includes("ipad")) deviceType = "ios";
 
-    // config.js에서 해당 기기 mapId 선택
-    const selectedMapId = CONFIG.mapIds[deviceType] || CONFIG.mapIds.fixed;
+  // config.js에서 해당 기기 mapId 선택
+  const selectedMapId = CONFIG.mapIds[deviceType] || CONFIG.mapIds.fixed;
 
-    // 지도 초기화 (최신 스타일 적용)
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapId: selectedMapId
-    });
+  // 지도 초기화
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
+    zoom: 7,
+    mapId: selectedMapId
+  });
 
-    // 닫기 버튼 이벤트 연결
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", closeUserPanel);
-    }
-
-    // 외부 클릭 시 패널 닫기
-    document.addEventListener("click", function(e) {
-      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.style.display = "none";
-      }
-      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.style.display = "none";
-      }
-    });
-
-    // 첫 데이터 로드 및 주기적 갱신
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000); // 기본 5분 갱신
+  // 닫기 버튼 이벤트 연결
+  const closeBtn = document.getElementById("close-user-panel");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeUserPanel);
   }
+
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", function(e) {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.style.display = "none";
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.style.display = "none";
+    }
+  });
+
+  // 첫 데이터 로드 및 주기적 갱신
+  loadData();
+  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+}
 </script>
 </body>
 </html>
