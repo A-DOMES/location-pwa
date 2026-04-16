@@ -352,7 +352,7 @@ async function loadData() {
 /* ---------------------- 초기 실행 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ 지도 초기화 직접 실행
-  initMap();
+  /* initMap(); */
 
   // ✅ 첫 데이터 로드
   loadData();
