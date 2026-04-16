@@ -123,7 +123,19 @@
   window.addEventListener("DOMContentLoaded", () => {
     // ✅ 반드시 GAS 웹앱 URL로 설정
     document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
+  
+    // ✅ 닉네임 자동 입력
+    const nickname = localStorage.getItem("nickname");
+    if (nickname) {
+      const nicknameBox = document.getElementById("nicknameBox");
+      if (nicknameBox) nicknameBox.value = nickname;
+    }
+  
+    // ✅ 토큰은 이미 sessionStorage에서 불러옴
+    const tokenBox = document.getElementById("tokenBox");
+    if (tokenBox) tokenBox.value = userToken;
   });
+
 
   // ============================
   // 📌 모달창 표시/닫기
