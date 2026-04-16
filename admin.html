@@ -49,6 +49,13 @@
       margin-left: 1px; margin-top: 10px; gap: 40px;
     }
     .map-btn { width: 100px; height: 100px; cursor: pointer; }
+
+    /* ✅ 지도맵 버튼 숨김 상태: 보이지 않고 클릭도 불가 */
+    .map-btn.hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     #sendBtn, #stopBtn {
       width: 200px; height: 50px; font-size: 20px;
       border: none; border-radius: 8px; cursor: pointer; color: white;
@@ -87,28 +94,28 @@
     <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
   </section>
 
-<!-- 위치 전송 영역 -->
-<form id="locationForm" method="POST">
-  <div class="center-wrapper">
-    <div class="inner-group">
-      <!-- 📌 F열 값이 자동으로 채워짐 -->
-      <input type="text" name="phone" id="phone" 
-             placeholder="회원가입 닉네임 또는 전화번호를 입력하세요">
-      <div class="button-group">
-        <a href="client.html" target="_blank">
-          <!-- ✅ 처음엔 숨김 처리, 자리 유지 -->
-          <img src="btn-current.png" alt="지도 버튼" 
-               class="map-btn" id="mapBtn" style="visibility:hidden;">
-        </a>
-        <!-- ✅ 버튼 클릭 시 admin.html에서 빈값 검증 후 서버 호출 -->
-        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-        <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+  <!-- 위치 전송 영역 -->
+  <form id="locationForm" method="POST">
+    <div class="center-wrapper">
+      <div class="inner-group">
+        <!-- 📌 F열 값이 자동으로 채워짐 -->
+        <input type="text" name="phone" id="phone" 
+               placeholder="회원가입 닉네임 또는 전화번호를 입력하세요">
+        <div class="button-group">
+          <a href="client.html" target="_blank">
+            <!-- ✅ 처음엔 숨김 처리 + 클릭 불가 -->
+            <img src="btn-current.png" alt="지도 버튼" 
+                 class="map-btn hidden" id="mapBtn">
+          </a>
+          <!-- ✅ 버튼 클릭 시 admin.html에서 빈값 검증 후 서버 호출 -->
+          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+          <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+        </div>
       </div>
     </div>
-  </div>
-</form>
+  </form>
 
-<div id="map"></div>
+  <div id="map"></div>
   
 
   <!-- ✅ CONFIG 불러오기 -->
