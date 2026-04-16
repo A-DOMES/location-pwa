@@ -200,16 +200,18 @@
         closeModal();
         if (result.result === "success") {
           showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
-
-          // ✅ 실제 응답이 success일 때만 지도맵 버튼 활성화 (.hidden 제거)
+      
+          // ✅ 실제 응답이 success일 때만 지도맵 버튼 활성화
           const mapBtn = document.getElementById("mapBtn");
-          mapBtn.classList.remove("hidden");
+          mapBtn.style.visibility = "visible";
+          mapBtn.style.pointerEvents = "auto";
         } else {
           showModal("❌ " + result.message, true);
-
-          // 실패 시 지도맵 버튼은 계속 숨김 (.hidden 유지)
+      
+          // 실패 시 지도맵 버튼은 계속 숨김
           const mapBtn = document.getElementById("mapBtn");
-          mapBtn.classList.add("hidden");
+          mapBtn.style.visibility = "hidden";
+          mapBtn.style.pointerEvents = "none";
         }
       })
       .catch(err => {
