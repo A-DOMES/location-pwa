@@ -10,7 +10,7 @@
         </script>
         
         <!-- 마커 클러스터링 라이브러리 -->
-        <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+        <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
       <style>
         /* 전체 초기화: 기본 margin/padding 제거, 화면 전체 사용 */
@@ -319,14 +319,17 @@
       });
     }
 
+    // ✅ 최신 MarkerClusterer 문법 적용
     if (document.getElementById("clusterOption").checked) {
-      markerCluster = new MarkerClusterer(map, markers, {
-        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+      markerCluster = new markerClusterer.MarkerClusterer({ 
+        map: map, 
+        markers: markers 
       });
     }
 
     updateUserPanelContent(mode);
   }
+
 
   /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
   function updateUserPanelContent(viewMode = "current") {
