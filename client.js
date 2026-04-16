@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     viewCurrentLocationBtn.addEventListener("click", () => {
       mode = "current";      // 현재 위치 보기 모드
       showMap();             // 지도 갱신
-      openUserPanel("current");
+      // ❌ openUserPanel 제거 → 환경설정에서는 user-panel을 열지 않음
     });
   }
 
@@ -328,13 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
     viewPathsBtn.addEventListener("click", () => {
       mode = "paths";        // 경로 보기 모드
       showMap();             // 지도 갱신
-      openUserPanel("paths");
+      // ❌ openUserPanel 제거
     });
   }
 
   if (applyIntervalBtn) {
     applyIntervalBtn.addEventListener("click", () => {
       setCustomInterval();   // 갱신 주기 설정 적용
+      // ❌ 패널 열기 없음
     });
   }
 });
