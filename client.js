@@ -310,6 +310,33 @@ document.addEventListener("DOMContentLoaded", () => {
       openUserPanel("paths");    // 사용자 패널 열기
     });
   }
+
+  // ✅ settings-panel 내부 버튼 동작
+  const viewCurrentLocationBtn = document.getElementById("view-current-location");
+  const viewPathsBtn = document.getElementById("view-paths");
+  const applyIntervalBtn = document.getElementById("apply-interval");
+
+  if (viewCurrentLocationBtn) {
+    viewCurrentLocationBtn.addEventListener("click", () => {
+      mode = "current";      // 현재 위치 보기 모드
+      showMap();             // 지도 갱신
+      openUserPanel("current");
+    });
+  }
+
+  if (viewPathsBtn) {
+    viewPathsBtn.addEventListener("click", () => {
+      mode = "paths";        // 경로 보기 모드
+      showMap();             // 지도 갱신
+      openUserPanel("paths");
+    });
+  }
+
+  if (applyIntervalBtn) {
+    applyIntervalBtn.addEventListener("click", () => {
+      setCustomInterval();   // 갱신 주기 설정 적용
+    });
+  }
 });
 
 /* ---------------------- 화면 복귀 시 갱신 ---------------------- */
