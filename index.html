@@ -176,12 +176,16 @@
       if (result.result === "success") {
         modal.querySelector("h2").innerText = "✅ 로그인 성공!";
         modal.querySelector("p").innerText = "잠시 후 이동합니다...";
-
+    
+        // ✅ 로그인 정보 저장
         sessionStorage.setItem("loggedIn", "true");
         sessionStorage.setItem("role", result.role);
         sessionStorage.setItem("userId", id);
         sessionStorage.setItem("token", result.token);
-
+    
+        // ✅ 닉네임도 저장 (admin.html에서 자동 입력용)
+        localStorage.setItem("nickname", result.nickname);
+    
         setTimeout(() => {
           if (result.role === "AD") {
             window.location.href = "admin.html";
@@ -197,6 +201,7 @@
         alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
       }
     };
+
 
     const script = document.createElement("script");
     script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
