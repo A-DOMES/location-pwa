@@ -119,32 +119,32 @@
 
   
 
-  <!-- ✅ CONFIG 불러오기 -->
-  <script src="config.js"></script>
-  <script>
-    let intervalId;
-    let userToken = sessionStorage.getItem("token") || "";
+<!-- ✅ CONFIG 불러오기 -->
+<script src="config.js"></script>
+<script>
+  let intervalId;
+  let userToken = sessionStorage.getItem("token") || "";
 
-    // ============================
-    // 📌 초기 설정
-    // ============================
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
+  // ============================
+  // 📌 초기 설정
+  // ============================
+  window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("locationForm").action = CONFIG.ADMIN_URL;
     
-      // ✅ 닉네임을 phone 입력란에 자동 입력
-      const nickname = localStorage.getItem("nickname");
-      const phoneBox = document.getElementById("phone");
-      if (nickname && phoneBox) {
-        phoneBox.value = nickname;
-      }
+    // ✅ 닉네임을 phone 입력란에 자동 입력
+    const nickname = localStorage.getItem("nickname");
+    const phoneBox = document.getElementById("phone");
+    if (nickname && nickname !== "undefined" && phoneBox) {
+      phoneBox.value = nickname;
+    }
     
-      // ✅ 토큰은 sessionStorage에서 불러와 내부 변수로만 사용
-      const tokenBox = document.getElementById("tokenBox");
-      if (tokenBox) tokenBox.value = userToken;
+    // ✅ 토큰은 sessionStorage에서 불러와 내부 변수로만 사용
+    const tokenBox = document.getElementById("tokenBox");
+    if (tokenBox) tokenBox.value = userToken;
 
-      const mapBtn = document.getElementById("mapBtn");
-      if (mapBtn) mapBtn.classList.add("hidden");
-    });
+    const mapBtn = document.getElementById("mapBtn");
+    if (mapBtn) mapBtn.classList.add("hidden");
+  });
 
 
   // ============================
