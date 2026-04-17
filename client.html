@@ -531,8 +531,9 @@ document.addEventListener("DOMContentLoaded", () => {
   <div class="dropdown-item">
     <strong>갱신 주기 설정</strong><br>
     <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <!-- 숫자 입력 박스 폭을 줄임 -->
       <input type="number" id="intervalValue" value="5" min="1" 
-             style="width:90px; font-size:18px; padding:6px;">
+             style="width:70px; font-size:18px; padding:6px;">
       <select id="intervalUnit" style="font-size:18px; padding:6px;">
         <option value="minutes">분</option>
         <option value="seconds">초</option>
