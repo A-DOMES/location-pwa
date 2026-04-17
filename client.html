@@ -108,71 +108,71 @@
     updateUserPanelContent(mode);
   }
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode = "current") {
-    const panel = document.getElementById("user-content");
-    panel.innerHTML = "";
+/* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+function updateUserPanelContent(viewMode = "current") {
+  const panel = document.getElementById("user-content");
+  panel.innerHTML = "";
 
-    if (viewMode === "current") {
-      const latestByUser = {};
-      allData.forEach(row => {
-        const key = row[1];
-        if (!latestByUser[key] || new Date(row[0]) > new Date(latestByUser[key][0])) {
-          latestByUser[key] = row;
-        }
-      });
-      if (Object.keys(latestByUser).length === 0) {
-        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
-        return;
+  if (viewMode === "current") {
+    const latestByUser = {};
+    allData.forEach(user => {
+      const key = user.phone;
+      if (!latestByUser[key] || new Date(user.time) > new Date(latestByUser[key].time)) {
+        latestByUser[key] = user;
       }
-      Object.values(latestByUser).forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${user[1]}</div>
-            📍 위치: ${user[6]}<br>
-            🕒 최초 입력: ${user[0]}<br>
-            🕒 마지막 갱신: ${user[5]}<br>
-            상태: ${user[2]}<br>
-            좌표: (${user[3]}, ${user[4]})
-          </div>
-        `;
-      });
-    } else if (viewMode === "all") {
-      allData.forEach(row => {
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${row[1]}</div>
-            📍 위치: ${row[6]}<br>
-            🕒 입력: ${row[0]}<br>
-            상태: ${row[2]}<br>
-            좌표: (${row[3]}, ${row[4]})
-          </div>
-        `;
-      });
-    } else if (viewMode === "paths") {
-      allData.forEach(row => {
-        let pathHtml = "";
-        for (let j = 8; j < row.length; j += 2) {
-          const lat = row[j];
-          const lng = row[j + 1];
-          if (lat && lng) {
-            pathHtml += `(${lat}, ${lng})<br>`;
-          }
-        }
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${row[1]}</div>
-            📍 위치: ${row[6]}<br>
-            🕒 입력: ${row[0]}<br>
-            상태: ${row[2]}<br>
-            좌표: (${row[3]}, ${row[4]})<br>
-            <strong>경로 누적:</strong><br>
-            ${pathHtml || "경로 없음"}
-          </div>
-        `;
-      });
+    });
+    if (Object.keys(latestByUser).length === 0) {
+      panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
+      return;
     }
+    Object.values(latestByUser).forEach(user => {
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 최초 입력: ${user.time}<br>
+          🕒 마지막 갱신: ${user.updated}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})
+        </div>
+      `;
+    });
+  } else if (viewMode === "all") {
+    allData.forEach(user => {
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 입력: ${user.time}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})
+        </div>
+      `;
+    });
+  } else if (viewMode === "paths") {
+    allData.forEach(user => {
+      let pathHtml = "";
+      for (let j = 0; j < user.path.length; j += 2) {
+        const lat = user.path[j];
+        const lng = user.path[j + 1];
+        if (lat && lng) {
+          pathHtml += `(${lat}, ${lng})<br>`;
+        }
+      }
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 입력: ${user.time}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})<br>
+          <strong>경로 누적:</strong><br>
+          ${pathHtml || "경로 없음"}
+        </div>
+      `;
+    });
   }
+}
 
   /* ---------------------- 갱신 주기 설정 ---------------------- */
   function setCustomInterval() {
