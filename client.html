@@ -341,58 +341,60 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ---------------------- 지도 초기화 ---------------------- */
-  function initMap() {
-    const mapId = getMapIdByDevice();
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapId: mapId
-    });
+function initMap() {
+  const mapId = getMapIdByDevice();
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
+    zoom: 7,
+    mapId: mapId
+  });
 
-    // ✅ 원래 위치 저장
-    const originalCenter = map.getCenter();
+  // ✅ 원래 위치 저장
+  const originalCenter = map.getCenter();
 
-    // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
-    google.maps.event.addListener(map, 'rightclick', function() {
-      map.setCenter(originalCenter);
-      map.setZoom(7);
-    });
+  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
+  google.maps.event.addListener(map, 'rightclick', function() {
+    map.setCenter(originalCenter);
+    map.setZoom(7);
+  });
 
-    // 내 위치 표시
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
-        },
-        () => {
-          new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
-        }
-      );
-    }
-
-    // 닫기 버튼 이벤트 연결
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", window.closeUserPanel);
-    }
-
-    // 외부 클릭 시 패널 닫기
-    document.addEventListener("click", function(e) {
-      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.classList.remove("open");
+  // 내 위치 표시
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
+      },
+      () => {
+        new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
       }
-      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.classList.remove("open");
-      }
-    });
-
-    // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+    );
   }
 
-  window.initMap = initMap;
+  // 닫기 버튼 이벤트 연결
+  const closeBtn = document.getElementById("close-user-panel");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", window.closeUserPanel);
+  }
+
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", function(e) {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.classList.remove("open");
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.classList.remove("open");
+    }
+  });
+
+  // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
+  loadData();
+  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+}
+
+// ✅ 반드시 함수 정의 이후에 전역 등록
+window.initMap = initMap;
+
 
   /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
   window.renderUserTable = function(users) {
