@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     connectionPanel.classList.remove("open");
     userPanel.classList.add("open");
     mode = viewMode; // 선택된 모드 반영
-    showMap();
+    showMap(); // 지도 갱신
     updateUserPanelContent(viewMode); // 패널 내용 갱신
   
     // 제목 변경
@@ -304,18 +304,21 @@ document.addEventListener("DOMContentLoaded", () => {
       users = Object.values(latestByUser);
 
     } else if (viewMode === "all") {
+      // 전체 사용자 표시
       users = allData;
 
     } else if (viewMode === "paths") {
+      // 경로 보기 모드: 선택된 사용자만 표시
       const select = document.getElementById("path-user-select");
       const selectedPhone = select ? select.value : "all";
       users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
     }
 
-    // 테이블 렌더링
+    // 테이블 렌더링 함수 호출
     renderUserTable(users);
   }
 
+  /* ---------------------- 기기별 지도 ID 선택 ---------------------- */
   function getMapIdByDevice() {
     const ua = navigator.userAgent.toLowerCase();
     if (/android/.test(ua)) return CONFIG.mapIds.android;
@@ -324,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return CONFIG.mapIds.fixed;
   }
 
+  /* ---------------------- 지도 초기화 ---------------------- */
   function initMap() {
     const mapId = getMapIdByDevice();
     map = new google.maps.Map(document.getElementById("map"), {
@@ -421,6 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
   window.focusOnUser = function(lat, lng) {
     map.setCenter({ lat: lat, lng: lng });
     map.setZoom(15);
