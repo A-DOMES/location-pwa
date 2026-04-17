@@ -16,12 +16,15 @@
   async function loadData(token = null) {
     try {
       // 🚗 관리자 서버 호출 URL 구성
-      let url = CONFIG.ADMIN_URL + "/data?mode=getLocations";
+      let url = CONFIG.ADMIN_URL + "?mode=getLocations";  // ✅ "/data" 제거
       if (token) {
         url += "&token=" + encodeURIComponent(token);
       }
+  
       const response = await fetch(url);
       allData = await response.json();
+  
+      // 데이터 정상 수신 후 지도 표시
       showMap();
     } catch (err) {
       console.error("데이터 로드 실패:", err);
@@ -196,36 +199,38 @@
   }
 
   <!-- 2. 사용자 코드 -->
+  <script>
   // HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
   document.addEventListener("DOMContentLoaded", () => {
-
+  
     /* ---------------------- 패널 동작 ---------------------- */
     const btnConnection = document.getElementById("btn-connection");
     const btnSettings = document.getElementById("btn-settings");
     const connectionPanel = document.getElementById("connection-panel");
     const settingsPanel = document.getElementById("settings-panel");
     const userPanel = document.getElementById("user-panel");
-
+  
     btnConnection.onclick = () => {
       settingsPanel.classList.remove("open");
       connectionPanel.classList.toggle("open");
     };
-
+  
     btnSettings.onclick = () => {
       connectionPanel.classList.remove("open");
       settingsPanel.classList.toggle("open");
     };
-
-    function openUserPanel(viewMode) {
+  
+    // ✅ 전역으로 노출해야 인라인 onclick에서 접근 가능
+    window.openUserPanel = function(viewMode) {
       connectionPanel.classList.remove("open");
       userPanel.classList.add("open");
       updateUserPanelContent(viewMode);
-    }
-
-    function closeUserPanel() {
+    };
+  
+    window.closeUserPanel = function() {
       userPanel.classList.remove("open");
-    }
-
+    };
+  
     /* ---------------------- 초기 실행 ---------------------- */
     function getMapIdByDevice() {
       const ua = navigator.userAgent.toLowerCase();
@@ -234,7 +239,7 @@
       if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
       return CONFIG.mapIds.fixed; // 기본값
     }
-
+  
     function initMap() {
       const mapId = getMapIdByDevice();
       map = new google.maps.Map(document.getElementById("map"), {
@@ -242,7 +247,7 @@
         zoom: 7,
         mapId: mapId
       });
-
+  
       // 내 위치 표시
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -255,13 +260,13 @@
           }
         );
       }
-
+  
       // 닫기 버튼 이벤트 연결
       const closeBtn = document.getElementById("close-user-panel");
       if (closeBtn) {
-        closeBtn.addEventListener("click", closeUserPanel);
+        closeBtn.addEventListener("click", window.closeUserPanel);
       }
-
+  
       // 외부 클릭 시 패널 닫기
       document.addEventListener("click", function(e) {
         if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
@@ -271,15 +276,15 @@
           settingsPanel.classList.remove("open");
         }
       });
-
+  
       // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
       loadData();
       intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
     }
-
+  
     // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
     window.initMap = initMap;
-
+  
   });
   </script>
 
