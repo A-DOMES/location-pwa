@@ -359,20 +359,25 @@
     window.renderUserTable = function(users) {
       const tbody = document.getElementById("user-table-body");
       tbody.innerHTML = "";
-
+    
       users.forEach(user => {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${user.name || "-"}</td>
-          <td>${user.phone}</td>
-          <td>${user.carNo || "-"}</td>
-          <td>${user.status}</td>
-          <td>${user.role || "-"}</td>
-          <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
+          <td>${user.phone || "-"}</td>     <!-- 닉네임 -->
+          <td>${user.status || "-"}</td>    <!-- 상태 -->
+          <td>${user.time || "-"}</td>      <!-- 기록 시간 -->
+          <td>${user.updated || "-"}</td>   <!-- 업데이트 -->
+          <td>${user.address || "-"}</td>   <!-- 주소 -->
+          <td>${user.lat || "-"}</td>       <!-- 위도 -->
+          <td>${user.lng || "-"}</td>       <!-- 경도 -->
+          <td>
+            <button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button>
+          </td>
         `;
         tbody.appendChild(row);
       });
     };
+
 
     /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
     window.focusOnUser = function(lat, lng) {
@@ -543,13 +548,18 @@
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">경로 보기</div>
-    <!-- ✅ 위치찾기 기능 추가 -->
+    <!-- ✅ 위치찾기 기능 -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
-      <div style="padding:8px;">
-        <input type="number" id="latInput" placeholder="위도" step="0.0001" style="width:100%; margin-bottom:6px;">
-        <input type="number" id="lngInput" placeholder="경도" step="0.0001" style="width:100%; margin-bottom:6px;">
-        <button onclick="moveToLatLng()" style="width:100%;">확인</button>
+      <div style="padding:10px; display:flex; flex-direction:column; gap:10px;">
+        <input type="number" id="latInput" placeholder="위도 입력" step="0.0001" 
+               style="width:100%; font-size:18px; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input type="number" id="lngInput" placeholder="경도 입력" step="0.0001" 
+               style="width:100%; font-size:18px; padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <button onclick="moveToLatLng()" 
+                style="font-size:18px; padding:10px; border:none; border-radius:6px; background:#3949ab; color:#fff; cursor:pointer;">
+          확인
+        </button>
       </div>
     </div>
   </div>
@@ -567,15 +577,14 @@
     <div class="dropdown-item">
       <strong>갱신 주기 설정</strong><br>
       <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <!-- 숫자 입력 박스 폭을 줄임 -->
         <input type="number" id="intervalValue" value="5" min="1" 
-               style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
+               style="width:80px; font-size:18px; padding:8px;">
+        <select id="intervalUnit" style="font-size:18px; padding:8px;">
           <option value="minutes">분</option>
           <option value="seconds">초</option>
         </select>
         <button onclick="setCustomInterval()" 
-                style="font-size:18px; padding:6px 12px;">적용</button>
+                style="font-size:18px; padding:8px 14px;">적용</button>
       </div>
     </div>
 
@@ -594,23 +603,18 @@
       <h3 id="user-panel-title">사용자 정보</h3>
       <button id="close-user-panel">✖ 닫기</button>
     </div>
-    <!-- 경로 선택 드롭다운 -->
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
     <!-- 사용자 목록 테이블 -->
     <div id="user-content">
       <table id="user-table">
         <thead>
           <tr>
-            <th>이름</th>
-            <th>전화번호</th>
-            <th>차량번호</th>
+            <th>닉네임</th>
             <th>상태</th>
-            <th>권한</th>
+            <th>기록 시간</th>
+            <th>업데이트</th>
+            <th>주소</th>
+            <th>위도</th>  
+            <th>경도</th>  
             <th>위치</th>
           </tr>
         </thead>
