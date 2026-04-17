@@ -15,15 +15,15 @@
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData(token = null) {
     try {
-      // 🚗 관리자 서버 호출 URL 구성
-      let url = CONFIG.ADMIN_URL + "?mode=getLocations";  // ✅ "/data" 제거
-      if (token) {
-        url += "&token=" + encodeURIComponent(token);
-      }
-  
+      let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+      if (token) url += "&token=" + encodeURIComponent(token);
+
       const response = await fetch(url);
       allData = await response.json();
-  
+
+      // 드롭다운 갱신
+      populatePathSelect();
+
       // 데이터 정상 수신 후 지도 표시
       showMap();
     } catch (err) {
@@ -33,7 +33,6 @@
   }
 
   /* ---------------------- 지도 초기화 보조 ---------------------- */
-  // 기존 마커, 폴리라인, 클러스터 제거
   function clearMap() {
     if (markerCluster) {
       markerCluster.clearMarkers();
@@ -51,33 +50,52 @@
     if (!map) return;
 
     if (mode === "current") {
-      // ✅ phone 기준으로 최신 위치만 표시
+      const now = new Date();
       const latestByUser = {};
-      allData.forEach(row => {
-        const key = row[1]; // phone
-        if (!latestByUser[key] || new Date(row[0]) > new Date(latestByUser[key][0])) {
-          latestByUser[key] = row;
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
         }
       });
       Object.values(latestByUser).forEach(user => {
         const marker = new google.maps.Marker({
-          position: { lat: parseFloat(user[3]), lng: parseFloat(user[4]) },
+          position: { lat: user.lat, lng: user.lng },
           map: map,
           icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: `${user[1]} (${user[2]}, ${user[0]})`
+          title: `${user.phone} (${user.status}, ${user.updated})`
         });
         markers.push(marker);
       });
+
+    } else if (mode === "all") {
+      allData.forEach(user => {
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          title: `${user.phone} (${user.status}, ${user.time})`
+        });
+        markers.push(marker);
+      });
+
     } else if (mode === "paths") {
-      // ✅ paths 모드일 때만 열 방향 좌표쌍을 Polyline으로 표시
-      allData.forEach(row => {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
+      }
+
+      users.forEach(user => {
         const pathCoords = [];
-        for (let j = 8; j < row.length; j += 2) {
-          const lat = row[j];
-          const lng = row[j + 1];
-          if (lat && lng) {
-            pathCoords.push({ lat: parseFloat(lat), lng: parseFloat(lng) });
-          }
+        for (let j = 0; j < user.path.length; j += 2) {
+          const lat = user.path[j];
+          const lng = user.path[j + 1];
+          if (lat && lng) pathCoords.push({ lat, lng });
         }
         if (pathCoords.length > 0) {
           const polyline = new google.maps.Polyline({
@@ -89,12 +107,12 @@
             map: map
           });
           polylines.push(polyline);
-          // 마지막 좌표에 마커 표시
+
           const last = pathCoords[pathCoords.length - 1];
           const marker = new google.maps.Marker({
             position: last,
             map: map,
-            title: `${row[1]} / ${row[0]}`,
+            title: `${user.phone} / ${user.updated}`,
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
           });
           markers.push(marker);
@@ -102,77 +120,95 @@
       });
     }
 
-    if (document.getElementById("clusterOption").checked) {
+    if (document.getElementById("clusterOption")?.checked) {
       markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
     }
     updateUserPanelContent(mode);
   }
 
-/* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-function updateUserPanelContent(viewMode = "current") {
-  const panel = document.getElementById("user-content");
-  panel.innerHTML = "";
+  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+  function updateUserPanelContent(viewMode = "current") {
+    const panel = document.getElementById("user-content");
+    panel.innerHTML = "";
 
-  if (viewMode === "current") {
-    const latestByUser = {};
-    allData.forEach(user => {
-      const key = user.phone;
-      if (!latestByUser[key] || new Date(user.time) > new Date(latestByUser[key].time)) {
-        latestByUser[key] = user;
-      }
-    });
-    if (Object.keys(latestByUser).length === 0) {
-      panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
-      return;
-    }
-    Object.values(latestByUser).forEach(user => {
-      panel.innerHTML += `
-        <div class="user-card">
-          <div class="user-name">👤 ${user.phone}</div>
-          📍 위치: ${user.address}<br>
-          🕒 최초 입력: ${user.time}<br>
-          🕒 마지막 갱신: ${user.updated}<br>
-          상태: ${user.status}<br>
-          좌표: (${user.lat}, ${user.lng})
-        </div>
-      `;
-    });
-  } else if (viewMode === "all") {
-    allData.forEach(user => {
-      panel.innerHTML += `
-        <div class="user-card">
-          <div class="user-name">👤 ${user.phone}</div>
-          📍 위치: ${user.address}<br>
-          🕒 입력: ${user.time}<br>
-          상태: ${user.status}<br>
-          좌표: (${user.lat}, ${user.lng})
-        </div>
-      `;
-    });
-  } else if (viewMode === "paths") {
-    allData.forEach(user => {
-      let pathHtml = "";
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) {
-          pathHtml += `(${lat}, ${lng})<br>`;
+    if (viewMode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
         }
+      });
+      if (Object.keys(latestByUser).length === 0) {
+        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
+        return;
       }
-      panel.innerHTML += `
-        <div class="user-card">
-          <div class="user-name">👤 ${user.phone}</div>
-          📍 위치: ${user.address}<br>
-          🕒 입력: ${user.time}<br>
-          상태: ${user.status}<br>
-          좌표: (${user.lat}, ${user.lng})<br>
-          <strong>경로 누적:</strong><br>
-          ${pathHtml || "경로 없음"}
-        </div>
-      `;
+      Object.values(latestByUser).forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+
+    } else if (viewMode === "all") {
+      allData.forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 입력: ${user.time}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+
+    } else if (viewMode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
+      }
+
+      users.forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 입력: ${user.time}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+    }
+  }
+
+  /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
+  function populatePathSelect() {
+    const select = document.getElementById("path-user-select");
+    if (!select) return;
+
+    select.innerHTML = `<option value="all">전체</option>`;
+    const phones = [...new Set(allData.map(u => u.phone))];
+    phones.forEach(phone => {
+      const opt = document.createElement("option");
+      opt.value = phone;
+      opt.textContent = phone;
+      select.appendChild(opt);
     });
   }
-}
 
   /* ---------------------- 갱신 주기 설정 ---------------------- */
   function setCustomInterval() {
@@ -190,13 +226,14 @@ function updateUserPanelContent(viewMode = "current") {
     showMessage(`✅ 갱신 주기가 ${value} ${unit}로 변경되었습니다.`);
   }
 
-  // 메시지를 화면에 표시하는 함수
+    // 메시지를 화면에 표시하는 함수  
   function showMessage(text) {
     const msgBox = document.getElementById("message-box");
     msgBox.innerText = text;
     msgBox.style.display = "block";
     setTimeout(() => msgBox.style.display = "none", 3000); // 3초 후 자동 숨김
   }
+
 
   <!-- 2. 사용자 코드 -->
   // HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
@@ -223,22 +260,23 @@ function updateUserPanelContent(viewMode = "current") {
     window.openUserPanel = function(viewMode) {
       connectionPanel.classList.remove("open");
       userPanel.classList.add("open");
+      mode = viewMode; // 선택된 모드 반영
+      showMap();
       updateUserPanelContent(viewMode);
     };
-  
+
     window.closeUserPanel = function() {
       userPanel.classList.remove("open");
     };
-  
-    /* ---------------------- 초기 실행 ---------------------- */
+
     function getMapIdByDevice() {
       const ua = navigator.userAgent.toLowerCase();
       if (/android/.test(ua)) return CONFIG.mapIds.android;
       if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
       if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
-      return CONFIG.mapIds.fixed; // 기본값
+      return CONFIG.mapIds.fixed;
     }
-  
+
     function initMap() {
       const mapId = getMapIdByDevice();
       map = new google.maps.Map(document.getElementById("map"), {
@@ -246,7 +284,7 @@ function updateUserPanelContent(viewMode = "current") {
         zoom: 7,
         mapId: mapId
       });
-  
+
       // 내 위치 표시
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -259,13 +297,13 @@ function updateUserPanelContent(viewMode = "current") {
           }
         );
       }
-  
+
       // 닫기 버튼 이벤트 연결
       const closeBtn = document.getElementById("close-user-panel");
       if (closeBtn) {
         closeBtn.addEventListener("click", window.closeUserPanel);
       }
-  
+
       // 외부 클릭 시 패널 닫기
       document.addEventListener("click", function(e) {
         if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
@@ -275,15 +313,14 @@ function updateUserPanelContent(viewMode = "current") {
           settingsPanel.classList.remove("open");
         }
       });
-  
+
       // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
       loadData();
       intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
     }
-  
+
     // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
     window.initMap = initMap;
-  
   });
   </script>
 
@@ -295,37 +332,48 @@ function updateUserPanelContent(viewMode = "current") {
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
   </script>
 
-  <!-- 스타일 -->
-  <style>
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
-    #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
-               display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
-    #menu-buttons { display:flex; gap:20px; margin-top:4px; }
-    .menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none;
-                display:flex; align-items:center; gap:6px; }
-    .icon { font-size:16px; }
-    #title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
-    #map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
+<!-- 스타일 -->
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
+  #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
+             display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
+  #menu-buttons { display:flex; gap:20px; margin-top:4px; }
+  .menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none;
+              display:flex; align-items:center; gap:6px; }
+  .icon { font-size:16px; }
+  #title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
+  #map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
 
-    .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
-                      display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-    .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
-    .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
-    .dropdown-item:hover { background:#f0f0f0; }
+  .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
+                    display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
+  .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
+  .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
+  .dropdown-item:hover { background:#f0f0f0; }
 
-    #user-panel { position:absolute; top:50px; right:0; width:320px; height:calc(100% - 50px); background:white;
-                  border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
-    #user-panel.open { display:block; }
-    .panel-header { display:flex; justify-content:space-between; align-items:center; }
-    #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
-                        border-radius:4px; font-size:14px; }
-    #close-user-panel:hover { background:#c62828; }
-    #user-panel h3 { margin:0; }
+  #user-panel { position:absolute; top:50px; right:0; width:340px; height:calc(100% - 50px); background:white;
+                border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
+  #user-panel.open { display:block; }
+  .panel-header { display:flex; justify-content:space-between; align-items:center; }
+  #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
+                      border-radius:4px; font-size:14px; }
+  #close-user-panel:hover { background:#c62828; }
+  #user-panel h3 { margin:0; }
 
-    /* 메시지 박스 */
-    #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-                   background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; }
-  </style>
+  /* 사용자 카드 */
+  .user-card { 
+    border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:12px; 
+    background:#fafafa; font-size:14px; line-height:1.4; 
+  }
+  .user-name { font-weight:bold; margin-bottom:6px; }
+
+  /* 경로 선택 드롭다운 */
+  #path-select-container { margin:10px 0; }
+  #path-user-select { width:100%; padding:6px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+
+  /* 메시지 박스 */
+  #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+                 background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; }
+</style>
 </head>
 
 <body>
@@ -376,13 +424,20 @@ function updateUserPanelContent(viewMode = "current") {
       <h3>사용자 정보</h3>
       <button id="close-user-panel">✖ 닫기</button>
     </div>
+    <!-- 경로 선택 드롭다운 -->
+    <div id="path-select-container">
+      <label for="path-user-select">경로 보기 선택:</label>
+      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+        <option value="all">전체</option>
+      </select>
+    </div>
     <div id="user-content"></div>
   </div>
 
   <!-- 지도 영역 -->
   <div id="map"></div>
 
-  <!-- 메시지 박스 (갱신 주기 변경 알림 등) -->
+  <!-- 메시지 박스 -->
   <div id="message-box"></div>
 </body>
 </html>
