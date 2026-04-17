@@ -7,7 +7,7 @@
   <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
   <script src="config.js"></script>
 
-  <!-- 2. 사용자 코드: initMap(), showMap(), loadData() 등 -->
+  <!-- 2. 사용자 코드 -->
   <script>
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
@@ -20,54 +20,62 @@
       if (token) {
         url += "&token=" + encodeURIComponent(token);
       }
-  
       const response = await fetch(url);
       allData = await response.json();
-  
       showMap();
     } catch (err) {
       console.error("데이터 로드 실패:", err);
-      alert("데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+      showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
     }
   }
 
-  /* ---------------------- 지도 초기화 ---------------------- */
+  /* ---------------------- 지도 초기화 보조 ---------------------- */
+  // 기존 마커, 폴리라인, 클러스터 제거
+  function clearMap() {
+    if (markerCluster) {
+      markerCluster.clearMarkers();
+      markerCluster = null;
+    }
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    polylines.forEach(p => p.setMap(null));
+    polylines = [];
+  }
+
+  /* ---------------------- 지도 표시 ---------------------- */
   function showMap() {
     clearMap();
     if (!map) return;
-  
+
     if (mode === "current") {
       // ✅ phone 기준으로 최신 위치만 표시
       const latestByUser = {};
-      allData.forEach(item => {
-        const key = item.phone;
-        if (!latestByUser[key] || new Date(item.time) > new Date(latestByUser[key].time)) {
-          latestByUser[key] = item;
+      allData.forEach(row => {
+        const key = row[1]; // phone
+        if (!latestByUser[key] || new Date(row[0]) > new Date(latestByUser[key][0])) {
+          latestByUser[key] = row;
         }
       });
-  
       Object.values(latestByUser).forEach(user => {
         const marker = new google.maps.Marker({
-          position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
+          position: { lat: parseFloat(user[3]), lng: parseFloat(user[4]) },
           map: map,
           icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: `${user.phone} (${user.status}, ${user.time})`
+          title: `${user[1]} (${user[2]}, ${user[0]})`
         });
         markers.push(marker);
       });
-  
     } else if (mode === "paths") {
-      // ✅ paths 모드일 때만 path 좌표쌍을 Polyline으로 표시
-      allData.forEach(item => {
+      // ✅ paths 모드일 때만 열 방향 좌표쌍을 Polyline으로 표시
+      allData.forEach(row => {
         const pathCoords = [];
-        for (let i = 0; i < item.path.length; i += 2) {
-          const lat = item.path[i];
-          const lng = item.path[i + 1];
+        for (let j = 8; j < row.length; j += 2) {
+          const lat = row[j];
+          const lng = row[j + 1];
           if (lat && lng) {
             pathCoords.push({ lat: parseFloat(lat), lng: parseFloat(lng) });
           }
         }
-  
         if (pathCoords.length > 0) {
           const polyline = new google.maps.Polyline({
             path: pathCoords,
@@ -78,27 +86,22 @@
             map: map
           });
           polylines.push(polyline);
-  
           // 마지막 좌표에 마커 표시
           const last = pathCoords[pathCoords.length - 1];
           const marker = new google.maps.Marker({
             position: last,
             map: map,
-            title: `${item.phone} / ${item.time}`,
+            title: `${row[1]} / ${row[0]}`,
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
           });
           markers.push(marker);
         }
       });
     }
-  
+
     if (document.getElementById("clusterOption").checked) {
-      markerCluster = new markerClusterer.MarkerClusterer({ 
-        map: map, 
-        markers: markers 
-      });
+      markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
     }
-  
     updateUserPanelContent(mode);
   }
 
@@ -109,56 +112,61 @@
 
     if (viewMode === "current") {
       const latestByUser = {};
-      allData.forEach(item => {
-        if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-          latestByUser[item.name] = item;
+      allData.forEach(row => {
+        const key = row[1];
+        if (!latestByUser[key] || new Date(row[0]) > new Date(latestByUser[key][0])) {
+          latestByUser[key] = row;
         }
       });
-
       if (Object.keys(latestByUser).length === 0) {
         panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
         return;
       }
-
-      Object.values(latestByUser).forEach(latest => {
+      Object.values(latestByUser).forEach(user => {
         panel.innerHTML += `
           <div class="user-card">
-            <div class="user-name">👤 ${latest.name}</div>
-            📍 위치: ${latest.location}<br>
-            🕒 최초 입력: ${latest.connectTime}<br>
-            🕒 마지막 갱신: ${latest.time}<br>
-            상태: ${latest.status}<br>
-            좌표: (${latest.lat}, ${latest.lng})
+            <div class="user-name">👤 ${user[1]}</div>
+            📍 위치: ${user[6]}<br>
+            🕒 최초 입력: ${user[0]}<br>
+            🕒 마지막 갱신: ${user[5]}<br>
+            상태: ${user[2]}<br>
+            좌표: (${user[3]}, ${user[4]})
           </div>
         `;
       });
-
     } else if (viewMode === "all") {
-      allData.forEach(item => {
+      allData.forEach(row => {
         panel.innerHTML += `
           <div class="user-card">
-            <div class="user-name">👤 ${item.name}</div>
-            📍 위치: ${item.location}<br>
-            🕒 입력: ${item.time}<br>
-            상태: ${item.status}<br>
-            좌표: (${item.lat}, ${item.lng})
+            <div class="user-name">👤 ${row[1]}</div>
+            📍 위치: ${row[6]}<br>
+            🕒 입력: ${row[0]}<br>
+            상태: ${row[2]}<br>
+            좌표: (${row[3]}, ${row[4]})
           </div>
         `;
       });
-
-    } else if (viewMode === "detail") {
-      const grouped = {};
-      allData.forEach(item => {
-        if (!grouped[item.name]) grouped[item.name] = [];
-        grouped[item.name].push(item);
-      });
-
-      Object.entries(grouped).forEach(([name, records]) => {
-        panel.innerHTML += `<div class="user-card"><strong>${name}</strong><br>`;
-        records.forEach(r => {
-          panel.innerHTML += `🕒 ${r.time} | ${r.status} | (${r.lat}, ${r.lng})<br>`;
-        });
-        panel.innerHTML += `</div>`;
+    } else if (viewMode === "paths") {
+      allData.forEach(row => {
+        let pathHtml = "";
+        for (let j = 8; j < row.length; j += 2) {
+          const lat = row[j];
+          const lng = row[j + 1];
+          if (lat && lng) {
+            pathHtml += `(${lat}, ${lng})<br>`;
+          }
+        }
+        panel.innerHTML += `
+          <div class="user-card">
+            <div class="user-name">👤 ${row[1]}</div>
+            📍 위치: ${row[6]}<br>
+            🕒 입력: ${row[0]}<br>
+            상태: ${row[2]}<br>
+            좌표: (${row[3]}, ${row[4]})<br>
+            <strong>경로 누적:</strong><br>
+            ${pathHtml || "경로 없음"}
+          </div>
+        `;
       });
     }
   }
@@ -169,14 +177,22 @@
     const unit = document.getElementById("intervalUnit").value;
 
     if (isNaN(value) || value <= 0) {
-      alert("1 이상의 값을 입력하세요.");
+      showMessage("⚠️ 1 이상의 값을 입력하세요.");
       return;
     }
 
     let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
     clearInterval(intervalId);
     intervalId = setInterval(loadData, newInterval);
-    alert("갱신 주기가 변경되었습니다.");
+    showMessage(`✅ 갱신 주기가 ${value} ${unit}로 변경되었습니다.`);
+  }
+
+  // 메시지를 화면에 표시하는 함수
+  function showMessage(text) {
+    const msgBox = document.getElementById("message-box");
+    msgBox.innerText = text;
+    msgBox.style.display = "block";
+    setTimeout(() => msgBox.style.display = "none", 3000); // 3초 후 자동 숨김
   }
 
   /* ---------------------- 패널 동작 ---------------------- */
@@ -187,27 +203,23 @@
   const userPanel = document.getElementById("user-panel");
 
   btnConnection.onclick = () => {
-    settingsPanel.style.display = "none";
-    connectionPanel.style.left = btnConnection.getBoundingClientRect().left + "px";
-    connectionPanel.style.display =
-      connectionPanel.style.display === "block" ? "none" : "block";
+    settingsPanel.classList.remove("open");
+    connectionPanel.classList.toggle("open");
   };
 
   btnSettings.onclick = () => {
-    connectionPanel.style.display = "none";
-    settingsPanel.style.left = btnSettings.getBoundingClientRect().left + "px";
-    settingsPanel.style.display =
-      settingsPanel.style.display === "block" ? "none" : "block";
+    connectionPanel.classList.remove("open");
+    settingsPanel.classList.toggle("open");
   };
 
   function openUserPanel(viewMode) {
-    connectionPanel.style.display = "none";
-    userPanel.style.display = "block";
+    connectionPanel.classList.remove("open");
+    userPanel.classList.add("open");
     updateUserPanelContent(viewMode);
   }
 
   function closeUserPanel() {
-    userPanel.style.display = "none";
+    userPanel.classList.remove("open");
   }
 
   /* ---------------------- 초기 실행 ---------------------- */
@@ -221,7 +233,6 @@
 
   function initMap() {
     const mapId = getMapIdByDevice();
-
     map = new google.maps.Map(document.getElementById("map"), {
       center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
       zoom: 7,
@@ -240,7 +251,7 @@
         }
       );
     }
-    
+
     // 닫기 버튼 이벤트 연결
     const closeBtn = document.getElementById("close-user-panel");
     if (closeBtn) {
@@ -250,10 +261,10 @@
     // 외부 클릭 시 패널 닫기
     document.addEventListener("click", function(e) {
       if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.style.display = "none";
+        connectionPanel.classList.remove("open");
       }
       if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.style.display = "none";
+        settingsPanel.classList.remove("open");
       }
     });
 
@@ -268,125 +279,39 @@
 
   <!-- 4. Google Maps API는 맨 마지막 -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
   </script>
 
   <!-- 스타일 -->
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
+    html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
+    #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
+               display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
+    #menu-buttons { display:flex; gap:20px; margin-top:4px; }
+    .menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none;
+                display:flex; align-items:center; gap:6px; }
+    .icon { font-size:16px; }
+    #title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
+    #map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
 
-    #top-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 50px;
-      background: #1a237e;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1000;
-      padding: 0 20px;
-    }
+    .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
+                      display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
+    .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
+    .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
+    .dropdown-item:hover { background:#f0f0f0; }
 
-    #menu-buttons {
-      display: flex;
-      gap: 20px;
-      margin-top: 4px;
-    }
+    #user-panel { position:absolute; top:50px; right:0; width:320px; height:calc(100% - 50px); background:white;
+                  border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
+    #user-panel.open { display:block; }
+    .panel-header { display:flex; justify-content:space-between; align-items:center; }
+    #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
+                        border-radius:4px; font-size:14px; }
+    #close-user-panel:hover { background:#c62828; }
+    #user-panel h3 { margin:0; }
 
-    .menu-btn {
-      cursor: pointer;
-      padding: 6px 12px;
-      background: #3949ab;
-      border-radius: 4px;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .icon { font-size: 16px; }
-
-    #title {
-      font-size: 20px;
-      font-weight: bold;
-      text-align: right;
-      margin-right: 50px;
-    }
-
-    #map {
-      position: absolute;
-      top: 50px;
-      left: 0;
-      width: 100%;
-      height: calc(100% - 50px);
-      background: #ddd;
-      z-index: 1;
-    }
-
-    .dropdown-panel {
-      position: absolute;
-      top: 50px;
-      background: white;
-      border: 1px solid #ccc;
-      width: 260px;
-      display: none;
-      z-index: 2000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      padding: 10px 0;
-    }
-
-    .dropdown-item {
-      padding: 12px 18px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .dropdown-item:hover { background: #f0f0f0; }
-
-    #user-panel {
-      position: absolute;
-      top: 50px;
-      right: 0;
-      width: 320px;
-      height: calc(100% - 50px);
-      background: white;
-      border-left: 1px solid #ccc;
-      display: none;
-      z-index: 3000;
-      padding: 15px;
-      overflow-y: auto;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #close-user-panel {
-      background: #e53935;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      cursor: pointer;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    #close-user-panel:hover { background: #c62828; }
-
-    #user-panel h3 { margin: 0; }
+    /* 메시지 박스 */
+    #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+                   background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; }
   </style>
 </head>
 
@@ -394,12 +319,8 @@
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
-      <div id="btn-connection" class="menu-btn">
-        <span class="icon">📡</span> 접속현황
-      </div>
-      <div id="btn-settings" class="menu-btn">
-        <span class="icon">⚙️</span> 환경설정
-      </div>
+      <div id="btn-connection" class="menu-btn"><span class="icon">📡</span> 접속현황</div>
+      <div id="btn-settings" class="menu-btn"><span class="icon">⚙️</span> 환경설정</div>
     </div>
     <div id="title">A-DOMES | 위치정보시스템</div>
   </div>
@@ -408,7 +329,7 @@
   <div id="connection-panel" class="dropdown-panel">
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
-    <div class="dropdown-item" onclick="openUserPanel('detail')">사용자별 상세 보기</div>
+    <div class="dropdown-item" onclick="openUserPanel('paths')">경로 보기</div>
   </div>
 
   <!-- 환경설정 패널 -->
@@ -416,7 +337,7 @@
     <div class="dropdown-item" onclick="mode='current'; showMap(); openUserPanel('current')">
       현재 위치 보기
     </div>
-    <div class="dropdown-item" onclick="mode='paths'; showMap(); openUserPanel('detail')">
+    <div class="dropdown-item" onclick="mode='paths'; showMap(); openUserPanel('paths')">
       경로 보기
     </div>
     <div class="dropdown-item">
@@ -447,7 +368,8 @@
 
   <!-- 지도 영역 -->
   <div id="map"></div>
+
+  <!-- 메시지 박스 (갱신 주기 변경 알림 등) -->
+  <div id="message-box"></div>
 </body>
 </html>
-
-
