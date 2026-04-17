@@ -13,10 +13,17 @@
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 
   /* ---------------------- 데이터 로딩 ---------------------- */
-  async function loadData() {
+  async function loadData(token = null) {
     try {
-      const response = await fetch(CONFIG.ADMIN_URL + "/data"); // config.js의 ADMIN_URL 사용
+      // 🚗 관리자 서버 호출 URL 구성
+      let url = CONFIG.ADMIN_URL + "/data?mode=getLocations";
+      if (token) {
+        url += "&token=" + encodeURIComponent(token);
+      }
+  
+      const response = await fetch(url);
       allData = await response.json();
+  
       showMap();
     } catch (err) {
       console.error("데이터 로드 실패:", err);
