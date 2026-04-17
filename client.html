@@ -263,8 +263,20 @@
       mode = viewMode; // 선택된 모드 반영
       showMap();
       updateUserPanelContent(viewMode);
+    
+      // 제목 변경
+      const titleEl = document.getElementById("user-panel-title");
+      if (viewMode === "current") {
+        titleEl.textContent = "현재 접속자 보기";
+      } else if (viewMode === "all") {
+        titleEl.textContent = "전체 사용자 보기";
+      } else if (viewMode === "paths") {
+        titleEl.textContent = "경로 보기";
+      } else {
+        titleEl.textContent = "사용자 정보";
+      }
     };
-
+    
     window.closeUserPanel = function() {
       userPanel.classList.remove("open");
     };
@@ -438,7 +450,7 @@
   <!-- 사용자 정보 패널 -->
   <div id="user-panel">
     <div class="panel-header">
-      <h3>사용자 정보</h3>
+      <h3 id="user-panel-title">사용자 정보</h3>
       <button id="close-user-panel">✖ 닫기</button>
     </div>
     <!-- 경로 선택 드롭다운 -->
