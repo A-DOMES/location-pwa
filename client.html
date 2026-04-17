@@ -15,7 +15,7 @@
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData() {
     try {
-      const response = await fetch(CONFIG.USER_URL + "/data"); // config.js의 USER_URL 사용
+      const response = await fetch(CONFIG.ADMIN_URL + "/data"); // config.js의 ADMIN_URL 사용
       allData = await response.json();
       showMap();
     } catch (err) {
