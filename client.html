@@ -195,83 +195,92 @@
     setTimeout(() => msgBox.style.display = "none", 3000); // 3초 후 자동 숨김
   }
 
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
+  <!-- 2. 사용자 코드 -->
+  // HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
+  document.addEventListener("DOMContentLoaded", () => {
 
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
+    /* ---------------------- 패널 동작 ---------------------- */
+    const btnConnection = document.getElementById("btn-connection");
+    const btnSettings = document.getElementById("btn-settings");
+    const connectionPanel = document.getElementById("connection-panel");
+    const settingsPanel = document.getElementById("settings-panel");
+    const userPanel = document.getElementById("user-panel");
 
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
+    btnConnection.onclick = () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
+    };
 
-  function openUserPanel(viewMode) {
-    connectionPanel.classList.remove("open");
-    userPanel.classList.add("open");
-    updateUserPanelContent(viewMode);
-  }
+    btnSettings.onclick = () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    };
 
-  function closeUserPanel() {
-    userPanel.classList.remove("open");
-  }
+    function openUserPanel(viewMode) {
+      connectionPanel.classList.remove("open");
+      userPanel.classList.add("open");
+      updateUserPanelContent(viewMode);
+    }
 
-  /* ---------------------- 초기 실행 ---------------------- */
-  function getMapIdByDevice() {
-    const ua = navigator.userAgent.toLowerCase();
-    if (/android/.test(ua)) return CONFIG.mapIds.android;
-    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
-    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
-    return CONFIG.mapIds.fixed; // 기본값
-  }
+    function closeUserPanel() {
+      userPanel.classList.remove("open");
+    }
 
-  function initMap() {
-    const mapId = getMapIdByDevice();
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapId: mapId
-    });
+    /* ---------------------- 초기 실행 ---------------------- */
+    function getMapIdByDevice() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/android/.test(ua)) return CONFIG.mapIds.android;
+      if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+      if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
+      return CONFIG.mapIds.fixed; // 기본값
+    }
 
-    // 내 위치 표시
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
-        },
-        () => {
-          new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
+    function initMap() {
+      const mapId = getMapIdByDevice();
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
+        zoom: 7,
+        mapId: mapId
+      });
+
+      // 내 위치 표시
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
+          },
+          () => {
+            new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
+          }
+        );
+      }
+
+      // 닫기 버튼 이벤트 연결
+      const closeBtn = document.getElementById("close-user-panel");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", closeUserPanel);
+      }
+
+      // 외부 클릭 시 패널 닫기
+      document.addEventListener("click", function(e) {
+        if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+          connectionPanel.classList.remove("open");
         }
-      );
+        if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+          settingsPanel.classList.remove("open");
+        }
+      });
+
+      // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
+      loadData();
+      intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
     }
 
-    // 닫기 버튼 이벤트 연결
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", closeUserPanel);
-    }
+    // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
+    window.initMap = initMap;
 
-    // 외부 클릭 시 패널 닫기
-    document.addEventListener("click", function(e) {
-      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.classList.remove("open");
-      }
-      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.classList.remove("open");
-      }
-    });
-
-    // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
-  }
+  });
   </script>
 
   <!-- 3. MarkerClusterer 라이브러리 -->
