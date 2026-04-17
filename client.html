@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
-  // ✅ 전역으로 노출해야 인라인 onclick에서 접근 가능
+  // ✅ 접속현황 패널 열기
   window.openUserPanel = function(viewMode) {
     connectionPanel.classList.remove("open");
     userPanel.classList.add("open");
@@ -365,6 +365,30 @@ document.addEventListener("DOMContentLoaded", () => {
     msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
     msgBox.style.display = "block";
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+  };
+
+  /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+  window.renderUserTable = function(users) {
+    const tbody = document.getElementById("user-table-body");
+    tbody.innerHTML = "";
+
+    users.forEach(user => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${user.name}</td>
+        <td>${user.phone}</td>
+        <td>${user.carNo}</td>
+        <td>${user.status}</td>
+        <td>${user.role}</td>
+        <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+  };
+
+  window.focusOnUser = function(lat, lng) {
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
   };
 });
 </script>
@@ -498,6 +522,20 @@ document.addEventListener("DOMContentLoaded", () => {
   input:checked + .slider:before {
     transform: translateX(24px);
   }
+  /* 사용자 테이블 */
+  #user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  #user-table th, #user-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  #user-table th {
+    background: #f5f5f5;
+  }
 </style>
 </head>
 
@@ -552,26 +590,43 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
-    </div>
-    <!-- 경로 선택 드롭다운 -->
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
-    <div id="user-content"></div>
+<!-- 사용자 정보 패널 -->
+<div id="user-panel">
+  <div class="panel-header">
+    <h3 id="user-panel-title">사용자 정보</h3>
+    <button id="close-user-panel">✖ 닫기</button>
   </div>
+  <!-- 경로 선택 드롭다운 -->
+  <div id="path-select-container">
+    <label for="path-user-select">경로 보기 선택:</label>
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
+    </select>
+  </div>
+  <!-- 사용자 목록 테이블 -->
+  <div id="user-content">
+    <table id="user-table">
+      <thead>
+        <tr>
+          <th>이름</th>
+          <th>전화번호</th>
+          <th>차량번호</th>
+          <th>상태</th>
+          <th>권한</th>
+          <th>위치</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <!-- JS에서 사용자 목록을 동적으로 추가 -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
-  <!-- 지도 영역 -->
-  <div id="map"></div>
+<!-- 지도 영역 -->
+<div id="map"></div>
 
-  <!-- 메시지 박스 -->
-  <div id="message-box"></div>
+<!-- 메시지 박스 -->
+<div id="message-box"></div>
 </body>
 </html>
