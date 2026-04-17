@@ -32,84 +32,75 @@
   }
 
   /* ---------------------- 지도 초기화 ---------------------- */
-  function clearMap() {
-    markers.forEach(m => m.setMap(null)); markers = [];
-    polylines.forEach(p => p.setMap(null)); polylines = [];
-    if (markerCluster) markerCluster.clearMarkers();
-  }
-
   function showMap() {
     clearMap();
     if (!map) return;
-
+  
     if (mode === "current") {
+      // ✅ phone 기준으로 최신 위치만 표시
       const latestByUser = {};
       allData.forEach(item => {
-        if (!latestByUser[item.name] || new Date(item.time) > new Date(latestByUser[item.name].time)) {
-          latestByUser[item.name] = item;
+        const key = item.phone;
+        if (!latestByUser[key] || new Date(item.time) > new Date(latestByUser[key].time)) {
+          latestByUser[key] = item;
         }
       });
-
+  
       Object.values(latestByUser).forEach(user => {
         const marker = new google.maps.Marker({
           position: { lat: parseFloat(user.lat), lng: parseFloat(user.lng) },
           map: map,
           icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: `${user.name} (${user.status}, ${user.time})`
+          title: `${user.phone} (${user.status}, ${user.time})`
         });
         markers.push(marker);
       });
-
+  
     } else if (mode === "paths") {
-      const grouped = {};
+      // ✅ paths 모드일 때만 path 좌표쌍을 Polyline으로 표시
       allData.forEach(item => {
-        if (!grouped[item.name]) grouped[item.name] = [];
-        grouped[item.name].push(item);
-      });
-
-      Object.values(grouped).forEach(records => {
-        records.sort((a, b) => new Date(a.time) - new Date(b.time));
-        let data = records;
-        if (document.getElementById("limitOption").checked) {
-          data = data.slice(-50);
+        const pathCoords = [];
+        for (let i = 0; i < item.path.length; i += 2) {
+          const lat = item.path[i];
+          const lng = item.path[i + 1];
+          if (lat && lng) {
+            pathCoords.push({ lat: parseFloat(lat), lng: parseFloat(lng) });
+          }
         }
-
-        const pathCoords = data.map(item => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lng) }));
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        polylines.push(polyline);
-
-        data.forEach((d, idx) => {
+  
+        if (pathCoords.length > 0) {
+          const polyline = new google.maps.Polyline({
+            path: pathCoords,
+            geodesic: true,
+            strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: map
+          });
+          polylines.push(polyline);
+  
+          // 마지막 좌표에 마커 표시
+          const last = pathCoords[pathCoords.length - 1];
           const marker = new google.maps.Marker({
-            position: { lat: parseFloat(d.lat), lng: parseFloat(d.lng) },
+            position: last,
             map: map,
-            title: `${d.name} / ${d.time}`,
-            icon: idx === data.length - 1
-              ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-              : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            title: `${item.phone} / ${item.time}`,
+            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
           });
           markers.push(marker);
-        });
+        }
       });
     }
-
-    // ✅ 최신 MarkerClusterer 문법 적용
+  
     if (document.getElementById("clusterOption").checked) {
       markerCluster = new markerClusterer.MarkerClusterer({ 
         map: map, 
         markers: markers 
       });
     }
-
+  
     updateUserPanelContent(mode);
   }
-
 
   /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
   function updateUserPanelContent(viewMode = "current") {
