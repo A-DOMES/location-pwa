@@ -531,30 +531,37 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   };
 
-  /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-  window.renderUserTable = function(users) {
-    const tbody = document.getElementById("user-table-body");
-    tbody.innerHTML = "";
+/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+window.renderUserTable = function(users) {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
 
-    users.forEach(user => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${user.name || "-"}</td>
-        <td>${user.phone}</td>
-        <td>${user.carNo || "-"}</td>
-        <td>${user.status}</td>
-        <td>${user.role || "-"}</td>
-        <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-  };
+  users.forEach(user => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${user.name || "-"}</td>
+      <td>${user.phone}</td>
+      <td>${user.carNo || "-"}</td>
+      <td>${user.status}</td>
+      <td>${user.role || "-"}</td>
+      <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+};
 
-  /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
-  window.focusOnUser = function(lat, lng) {
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(15);
-  };
+/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
+window.focusOnUser = function(lat, lng) {
+  map.setCenter({ lat: lat, lng: lng });
+  map.setZoom(15);
+};
+
+/* ---------------------- DOMContentLoaded 이벤트로 안전하게 이벤트 연결 ---------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const locationBtn = document.getElementById("location-check");
+  if (locationBtn) {
+    locationBtn.addEventListener("click", moveToLatLng);
+  }
 });
 </script>
 
@@ -615,6 +622,21 @@ document.addEventListener("DOMContentLoaded", () => {
       font-size: 18px;        /* 모바일에서는 글씨 조금 크게 */
     }
   }
+
+ /* 버튼 스타일 */ 
+.btn-check {
+  background-color: #4CAF50; /* 초록색 */
+  color: white;             /* 글자색 */
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-check:hover {
+  background-color: #45a049; /* 마우스 올렸을 때 조금 더 진한 초록 */
+}
+
   
 /* 사용자 카드 */
 .user-card { 
@@ -766,7 +788,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="location-search">
         <input type="number" id="latInput" placeholder="위도 입력" step="0.0001">
         <input type="number" id="lngInput" placeholder="경도 입력" step="0.0001">
-        <button onclick="moveToLatLng()">확인</button>
+        <button id="location-check" class="btn-check">확인</button> 
       </div>
     </div>
   </div>
