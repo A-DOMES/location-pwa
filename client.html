@@ -235,8 +235,8 @@
   }
 
 
-<!-- ✅ 지도 초기화 함수는 DOMContentLoaded 바깥에 두어야 Google Maps API에서 바로 호출 가능 -->
 // ---------------------- 지도 초기화 ----------------------
+// ✅ 지도 초기화 함수는 DOMContentLoaded 바깥에 두어야 Google Maps API에서 바로 호출 가능
 function initMap() {
   const mapId = getMapIdByDevice();
   map = new google.maps.Map(document.getElementById("map"), {
