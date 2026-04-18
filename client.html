@@ -571,7 +571,6 @@ window.focusOnUser = function(lat, lng) {
   </script>  
 
 
-  <!-- 스타일 -->
 <style>
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
   #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
@@ -585,100 +584,57 @@ window.focusOnUser = function(lat, lng) {
 
   .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
                     display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-  .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
+  .dropdown-panel.open { display:block; }
   .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
   .dropdown-item:hover { background:#e3f2fd; }
 
-  #user-panel { position:absolute; top:50px; right:0; width:360px; height:calc(100% - 50px); background:white;
+  #user-panel { position:absolute; top:50px; right:0; width:340px; height:calc(100% - 50px); background:white;
                 border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
   #user-panel.open { display:block; }
   .panel-header { display:flex; justify-content:space-between; align-items:center; }
   #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
                       border-radius:4px; font-size:14px; }
   #close-user-panel:hover { background:#c62828; }
-  #user-panel h3 { margin:0; }
 
-  /* 위치찾기 입력창 */
+  /* 위치찾기 입력창 (세로 배치 복원) */
   .location-search {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
+    display:flex;
+    flex-direction:column;   /* 세로 배치 */
+    gap:8px;
+    padding:8px;
   }
   .location-search input,
   .location-search button {
-    flex: 1;
-    font-size: 16px;
-    padding: 10px;
-    box-sizing: border-box;
+    width:100%;
+    font-size:15px;          /* 글씨 크기 적당히 */
+    padding:6px;             /* 높이 줄임 */
+    box-sizing:border-box;
   }
 
-  /* 버튼 스타일 */ 
-  .btn-check {
-    background-color: #4CAF50;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .btn-check:hover { background-color: #45a049; }
+  .btn-check { background:#4CAF50; color:white; padding:8px 16px; border:none; border-radius:4px; cursor:pointer; }
+  .btn-check:hover { background:#45a049; }
 
   /* 사용자 카드 */
-  .user-card { 
-    border: 1px solid #ddd; 
-    border-radius: 6px; 
-    padding: 10px; 
-    margin-bottom: 12px; 
-    background: #fafafa; 
-    font-size: 14px; 
-    line-height: 1.4; 
-    cursor: pointer; 
-    transition: background-color 0.2s, box-shadow 0.2s;
-  }
-  .user-card:hover { background-color: #f0f0f0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  .user-name { font-weight: bold; margin-bottom: 6px; }
+  .user-card { border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:12px; background:#fafafa;
+               font-size:14px; line-height:1.4; cursor:pointer; transition:background-color 0.2s, box-shadow 0.2s; }
+  .user-card:hover { background:#f0f0f0; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  .user-name { font-weight:bold; margin-bottom:6px; }
 
-  /* 경로 선택 드롭다운 */
-  #path-select-container { margin:10px 0; }
-  #path-user-select { width:100%; padding:6px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
-
-  /* 검색창 + 경로보기 버튼 */
-  #search-container {
-    display:none;
-    margin:15px 0;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  #search-container label {
-    flex-shrink:0;
-    font-size:14px;
-    font-weight:bold;
-  }
-  #search-container input {
-    flex:1;
-    padding:8px;
-    font-size:14px;
-    border:1px solid #ccc;
-    border-radius:4px;
-  }
-  #search-container button {
-    flex-shrink:0;
-  }
+  /* 검색창 (라벨 + 텍스트박스 + 버튼 가로 배치) */
+  #search-container { display:none; margin:10px 0; display:flex; align-items:center; gap:10px; }
+  #search-container label { flex-shrink:0; font-size:14px; font-weight:bold; }
+  #search-container input { flex:1; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+  #search-container button { flex-shrink:0; }
 
   /* 구분선 */
-  .section-divider {
-    border-top:1px solid #ddd;
-    margin:15px 0;
-    padding-top:10px;
-  }
+  .section-divider { border-top:1px solid #ddd; margin:15px 0; padding-top:10px; }
 
-  /* 메시지 박스 */
-  #message-box { 
-    position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-    background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none;
-    z-index:4000; font-size:16px;
-  }
+  #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
+  #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
+  #user-table th { background:#f5f5f5; }
+
+  #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+                 background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; }
 </style>
 </head>
 
@@ -697,8 +653,8 @@ window.focusOnUser = function(lat, lng) {
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">경로 보기</div>
-  
-    <!-- 위치찾기 -->
+
+    <!-- 위치찾기 (세로 배치 복원) -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
       <div class="location-search">
@@ -711,7 +667,7 @@ window.focusOnUser = function(lat, lng) {
 
   <!-- 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
-    <!-- ... 기존 환경설정 내용 그대로 유지 ... -->
+    <!-- 기존 환경설정 내용 유지 -->
   </div>
 
   <!-- 사용자 패널 -->
@@ -721,7 +677,7 @@ window.focusOnUser = function(lat, lng) {
       <button id="close-user-panel">✖ 닫기</button>
     </div>
 
-    <!-- 사용자정보 섹션 -->
+    <!-- 사용자정보 -->
     <div id="user-info">
       <div class="user-card">
         <div class="user-name">홍길동</div>
@@ -735,9 +691,8 @@ window.focusOnUser = function(lat, lng) {
     <!-- 구분선 -->
     <div class="section-divider"></div>
 
-    <!-- 경로보기 선택 -->
+    <!-- 검색 버튼 + 입력창 -->
     <div style="display:flex; align-items:center; gap:8px; margin:10px 0;">
-      <label for="path-user-select">경로 보기 선택:</label>
       <select id="path-user-select">
         <option value="all">전체</option>
         <option value="online">온라인</option>
@@ -746,7 +701,7 @@ window.focusOnUser = function(lat, lng) {
       <button id="toggle-search" class="btn-check">검색</button>
     </div>
 
-    <!-- 검색 입력창 (라벨 + 텍스트박스 + 경로보기 버튼) -->
+    <!-- 검색 입력창 -->
     <div id="search-container">
       <label for="user-search">정보입력:</label>
       <input type="text" id="user-search" placeholder="이름 또는 전화번호 검색">
@@ -769,6 +724,7 @@ window.focusOnUser = function(lat, lng) {
         <tbody id="user-table-body"></tbody>
       </table>
     </div>
+  </div>
   </div> <!-- user-panel 끝 -->
 
   <!-- 지도 영역 -->
