@@ -531,6 +531,14 @@ document.addEventListener("DOMContentLoaded", () => {
     padding: 8px;
     box-sizing: border-box;   /* 폭 계산 안정화 */
   }
+
+  /* 모바일 반응형 */
+  @media (max-width: 600px) {
+    .location-search input,
+    .location-search button {
+      font-size: 18px;        /* 모바일에서는 글씨 조금 크게 */
+    }
+  }
   
   /* 사용자 카드 */
   .user-card { 
