@@ -556,21 +556,21 @@ window.focusOnUser = function(lat, lng) {
   map.setZoom(15);
 };
 
-/* ----------------------버튼 이벤트만 안전하게 연결 ---------------------- */
+/* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
   // JS에서 이벤트 연결
   document.getElementById("location-check").addEventListener("click", moveToLatLng);
 });
 </script>
 
-  <!-- 3. MarkerClusterer 라이브러리 -->
-  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<!-- 3. MarkerClusterer 라이브러리 -->
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
-  <!-- 4. Google Maps API는 맨 마지막 -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
-  </script>  
+<!-- 4. Google Maps API는 맨 마지막 -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
+</script>
 
-
+<!-- 스타일 -->
 <style>
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
   #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
@@ -584,7 +584,7 @@ window.focusOnUser = function(lat, lng) {
 
   .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
                     display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-  .dropdown-panel.open { display:block; }
+  .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
   .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
   .dropdown-item:hover { background:#e3f2fd; }
 
@@ -595,46 +595,171 @@ window.focusOnUser = function(lat, lng) {
   #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
                       border-radius:4px; font-size:14px; }
   #close-user-panel:hover { background:#c62828; }
+  #user-panel h3 { margin:0; }
 
-  /* 위치찾기 입력창 (세로 배치 복원) */
   .location-search {
-    display:flex;
-    flex-direction:column;   /* 세로 배치 */
-    gap:8px;
-    padding:8px;
+    display: flex;
+    flex-direction: column;   /* 세로로 배치 */
+    gap: 10px;                /* 요소 간격 */
+    padding: 10px;
   }
+  
   .location-search input,
   .location-search button {
-    width:100%;
-    font-size:15px;          /* 글씨 크기 적당히 */
-    padding:6px;             /* 높이 줄임 */
-    box-sizing:border-box;
+    width: 100%;              /* 같은 폭 */
+    font-size: 16px;
+    padding: 8px;
+    box-sizing: border-box;   /* 폭 계산 안정화 */
   }
 
-  .btn-check { background:#4CAF50; color:white; padding:8px 16px; border:none; border-radius:4px; cursor:pointer; }
-  .btn-check:hover { background:#45a049; }
+  /* 모바일 반응형 */
+  @media (max-width: 600px) {
+    .location-search input,
+    .location-search button {
+      font-size: 18px;        /* 모바일에서는 글씨 조금 크게 */
+    }
+  }
 
-  /* 사용자 카드 */
-  .user-card { border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:12px; background:#fafafa;
-               font-size:14px; line-height:1.4; cursor:pointer; transition:background-color 0.2s, box-shadow 0.2s; }
-  .user-card:hover { background:#f0f0f0; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-  .user-name { font-weight:bold; margin-bottom:6px; }
+ /* 버튼 스타일 */ 
+.btn-check {
+  background-color: #4CAF50; /* 초록색 */
+  color: white;             /* 글자색 */
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-  /* 검색창 (라벨 + 텍스트박스 + 버튼 가로 배치) */
-  #search-container { display:none; margin:10px 0; display:flex; align-items:center; gap:10px; }
-  #search-container label { flex-shrink:0; font-size:14px; font-weight:bold; }
-  #search-container input { flex:1; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
-  #search-container button { flex-shrink:0; }
+.btn-check:hover {
+  background-color: #45a049; /* 마우스 올렸을 때 조금 더 진한 초록 */
+}
 
-  /* 구분선 */
-  .section-divider { border-top:1px solid #ddd; margin:15px 0; padding-top:10px; }
+  
+/* 사용자 카드 */
+.user-card { 
+  border: 1px solid #ddd; 
+  border-radius: 6px; 
+  padding: 10px; 
+  margin-bottom: 12px; 
+  background: #fafafa; 
+  font-size: 14px; 
+  line-height: 1.4; 
+  cursor: pointer;              /* 마우스를 올리면 손바닥 모양 */
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
 
-  #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
-  #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
-  #user-table th { background:#f5f5f5; }
+.user-card:hover {
+  background-color: #f0f0f0;    /* hover 시 배경색 변경 */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* 살짝 그림자 효과 */
+}
 
-  #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-                 background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; }
+.user-name { 
+  font-weight: bold; 
+  margin-bottom: 6px; 
+}
+
+
+  /* 경로 선택 드롭다운 */
+  #path-select-container { margin:10px 0; }
+  #path-user-select { width:100%; padding:6px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+
+  /* 메시지 박스 */
+  #message-box { 
+    position:fixed; 
+    bottom:10px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:#333; 
+    color:#fff; 
+    padding:8px 16px; 
+    border-radius:4px; 
+    display:none; 
+    z-index:4000; 
+    font-size:16px;
+  }
+
+  /* 📱 모바일 반응형 */
+  @media (max-width: 768px) {
+    #user-panel {
+      width: 100%;          /* 전체 너비 */
+      height: 40%;          /* 화면 하단 40%만 차지 */
+      bottom: 0;            /* 하단 고정 */
+      top: auto;            /* 상단에서 떨어지지 않도록 */
+      border-left: none;
+      border-top: 1px solid #ccc;
+      border-radius: 12px 12px 0 0; /* 위쪽 모서리 둥글게 */
+    }
+    .user-card { font-size:16px; padding:14px; }
+    .user-name { font-size:18px; }
+    .menu-btn { padding:10px 16px; font-size:18px; }
+    #path-user-select { font-size:16px; padding:10px; }
+    #intervalValue, #intervalUnit { font-size:18px; padding:8px; }
+    #message-box { font-size:18px; }
+  }
+
+  /* 라이트/다크 모드 */
+  body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+  }
+  body.dark-mode #top-bar {
+    background: #333;
+    color: #fff;
+  }
+  body.dark-mode .dropdown-panel {
+    background: #222;
+    color: #ddd;
+  }
+  body.dark-mode .menu-btn {
+    background: #444;
+    color: #fff;
+  }
+
+  /* 라이트/다크 모드 토글 스위치 */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+  }
+  .switch input { display:none; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: #3949ab;
+  }
+  input:checked + .slider:before {
+    transform: translateX(24px);
+  }
+  /* 사용자 테이블 */
+  #user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  #user-table th, #user-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  #user-table th {
+    background: #f5f5f5;
+  }
 </style>
 </head>
 
@@ -653,8 +778,8 @@ window.focusOnUser = function(lat, lng) {
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">경로 보기</div>
-
-    <!-- 위치찾기 (세로 배치 복원) -->
+  
+    <!-- 위치찾기 -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
       <div class="location-search">
@@ -667,81 +792,76 @@ window.focusOnUser = function(lat, lng) {
 
   <!-- 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
-    <!-- 기존 환경설정 내용 유지 -->
-  </div>
-
-  <!-- 사용자 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
+    <div class="dropdown-item">
+      <strong>라이트/다크 모드</strong><br>
+      <label class="switch">
+        <input type="checkbox" id="themeToggle">
+        <span class="slider"></span>
+      </label>
     </div>
 
-    <!-- 사용자정보 -->
-    <div id="user-info">
-      <div class="user-card">
-        <div class="user-name">홍길동</div>
-        <div>전화번호: 010-1234-5678</div>
-        <div>차량번호: 12가3456</div>
-        <div>상태: 온라인</div>
-        <div>권한: 관리자</div>
-      </div>
-    </div>
-
-    <!-- 구분선 -->
-    <div class="section-divider"></div>
-
-    <!-- 검색 버튼 + 입력창 -->
-    <div style="display:flex; align-items:center; gap:8px; margin:10px 0;">
-      <select id="path-user-select">
-        <option value="all">전체</option>
-        <option value="online">온라인</option>
-        <option value="offline">오프라인</option>
+  <div class="dropdown-item">
+    <strong>갱신 주기 설정</strong><br>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <!-- 숫자 입력 박스 폭을 줄임 -->
+      <input type="number" id="intervalValue" value="5" min="1" 
+             style="width:70px; font-size:18px; padding:6px;">
+      <select id="intervalUnit" style="font-size:18px; padding:6px;">
+        <option value="minutes">분</option>
+        <option value="seconds">초</option>
       </select>
-      <button id="toggle-search" class="btn-check">검색</button>
-    </div>
-
-    <!-- 검색 입력창 -->
-    <div id="search-container">
-      <label for="user-search">정보입력:</label>
-      <input type="text" id="user-search" placeholder="이름 또는 전화번호 검색">
-      <button id="show-path" class="btn-check">경로 보기</button>
-    </div>
-
-    <!-- 사용자 목록 테이블 -->
-    <div id="user-content">
-      <table id="user-table">
-        <thead>
-          <tr>
-            <th>이름</th>
-            <th>전화번호</th>
-            <th>차량번호</th>
-            <th>상태</th>
-            <th>권한</th>
-            <th>위치</th>
-          </tr>
-        </thead>
-        <tbody id="user-table-body"></tbody>
-      </table>
+      <button onclick="setCustomInterval()" 
+              style="font-size:18px; padding:6px 12px;">적용</button>
     </div>
   </div>
-  </div> <!-- user-panel 끝 -->
 
-  <!-- 지도 영역 -->
-  <div id="map"></div>
+    <div class="dropdown-item">
+      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+    </div>
 
-  <!-- 메시지 박스 -->
-  <div id="message-box"></div>
+    <div class="dropdown-item">
+      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+    </div>
+  </div>
 
-  <!-- MarkerClusterer 라이브러리 -->
-  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<!-- 사용자 정보 패널 -->
+<div id="user-panel">
+  <div class="panel-header">
+    <h3 id="user-panel-title">사용자 정보</h3>
+    <button id="close-user-panel">✖ 닫기</button>
+  </div>
+  <!-- 경로 선택 드롭다운 -->
+  <div id="path-select-container">
+    <label for="path-user-select">경로 보기 선택:</label>
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
+    </select>
+  </div>
+  <!-- 사용자 목록 테이블 -->
+  <div id="user-content">
+    <table id="user-table">
+      <thead>
+        <tr>
+          <th>이름</th>
+          <th>전화번호</th>
+          <th>차량번호</th>
+          <th>상태</th>
+          <th>권한</th>
+          <th>위치</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <!-- JS에서 사용자 목록을 동적으로 추가 -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
-  <!-- Google Maps API -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
-  </script>
+<!-- 지도 영역 -->
+<div id="map"></div>
 
-  <!-- client.js 불러오기 -->
-  <script src="client.js"></script>
+<!-- 메시지 박스 -->
+<div id="message-box"></div>
 </body>
 </html>
+
