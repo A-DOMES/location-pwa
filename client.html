@@ -718,12 +718,12 @@ window.focusOnUser = function(lat, lng) {
     <div class="dropdown-item">
       <strong>갱신 주기 설정</strong><br>
       <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
+        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:8px;">
+        <select id="intervalUnit" style="font-size:18px; padding:8px;">
           <option value="minutes">분</option>
           <option value="seconds">초</option>
         </select>
-        <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
+        <button onclick="setCustomInterval()" style="font-size:18px; padding:8px 14px;">적용</button>
       </div>
     </div>
     <div class="dropdown-item"><label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label></div>
@@ -737,7 +737,22 @@ window.focusOnUser = function(lat, lng) {
       <button id="close-user-panel">✖ 닫기</button>
     </div>
 
-    <!-- 드롭다운 + 검색 버튼 -->
+    <!-- 사용자정보 섹션 -->
+    <div id="user-info">
+      <!-- 사용자 카드 예시 -->
+      <div class="user-card">
+        <div class="user-name">홍길동</div>
+        <div>전화번호: 010-1234-5678</div>
+        <div>차량번호: 12가3456</div>
+        <div>상태: 온라인</div>
+        <div>권한: 관리자</div>
+      </div>
+    </div>
+
+    <!-- 구분선 -->
+    <div class="section-divider"></div>
+
+    <!-- 경로보기 선택 -->
     <div class="filter-bar">
       <label for="path-user-select">경로 보기 선택:</label>
       <select id="path-user-select">
@@ -778,9 +793,8 @@ window.focusOnUser = function(lat, lng) {
   <!-- 메시지 박스 -->
   <div id="message-box"></div>
 
-
-
-  <!-- 내가 만든 client.js 불러오기 -->
+  <!-- client.js 불러오기 -->
   <script src="client.js"></script>
 </body>
 </html>
+
