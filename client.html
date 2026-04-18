@@ -390,7 +390,6 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
-  // ✅ 접속현황 패널 열기
   window.openUserPanel = function(viewMode) {
     connectionPanel.classList.remove("open");
     userPanel.classList.add("open");
@@ -409,7 +408,6 @@ document.addEventListener("DOMContentLoaded", () => {
     userPanel.classList.remove("open");
   };
 
-  /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
   window.renderUserTable = function(users) {
     const tbody = document.getElementById("user-table-body");
     tbody.innerHTML = "";
@@ -427,13 +425,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
   window.focusOnUser = function(lat, lng) {
     map.setCenter({ lat: lat, lng: lng });
     map.setZoom(15);
   };
 
-  /* ---------------------- 위치찾기 기능 ---------------------- */
   window.moveToLatLng = function() {
     const lat = parseFloat(document.getElementById("latInput").value);
     const lng = parseFloat(document.getElementById("lngInput").value);
