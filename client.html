@@ -354,6 +354,7 @@ function initMap() {
     map.setZoom(7);
   });
 
+  // ✅ 지도는 바로 뜨고, 내 위치 마커는 비동기로 처리
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -366,8 +367,8 @@ function initMap() {
     );
   }
 
-  // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
-  loadData();
+  // ✅ 데이터는 조금 뒤에 불러오기 (지도 먼저 표시)
+  setTimeout(() => loadData(), 200);
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 }
 window.initMap = initMap;
