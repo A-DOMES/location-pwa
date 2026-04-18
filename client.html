@@ -149,7 +149,7 @@ function updateUserPanelContent(viewMode = "current") {
     }
     Object.values(latestByUser).forEach(user => {
       panel.innerHTML += `
-        <div class="user-card">
+        <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
           <div class="user-name">👤 ${user.phone}</div>
           📍 위치: ${user.address}<br>
           🕒 마지막 갱신: ${user.updated}<br>
@@ -421,6 +421,22 @@ document.addEventListener("DOMContentLoaded", () => {
     map.setZoom(15);
   };
 
+  /* ---------------------- 사용자 카드 클릭 시 지도 이동 ---------------------- */
+  window.moveToUser = function(lat, lng, phone) {
+    if (!map) return;
+  
+    // 지도 이동
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
+  
+    // 강조 마커 표시
+    new google.maps.Marker({
+      position: { lat: lat, lng: lng },
+      map: map,
+      title: `사용자: ${phone}`,
+      animation: google.maps.Animation.BOUNCE
+    });
+  };
   
   /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
   const themeToggle = document.getElementById("themeToggle");
