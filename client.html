@@ -562,7 +562,7 @@ window.focusOnUser = function(lat, lng) {
 });
 </script>
 
-  
+
 <!-- 스타일 -->
 <style>
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
@@ -607,9 +607,10 @@ window.focusOnUser = function(lat, lng) {
   #path-user-select { flex:1; padding:6px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
   #toggle-search { flex-shrink:0; }
 
-  /* 검색창 */
-  #search-container { display:none; margin:12px 0; }
-  #search-container input { width:100%; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+  /* 검색창 + 경로보기 버튼 한 줄 배치 */
+  #search-container { display:none; margin:12px 0; display:flex; align-items:center; gap:10px; }
+  #search-container input { flex:1; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+  #search-container button { flex-shrink:0; }
 
   /* 버튼 스타일 */
   .btn-check {
@@ -622,6 +623,24 @@ window.focusOnUser = function(lat, lng) {
   }
   .btn-check:hover { background-color: #45a049; }
 
+  /* 사용자 카드 */
+  .user-card { 
+    border: 1px solid #ddd; 
+    border-radius: 6px; 
+    padding: 10px; 
+    margin-bottom: 12px; 
+    background: #fafafa; 
+    font-size: 14px; 
+    line-height: 1.4; 
+    cursor: pointer; 
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  .user-card:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .user-name { font-weight: bold; margin-bottom: 6px; }
+
   /* 사용자 테이블 */
   #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
   #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
@@ -629,6 +648,11 @@ window.focusOnUser = function(lat, lng) {
 
   /* 사용자 패널 액션 버튼 */
   #user-actions { margin:15px 0; text-align:right; }
+
+  /* 위치찾기 입력창 가로 배치 */
+  .location-search { display:flex; gap:8px; }
+  .location-search input { flex:1; padding:6px; font-size:14px; }
+  .location-search button { padding:6px 12px; }
 
   /* 메시지 박스 */
   #message-box { 
@@ -643,6 +667,8 @@ window.focusOnUser = function(lat, lng) {
                   border-top:1px solid #ccc; border-radius:12px 12px 0 0; }
     .filter-bar { flex-direction:column; align-items:stretch; }
     #path-user-select, #toggle-search { width:100%; }
+    #search-container { flex-direction:column; }
+    #search-container input, #search-container button { width:100%; }
     #user-actions { text-align:center; }
   }
 </style>
@@ -715,9 +741,10 @@ window.focusOnUser = function(lat, lng) {
       <button id="toggle-search" class="btn-check">검색</button>
     </div>
 
-    <!-- 검색 입력창 -->
+    <!-- 검색 입력창 + 경로보기 버튼 -->
     <div id="search-container">
       <input type="text" id="user-search" placeholder="이름 또는 전화번호 검색">
+      <button id="show-path" class="btn-check">경로 보기</button>
     </div>
 
     <!-- 사용자 목록 테이블 -->
@@ -736,11 +763,6 @@ window.focusOnUser = function(lat, lng) {
         <tbody id="user-table-body"></tbody>
       </table>
     </div>
-
-    <!-- 사용자 패널 액션 -->
-    <div id="user-actions">
-      <button id="show-path" class="btn-check">경로 보기</button>
-    </div>
   </div>
 
   <!-- 지도 영역 -->
@@ -751,7 +773,7 @@ window.focusOnUser = function(lat, lng) {
 
   <!-- 3. MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-  
+
   <!-- 4. Google Maps API는 맨 마지막 -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
