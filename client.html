@@ -824,19 +824,30 @@ window.focusOnUser = function(lat, lng) {
     </div>
   </div>
 
-<!-- 사용자 정보 패널 -->
+<!-- 사용자 패널 -->
 <div id="user-panel">
   <div class="panel-header">
     <h3 id="user-panel-title">사용자 정보</h3>
     <button id="close-user-panel">✖ 닫기</button>
   </div>
-  <!-- 경로 선택 드롭다운 -->
-  <div id="path-select-container">
+
+  <!-- 드롭다운 + 검색 버튼 -->
+  <div style="display:flex; align-items:center; gap:8px; margin:10px 0;">
     <label for="path-user-select">경로 보기 선택:</label>
-    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+    <select id="path-user-select">
       <option value="all">전체</option>
+      <option value="online">온라인</option>
+      <option value="offline">오프라인</option>
     </select>
+    <button id="toggle-search" class="btn-check">검색</button>
   </div>
+
+  <!-- 검색 입력창 (기본 숨김) -->
+  <div id="search-container" style="display:none; margin:10px 0;">
+    <input type="text" id="user-search" placeholder="이름 또는 전화번호 검색" 
+           style="width:100%; padding:6px; font-size:14px;">
+  </div>
+
   <!-- 사용자 목록 테이블 -->
   <div id="user-content">
     <table id="user-table">
@@ -850,12 +861,16 @@ window.focusOnUser = function(lat, lng) {
           <th>위치</th>
         </tr>
       </thead>
-      <tbody id="user-table-body">
-        <!-- JS에서 사용자 목록을 동적으로 추가 -->
-      </tbody>
+      <tbody id="user-table-body"></tbody>
     </table>
   </div>
+
+  <!-- 사용자 패널 액션 -->
+  <div id="user-actions" style="margin:10px 0;">
+    <button id="show-path" class="btn-check">경로 보기</button>
+  </div>
 </div>
+
 
 <!-- 지도 영역 -->
 <div id="map"></div>
