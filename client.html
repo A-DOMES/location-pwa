@@ -372,7 +372,7 @@ function initMap() {
 }
 window.initMap = initMap;
 
-// ✅ 모든 UI 초기화는 한 번만 DOMContentLoaded에서 처리
+// ✅ UI 초기화는 DOMContentLoaded 안에서만 처리
 document.addEventListener("DOMContentLoaded", () => {
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
