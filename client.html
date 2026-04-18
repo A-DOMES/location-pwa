@@ -235,111 +235,8 @@
   }
 
 
-<!-- 2. 사용자 코드 -->
-// HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
-document.addEventListener("DOMContentLoaded", () => {
-  
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
-
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
-
-  // ✅ 접속현황 패널 열기
-  window.openUserPanel = function(viewMode) {
-    connectionPanel.classList.remove("open");
-    userPanel.classList.add("open");
-    mode = viewMode; // 선택된 모드 반영
-    showMap(); // 지도 갱신
-    updateUserPanelContent(viewMode); // 패널 내용 갱신
-  
-    // 제목 변경
-    const titleEl = document.getElementById("user-panel-title");
-    if (viewMode === "current") {
-      titleEl.textContent = "현재 접속자 보기";
-    } else if (viewMode === "all") {
-      titleEl.textContent = "전체 사용자 보기";
-    } else if (viewMode === "paths") {
-      titleEl.textContent = "경로 보기";
-    } else {
-      titleEl.textContent = "사용자 정보";
-    }
-  };
-  
-  window.closeUserPanel = function() {
-    userPanel.classList.remove("open");
-  };
-
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode) {
-    const tbody = document.getElementById("user-table-body");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    let users = [];
-    if (viewMode === "current") {
-      // 최근 5분 이내 갱신된 사용자만 표시
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
-        }
-      });
-      users = Object.values(latestByUser);
-
-    } else if (viewMode === "all") {
-      // 전체 사용자 표시
-      users = allData;
-
-    } else if (viewMode === "paths") {
-      // 경로 보기 모드: 선택된 사용자만 표시
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
-      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-      // ✅ 이동거리 계산 후 선 굵기 조절
-      if (users.length > 0) {
-        const pathPoints = users.map(u => ({ lat: u.lat, lng: u.lng }));
-        let distance = 0;
-        for (let i = 1; i < pathPoints.length; i++) {
-          const p1 = new google.maps.LatLng(pathPoints[i-1].lat, pathPoints[i-1].lng);
-          const p2 = new google.maps.LatLng(pathPoints[i].lat, pathPoints[i].lng);
-          distance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-        }
-        const strokeWeight = distance > 5000 ? 5 : 2;
-        const polyline = new google.maps.Polyline({
-          path: pathPoints,
-          strokeWeight: strokeWeight,
-          strokeColor: '#FF0000',
-          strokeOpacity: 0.8,
-          strokeStyle: 'solid',
-          map: map
-        });
-      }
-    }
-
-    // 테이블 렌더링 함수 호출
-    renderUserTable(users);
-  }
-
-  /* ---------------------- 지도 초기화 ---------------------- */
-// ✅ 지도 초기화 함수는 전역에 정의
+<!-- ✅ 지도 초기화 함수는 DOMContentLoaded 바깥에 두어야 Google Maps API에서 바로 호출 가능 -->
+// ---------------------- 지도 초기화 ----------------------
 function initMap() {
   const mapId = getMapIdByDevice();
   map = new google.maps.Map(document.getElementById("map"), {
@@ -357,7 +254,7 @@ function initMap() {
     map.setZoom(7);
   });
 
-  // 내 위치 표시
+  // ✅ 내 위치 표시 (비동기 처리)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -370,8 +267,8 @@ function initMap() {
     );
   }
 
-  // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
-  loadData();
+  // ✅ 지도는 바로 뜨고, 데이터는 뒤에서 불러오기
+  setTimeout(() => loadData(), 200);
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 }
 
@@ -379,7 +276,8 @@ function initMap() {
 window.initMap = initMap;
 
 
-// ✅ UI 관련 코드는 DOMContentLoaded 안에
+// ---------------------- UI 초기화 ----------------------
+// HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
 document.addEventListener("DOMContentLoaded", () => {
   /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
@@ -510,6 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 </script>
+
   
 <!-- 3. MarkerClusterer 라이브러리 -->
 <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
