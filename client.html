@@ -557,11 +557,8 @@ window.focusOnUser = function(lat, lng) {
 };
 
 /* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const locationBtn = document.getElementById("location-check");
-  if (locationBtn) {
-    locationBtn.addEventListener("click", moveToLatLng);
-  }
+  // JS에서 이벤트 연결
+  document.getElementById("location-check").addEventListener("click", moveToLatLng);
 });
 </script>
 
