@@ -12,6 +12,19 @@
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 
+   /* ----------------------  거리 계산 함수 (전역에 추가) ---------------------- */
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // 지구 반지름 (km)
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // km
+}
+
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData(token = null) {
     try {
@@ -175,18 +188,41 @@ function updateUserPanelContent(viewMode = "current") {
   } else if (viewMode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
-
+  
     let users = allData;
     if (selectedPhone !== "all") {
       users = allData.filter(u => u.phone === selectedPhone);
     }
-
+  
     users.forEach(user => {
+      // 경로 거리 계산
+      user.distance = 0;
+      if (user.path && user.path.length > 1) {
+        for (let i = 1; i < user.path.length; i++) {
+          user.distance += calculateDistance(
+            user.path[i-1].lat, user.path[i-1].lng,
+            user.path[i].lat, user.path[i].lng
+          );
+        }
+  
+        // 사용자별 Polyline 그리기
+        const pathPoints = user.path.map(p => ({ lat: p.lat, lng: p.lng }));
+        new google.maps.Polyline({
+          path: pathPoints,
+          strokeWeight: user.distance > 5000 ? 5 : 2,
+          strokeColor: '#FF0000',
+          strokeOpacity: 0.8,
+          map: map
+        });
+      }
+  
+      // 카드 출력
       panel.innerHTML += `
         <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
           <div class="user-name">👤 ${user.phone}</div>
           📍 위치: ${user.address}<br>
-          🕒 경로 길이: ${user.distance}km<br>
+          🕒 마지막 갱신: ${user.updated}<br>
+          경로 길이: ${user.distance.toFixed(2)} km<br>
           좌표: (${user.lat}, ${user.lng})
         </div>
       `;
