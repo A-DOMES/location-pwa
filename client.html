@@ -402,6 +402,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
   window.initMap = initMap;
 
+  /* ---------------------- 위치찾기 기능 ---------------------- */
+  window.moveToLatLng = function() {
+    const lat = parseFloat(document.getElementById("latInput").value);
+    const lng = parseFloat(document.getElementById("lngInput").value);
+  
+    if (isNaN(lat) || isNaN(lng)) {
+      alert("올바른 위도와 경도를 입력하세요.");
+      return;
+    }
+  
+    if (!map) {
+      alert("지도가 아직 초기화되지 않았습니다.");
+      return;
+    }
+  
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
+  };
+
+  
   /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
   const themeToggle = document.getElementById("themeToggle");
   if (themeToggle) {
