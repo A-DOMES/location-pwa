@@ -348,16 +348,12 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 원래 위치 저장
   const originalCenter = map.getCenter();
-
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
 
-  // 내 위치 표시
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -374,14 +370,10 @@ function initMap() {
   loadData();
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 }
-
-// ✅ 반드시 함수 정의 이후에 전역 등록
 window.initMap = initMap;
 
-
-// ✅ UI 관련 코드는 DOMContentLoaded 안에
+// ✅ 모든 UI 초기화는 한 번만 DOMContentLoaded에서 처리
 document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -407,78 +399,20 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUserPanelContent(viewMode);
 
     const titleEl = document.getElementById("user-panel-title");
-    if (viewMode === "current") {
-      titleEl.textContent = "현재 접속자 보기";
-    } else if (viewMode === "all") {
-      titleEl.textContent = "전체 사용자 보기";
-    } else if (viewMode === "paths") {
-      titleEl.textContent = "경로 보기";
-    } else {
-      titleEl.textContent = "사용자 정보";
-    }
+    if (viewMode === "current") titleEl.textContent = "현재 접속자 보기";
+    else if (viewMode === "all") titleEl.textContent = "전체 사용자 보기";
+    else if (viewMode === "paths") titleEl.textContent = "경로 보기";
+    else titleEl.textContent = "사용자 정보";
   };
 
   window.closeUserPanel = function() {
     userPanel.classList.remove("open");
   };
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode) {
-    const tbody = document.getElementById("user-table-body");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    let users = [];
-    if (viewMode === "current") {
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
-        }
-      });
-      users = Object.values(latestByUser);
-
-    } else if (viewMode === "all") {
-      users = allData;
-
-    } else if (viewMode === "paths") {
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
-      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-      if (users.length > 0) {
-        const pathPoints = users.map(u => ({ lat: u.lat, lng: u.lng }));
-        let distance = 0;
-        for (let i = 1; i < pathPoints.length; i++) {
-          const p1 = new google.maps.LatLng(pathPoints[i-1].lat, pathPoints[i-1].lng);
-          const p2 = new google.maps.LatLng(pathPoints[i].lat, pathPoints[i].lng);
-          distance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-        }
-        const strokeWeight = distance > 5000 ? 5 : 2;
-        const polyline = new google.maps.Polyline({
-          path: pathPoints,
-          strokeWeight: strokeWeight,
-          strokeColor: '#FF0000',
-          strokeOpacity: 0.8,
-          strokeStyle: 'solid',
-          map: map
-        });
-      }
-    }
-
-    renderUserTable(users);
-  }
-
   /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
   window.renderUserTable = function(users) {
     const tbody = document.getElementById("user-table-body");
     tbody.innerHTML = "";
-
     users.forEach(user => {
       const row = document.createElement("tr");
       row.innerHTML = `
