@@ -556,7 +556,7 @@ window.focusOnUser = function(lat, lng) {
   map.setZoom(15);
 };
 
-/* ---------------------- DOMContentLoaded 이벤트로 안전하게 이벤트 연결 ---------------------- */
+/* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const locationBtn = document.getElementById("location-check");
   if (locationBtn) {
