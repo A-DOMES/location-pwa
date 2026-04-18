@@ -25,6 +25,16 @@
   return R * c; // km
 }
 
+  // 문자열(전화번호/닉네임) 기반 색상 함수
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  }
+    
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData(token = null) {
     try {
@@ -220,17 +230,17 @@ function updateUserPanelContent(viewMode = "current") {
               pathPoints[i].lat, pathPoints[i].lng
             );
           }
-    
+       
           // 사용자별 Polyline 그리기
           new google.maps.Polyline({
             path: pathPoints,
             strokeWeight: user.distance > 5000 ? 5 : 2,
-            strokeColor: '#FF0000',
+            strokeColor: stringToColor(user.phone),
             strokeOpacity: 0.8,
             map: map
           });
         }
-    
+       
         // 카드 출력
         panel.innerHTML += `
           <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
@@ -243,6 +253,15 @@ function updateUserPanelContent(viewMode = "current") {
         `;
       });
 
+    if (selectedPhone === "all") {
+      const totalDistance = users.reduce((sum, u) => sum + (u.distance || 0), 0);
+      panel.innerHTML += `
+        <div class="user-card" style="font-weight:bold; background:#eef;">
+          전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
+        </div>
+      `;
+    }
+    
     // ✅ 경로 거리 계산 후 선 굵기 조절
     if (users.length > 1) {
       const pathPoints = users.map(u => ({ lat: u.lat, lng: u.lng }));
