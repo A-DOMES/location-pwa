@@ -126,74 +126,94 @@
     updateUserPanelContent(mode);
   }
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode = "current") {
-    const panel = document.getElementById("user-content");
-    panel.innerHTML = "";
+/* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+function updateUserPanelContent(viewMode = "current") {
+  const panel = document.getElementById("user-content");
+  panel.innerHTML = "";
 
-    if (viewMode === "current") {
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
+  if (viewMode === "current") {
+    const now = new Date();
+    const latestByUser = {};
+    allData.forEach(user => {
+      const updated = new Date(user.updated);
+      if (now - updated <= 5 * 60 * 1000) {
+        const key = user.phone;
+        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+          latestByUser[key] = user;
         }
-      });
-      if (Object.keys(latestByUser).length === 0) {
-        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
-        return;
       }
-      Object.values(latestByUser).forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 마지막 갱신: ${user.updated}<br>
-            상태: ${user.status}<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
-      });
+    });
+    if (Object.keys(latestByUser).length === 0) {
+      panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
+      return;
+    }
+    Object.values(latestByUser).forEach(user => {
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 마지막 갱신: ${user.updated}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})
+        </div>
+      `;
+    });
 
-    } else if (viewMode === "all") {
-      allData.forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 입력: ${user.time}<br>
-            상태: ${user.status}<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
-      });
+  } else if (viewMode === "all") {
+    allData.forEach(user => {
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 입력: ${user.time}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})
+        </div>
+      `;
+    });
 
-    } else if (viewMode === "paths") {
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
+  } else if (viewMode === "paths") {
+    const select = document.getElementById("path-user-select");
+    const selectedPhone = select ? select.value : "all";
 
-      let users = allData;
-      if (selectedPhone !== "all") {
-        users = allData.filter(u => u.phone === selectedPhone);
+    let users = allData;
+    if (selectedPhone !== "all") {
+      users = allData.filter(u => u.phone === selectedPhone);
+    }
+
+    users.forEach(user => {
+      panel.innerHTML += `
+        <div class="user-card">
+          <div class="user-name">👤 ${user.phone}</div>
+          📍 위치: ${user.address}<br>
+          🕒 입력: ${user.time}<br>
+          상태: ${user.status}<br>
+          좌표: (${user.lat}, ${user.lng})
+        </div>
+      `;
+    });
+
+    // ✅ 경로 거리 계산 후 선 굵기 조절
+    if (users.length > 1) {
+      const pathPoints = users.map(u => ({ lat: u.lat, lng: u.lng }));
+      let distance = 0;
+      for (let i = 1; i < pathPoints.length; i++) {
+        const p1 = new google.maps.LatLng(pathPoints[i-1].lat, pathPoints[i-1].lng);
+        const p2 = new google.maps.LatLng(pathPoints[i].lat, pathPoints[i].lng);
+        distance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
       }
-
-      users.forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 입력: ${user.time}<br>
-            상태: ${user.status}<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
+      const strokeWeight = distance > 5000 ? 5 : 2;
+      new google.maps.Polyline({
+        path: pathPoints,
+        strokeWeight: strokeWeight,
+        strokeColor: '#FF0000',
+        strokeOpacity: 0.8,
+        map: map
       });
     }
   }
+}
+
 
   /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
   function populatePathSelect() {
