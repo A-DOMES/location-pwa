@@ -149,135 +149,146 @@
     updateUserPanelContent(mode);
   }
 
-    /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-    // path 배열을 lat/lng 쌍으로 변환
-    function parsePathArray(pathArray) {
-      const points = [];
-      for (let i = 0; i < pathArray.length; i += 2) {
-        const lat = parseFloat(pathArray[i]);
-        const lng = parseFloat(pathArray[i+1]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          points.push({ lat, lng });
-        }
+  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+  // path 배열을 lat/lng 쌍으로 변환
+  function parsePathArray(pathArray) {
+    const points = [];
+    for (let i = 0; i < pathArray.length; i += 2) {
+      const lat = parseFloat(pathArray[i]);
+      const lng = parseFloat(pathArray[i+1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        points.push({ lat, lng });
       }
-      return points;
     }
-    
-    function updateUserPanelContent(viewMode = "current") {
-      const panel = document.getElementById("user-content");
-      panel.innerHTML = "";
-    
-      if (viewMode === "current") {
-        const now = new Date();
-        const latestByUser = {};
-        allData.forEach(user => {
-          const updated = new Date(user.updated);
-          if (now - updated <= 5 * 60 * 1000) {
-            const key = user.phone;
-            if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-              latestByUser[key] = user;
-            }
+    return points;
+  }
+  
+  function updateUserPanelContent(viewMode = "current") {
+    const panel = document.getElementById("user-content");
+    panel.innerHTML = "";
+  
+    if (viewMode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
           }
-        });
-        if (Object.keys(latestByUser).length === 0) {
-          panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
-          return;
         }
-        Object.values(latestByUser).forEach(user => {
-          panel.innerHTML += `
-            <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-              <div class="user-name">👤 ${user.phone}</div>
-              📍 위치: ${user.address}<br>
-              🕒 마지막 갱신: ${user.updated}<br>
-              상태: ${user.status}<br>
-              좌표: (${user.lat}, ${user.lng})
-            </div>
-          `;
-        });
-    
-      } else if (viewMode === "all") {
-        allData.forEach(user => {
-          panel.innerHTML += `
-            <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-              <div class="user-name">👤 ${user.phone}</div>
-              📍 위치: ${user.address}<br>
-              🕒 마지막 갱신: ${user.updated}<br>
-              상태: ${user.status}<br>
-              좌표: (${user.lat}, ${user.lng})
-            </div>
-          `;
-        });
-    
-      } else if (viewMode === "paths") {
-        const select = document.getElementById("path-user-select");
-        const selectedPhone = select ? select.value : "all";
-    
-        let users = allData;
-        if (selectedPhone !== "all") {
-          users = allData.filter(u => u.phone === selectedPhone);
-        }
-    
-        users.forEach(user => {
-          const pathPoints = parsePathArray(user.path);
-    
-          // 경로 거리 계산
-          user.distance = 0;
+      });
+      if (Object.keys(latestByUser).length === 0) {
+        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
+        return;
+      }
+      Object.values(latestByUser).forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+  
+    } else if (viewMode === "all") {
+      allData.forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+  
+    } else if (viewMode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+  
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
+      }
+  
+      // ✅ 전체 선택 모드일 때 총합을 먼저 계산해서 드롭다운 바로 아래에 표시
+      if (selectedPhone === "all") {
+        const totalDistance = users.reduce((sum, u) => {
+          const pathPoints = parsePathArray(u.path);
+          let dist = 0;
           if (pathPoints.length > 1) {
             for (let i = 1; i < pathPoints.length; i++) {
-              user.distance += calculateDistance(
+              dist += calculateDistance(
                 pathPoints[i-1].lat, pathPoints[i-1].lng,
                 pathPoints[i].lat, pathPoints[i].lng
               );
             }
-    
-            // 사용자별 Polyline 그리기
-            new google.maps.Polyline({
-              path: pathPoints,
-              strokeWeight: user.distance > 5000 ? 5 : 2,
-              strokeColor: stringToColor(user.phone), // 전역 함수 호출
-              strokeOpacity: 0.8,
-              map: map
-            });
           }
-    
-          // 카드 출력
-          panel.innerHTML += `
-            <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-              <div class="user-name">👤 ${user.phone}</div>
-              📍 위치: ${user.address}<br>
-              🕒 마지막 갱신: ${user.updated}<br>
-              경로 길이: ${user.distance.toFixed(2)} km<br>
-              좌표: (${user.lat}, ${user.lng})
-            </div>
-          `;
-        });
-    
-        // ✅ 전체 선택 모드일 때 총합 표시 (forEach 바깥에서 한 번만)
-        if (selectedPhone === "all") {
-          const totalDistance = users.reduce((sum, u) => sum + (u.distance || 0), 0);
-          panel.innerHTML += `
-            <div class="user-card" style="font-weight:bold; background:#eef;">
-              전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
-            </div>
-          `;
-        }
+          return sum + dist;
+        }, 0);
+  
+        panel.innerHTML += `
+          <div class="user-card" style="font-weight:bold; background:#eef;">
+            전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
+          </div>
+        `;
       }
-    }
-    
-    /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
-    function populatePathSelect() {
-      const select = document.getElementById("path-user-select");
-      if (!select) return;
-    
-      select.innerHTML = `<option value="all">전체</option>`;
-      const phones = [...new Set(allData.map(u => u.phone))];
-      phones.forEach(phone => {
-        const opt = document.createElement("option");
-        opt.value = phone;
-        opt.textContent = phone;
-        select.appendChild(opt);
+  
+      // ✅ 사용자별 카드 출력
+      users.forEach(user => {
+        const pathPoints = parsePathArray(user.path);
+  
+        user.distance = 0;
+        if (pathPoints.length > 1) {
+          for (let i = 1; i < pathPoints.length; i++) {
+            user.distance += calculateDistance(
+              pathPoints[i-1].lat, pathPoints[i-1].lng,
+              pathPoints[i].lat, pathPoints[i].lng
+            );
+          }
+  
+          new google.maps.Polyline({
+            path: pathPoints,
+            strokeWeight: user.distance > 5000 ? 5 : 2,
+            strokeColor: stringToColor(user.phone),
+            strokeOpacity: 0.8,
+            map: map
+          });
+        }
+  
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            경로 길이: ${user.distance.toFixed(2)} km<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
       });
     }
+  }
+  
+  /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
+  function populatePathSelect() {
+    const select = document.getElementById("path-user-select");
+    if (!select) return;
+  
+    select.innerHTML = `<option value="all">전체</option>`;
+    const phones = [...new Set(allData.map(u => u.phone))];
+    phones.forEach(phone => {
+      const opt = document.createElement("option");
+      opt.value = phone;
+      opt.textContent = phone;
+      select.appendChild(opt);
+    });
+  }
 
   /* ---------------------- 갱신 주기 설정 ---------------------- */
   function setCustomInterval() {
