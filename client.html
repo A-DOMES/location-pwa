@@ -162,10 +162,10 @@ function updateUserPanelContent(viewMode = "current") {
   } else if (viewMode === "all") {
     allData.forEach(user => {
       panel.innerHTML += `
-        <div class="user-card">
+        <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
           <div class="user-name">👤 ${user.phone}</div>
           📍 위치: ${user.address}<br>
-          🕒 입력: ${user.time}<br>
+          🕒 마지막 갱신: ${user.updated}<br>
           상태: ${user.status}<br>
           좌표: (${user.lat}, ${user.lng})
         </div>
@@ -183,11 +183,10 @@ function updateUserPanelContent(viewMode = "current") {
 
     users.forEach(user => {
       panel.innerHTML += `
-        <div class="user-card">
+        <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
           <div class="user-name">👤 ${user.phone}</div>
           📍 위치: ${user.address}<br>
-          🕒 입력: ${user.time}<br>
-          상태: ${user.status}<br>
+          🕒 경로 길이: ${user.distance}km<br>
           좌표: (${user.lat}, ${user.lng})
         </div>
       `;
@@ -556,12 +555,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  /* 사용자 카드 */
-  .user-card { 
-    border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:12px; 
-    background:#fafafa; font-size:14px; line-height:1.4; 
-  }
-  .user-name { font-weight:bold; margin-bottom:6px; }
+/* 사용자 카드 */
+.user-card { 
+  border: 1px solid #ddd; 
+  border-radius: 6px; 
+  padding: 10px; 
+  margin-bottom: 12px; 
+  background: #fafafa; 
+  font-size: 14px; 
+  line-height: 1.4; 
+  cursor: pointer;              /* 마우스를 올리면 손바닥 모양 */
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+  background-color: #f0f0f0;    /* hover 시 배경색 변경 */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* 살짝 그림자 효과 */
+}
+
+.user-name { 
+  font-weight: bold; 
+  margin-bottom: 6px; 
+}
+
 
   /* 경로 선택 드롭다운 */
   #path-select-container { margin:10px 0; }
