@@ -537,9 +537,9 @@ window.renderUserTable = function(users, viewMode = "current") {
   users.forEach(user => {
     const row = document.createElement("tr");
     row.style.cursor = "pointer"; // 손가락 모양 커서
-    
+
     if (viewMode === "paths-current" || viewMode === "paths-all") {
-      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
+      // 경로 보기 모드: 전화번호, 주소, 기록 시간, 최근 갱신, 이동거리, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.address || "-"}</td>
@@ -566,7 +566,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       }
 
     } else {
-      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
+      // 일반 모드: 전화번호, 상태, 기록 시간, 최근 갱신, 주소, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
