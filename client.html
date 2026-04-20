@@ -265,6 +265,28 @@ function parsePathArray(pathArray) {
   return points;
 }
 
+function drawPath(points, distanceKm) {
+  if (!map || !points || points.length === 0) return;
+
+  // 거리(km)에 따라 선 두께 계산 (최소 5, 최대 18)
+  let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
+
+  // 거리(km)에 따라 색상 단계 구분
+  let color = "#00FF00"; // 0~20km → 초록
+  if (distanceKm > 20) color = "#0000FF"; // 20~50km → 파랑
+  if (distanceKm > 50) color = "#FFA500"; // 50~100km → 주황
+  if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
+
+  const pathLine = new google.maps.Polyline({
+    path: points,
+    geodesic: true,
+    strokeColor: color,
+    strokeOpacity: 1.0,
+    strokeWeight: weight
+  });
+
+  pathLine.setMap(map);
+}
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
