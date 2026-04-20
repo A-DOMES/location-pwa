@@ -169,21 +169,24 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
-  function openUserPanel(viewMode) {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.remove("open");
-    userPanel.classList.add("open");
+// 기존 function openUserPanel(viewMode) { ... } 대신
+window.openUserPanel = function(viewMode) {
+  connectionPanel.classList.remove("open");
+  settingsPanel.classList.remove("open");
+  userPanel.classList.add("open");
 
-    const title = document.getElementById("user-panel-title");
-    if (viewMode === "current") title.textContent = "현재 접속자";
-    else if (viewMode === "all") title.textContent = "전체 사용자";
-    else if (viewMode === "paths") title.textContent = "경로 보기";
+  const title = document.getElementById("user-panel-title");
+  if (viewMode === "current") title.textContent = "현재 접속자";
+  else if (viewMode === "all") title.textContent = "전체 사용자";
+  else if (viewMode === "paths") title.textContent = "경로 보기";
 
-    updateUserPanelContent(viewMode);
-  }
-  document.getElementById("close-user-panel").onclick = () => {
-    userPanel.classList.remove("open");
-  };
+  updateUserPanelContent(viewMode);
+};
+
+// 닫기 버튼 이벤트도 전역으로 연결
+document.getElementById("close-user-panel").onclick = () => {
+  userPanel.classList.remove("open");
+};
 
   // path 배열을 lat/lng 쌍으로 변환
   function parsePathArray(pathArray) {
