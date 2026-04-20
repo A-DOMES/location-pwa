@@ -4,167 +4,322 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-<!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
-<script src="config.js"></script>
+  <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
+  <script src="config.js"></script>
 
-<!-- 2. 사용자 코드 -->
-<script>
-// ---------------------- 전역 변수 ----------------------
-let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
+  <!-- 2. 사용자 코드 -->
+  <script>
+  // ---------------------- 전역 변수 ----------------------
+  let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
 
-/* ---------------------- 거리 계산 함수 ---------------------- */
-function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371;
+   /* ----------------------  거리 계산 함수 (전역에 추가) ---------------------- */
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // 지구 반지름 (km)
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-            Math.sin(dLng/2)**2;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  return R * c; // km
 }
 
-/* ---------------------- 문자열 기반 색상 ---------------------- */
-function stringToColor(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  // 문자열(전화번호/닉네임) 기반 색상 함수
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
   }
-  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
-}
+    
+  /* ---------------------- 데이터 로딩 ---------------------- */
+  async function loadData(token = null) {
+    try {
+      let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+      if (token) url += "&token=" + encodeURIComponent(token);
 
-/* ---------------------- 데이터 로딩 ---------------------- */
-async function loadData(token = null) {
-  try {
-    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-    if (token) url += "&token=" + encodeURIComponent(token);
+      const response = await fetch(url);
+      allData = await response.json();
 
-    const response = await fetch(url);
-    allData = await response.json();
+      // 드롭다운 갱신
+      populatePathSelect();
 
-    populatePathSelect();
-    showMap();
-  } catch (err) {
-    console.error("데이터 로드 실패:", err);
-    showMessage("⚠️ 데이터를 불러오지 못했습니다.");
+      // 데이터 정상 수신 후 지도 표시
+      showMap();
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+      showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+    }
   }
-}
 
-/* ---------------------- 지도 초기화 보조 ---------------------- */
-function clearMap() {
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-    markerCluster = null;
+  /* ---------------------- 지도 초기화 보조 ---------------------- */
+  function clearMap() {
+    if (markerCluster) {
+      markerCluster.clearMarkers();
+      markerCluster = null;
+    }
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    polylines.forEach(p => p.setMap(null));
+    polylines = [];
   }
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-  polylines.forEach(p => p.setMap(null));
-  polylines = [];
-}
 
-/* ---------------------- 지도 표시 ---------------------- */
-function showMap() {
-  clearMap();
-  if (!map) return;
+  /* ---------------------- 지도 표시 ---------------------- */
+  function showMap() {
+    clearMap();
+    if (!map) return;
 
-  if (mode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
+    if (mode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
         }
-      }
-    });
-    Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-        title: `${user.phone} (${user.status}, ${user.updated})`
       });
-      markers.push(marker);
-    });
-
-  } else if (mode === "all") {
-    allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        title: `${user.phone} (${user.status}, ${user.time})`
-      });
-      markers.push(marker);
-    });
-
-  } else if (mode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    let users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-    users.forEach(user => {
-      const pathCoords = [];
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) pathCoords.push({ lat, lng });
-      }
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: stringToColor(user.phone),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        polylines.push(polyline);
-
-        const last = pathCoords[pathCoords.length - 1];
+      Object.values(latestByUser).forEach(user => {
         const marker = new google.maps.Marker({
-          position: last,
+          position: { lat: user.lat, lng: user.lng },
           map: map,
-          title: `${user.phone} / ${user.updated}`,
-          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: `${user.phone} (${user.status}, ${user.updated})`
         });
         markers.push(marker);
+      });
+
+    } else if (mode === "all") {
+      allData.forEach(user => {
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          title: `${user.phone} (${user.status}, ${user.time})`
+        });
+        markers.push(marker);
+      });
+
+    } else if (mode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
       }
+
+      users.forEach(user => {
+        const pathCoords = [];
+        for (let j = 0; j < user.path.length; j += 2) {
+          const lat = user.path[j];
+          const lng = user.path[j + 1];
+          if (lat && lng) pathCoords.push({ lat, lng });
+        }
+        if (pathCoords.length > 0) {
+          const polyline = new google.maps.Polyline({
+            path: pathCoords,
+            geodesic: true,
+            strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: map
+          });
+          polylines.push(polyline);
+
+          const last = pathCoords[pathCoords.length - 1];
+          const marker = new google.maps.Marker({
+            position: last,
+            map: map,
+            title: `${user.phone} / ${user.updated}`,
+            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          });
+          markers.push(marker);
+        }
+      });
+    }
+
+    if (document.getElementById("clusterOption")?.checked) {
+      markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
+    }
+    updateUserPanelContent(mode);
+  }
+
+  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+  // path 배열을 lat/lng 쌍으로 변환
+  function parsePathArray(pathArray) {
+    const points = [];
+    for (let i = 0; i < pathArray.length; i += 2) {
+      const lat = parseFloat(pathArray[i]);
+      const lng = parseFloat(pathArray[i+1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        points.push({ lat, lng });
+      }
+    }
+    return points;
+  }
+  
+  function updateUserPanelContent(viewMode = "current") {
+    const panel = document.getElementById("user-content");
+    panel.innerHTML = "";
+  
+    if (viewMode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
+        }
+      });
+      if (Object.keys(latestByUser).length === 0) {
+        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
+        return;
+      }
+      Object.values(latestByUser).forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+  
+    } else if (viewMode === "all") {
+      allData.forEach(user => {
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            상태: ${user.status}<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+  
+    } else if (viewMode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+  
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
+      }
+  
+      // ✅ 전체 선택 모드일 때 총합을 먼저 계산해서 드롭다운 바로 아래에 표시
+      if (selectedPhone === "all") {
+        const totalDistance = users.reduce((sum, u) => {
+          const pathPoints = parsePathArray(u.path);
+          let dist = 0;
+          if (pathPoints.length > 1) {
+            for (let i = 1; i < pathPoints.length; i++) {
+              dist += calculateDistance(
+                pathPoints[i-1].lat, pathPoints[i-1].lng,
+                pathPoints[i].lat, pathPoints[i].lng
+              );
+            }
+          }
+          return sum + dist;
+        }, 0);
+  
+        panel.innerHTML += `
+          <div class="user-card" style="font-weight:bold; background:#eef;">
+            전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
+          </div>
+        `;
+      }
+  
+      // ✅ 사용자별 카드 출력
+      users.forEach(user => {
+        const pathPoints = parsePathArray(user.path);
+  
+        user.distance = 0;
+        if (pathPoints.length > 1) {
+          for (let i = 1; i < pathPoints.length; i++) {
+            user.distance += calculateDistance(
+              pathPoints[i-1].lat, pathPoints[i-1].lng,
+              pathPoints[i].lat, pathPoints[i].lng
+            );
+          }
+  
+          new google.maps.Polyline({
+            path: pathPoints,
+            strokeWeight: user.distance > 5000 ? 5 : 2,
+            strokeColor: stringToColor(user.phone),
+            strokeOpacity: 0.8,
+            map: map
+          });
+        }
+  
+        panel.innerHTML += `
+          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
+            <div class="user-name">👤 ${user.phone}</div>
+            📍 위치: ${user.address}<br>
+            🕒 마지막 갱신: ${user.updated}<br>
+            경로 길이: ${user.distance.toFixed(2)} km<br>
+            좌표: (${user.lat}, ${user.lng})
+          </div>
+        `;
+      });
+    }
+  }
+  
+  /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
+  function populatePathSelect() {
+    const select = document.getElementById("path-user-select");
+    if (!select) return;
+  
+    select.innerHTML = `<option value="all">전체</option>`;
+    const phones = [...new Set(allData.map(u => u.phone))];
+    phones.forEach(phone => {
+      const opt = document.createElement("option");
+      opt.value = phone;
+      opt.textContent = phone;
+      select.appendChild(opt);
     });
   }
 
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
+  /* ---------------------- 갱신 주기 설정 ---------------------- */
+  function setCustomInterval() {
+    const value = parseInt(document.getElementById("intervalValue").value);
+    const unit = document.getElementById("intervalUnit").value;
+
+    if (isNaN(value) || value <= 0) {
+      showMessage("⚠️ 1 이상의 값을 입력하세요.");
+      return;
+    }
+
+    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+    clearInterval(intervalId);
+    intervalId = setInterval(loadData, newInterval);
+    showMessage(`✅ 갱신 주기가 ${value} ${unit}로 변경되었습니다.`);
   }
-  updateUserPanelContent(mode);
-}
 
-/* ---------------------- 사용자 목록 드롭다운 ---------------------- */
-function populatePathSelect() {
-  const select = document.getElementById("path-user-select");
-  if (!select) return;
-  select.innerHTML = `<option value="all">전체</option>`;
-  const phones = [...new Set(allData.map(u => u.phone))];
-  phones.forEach(phone => {
-    const opt = document.createElement("option");
-    opt.value = phone;
-    opt.textContent = phone;
-    select.appendChild(opt);
-  });
-}
+    // 메시지를 화면에 표시하는 함수  
+  function showMessage(text) {
+    const msgBox = document.getElementById("message-box");
+    msgBox.innerText = text;
+    msgBox.style.display = "block";
+    setTimeout(() => msgBox.style.display = "none", 3000); // 3초 후 자동 숨김
+  }
 
-/* ---------------------- 메시지 표시 ---------------------- */
-function showMessage(text) {
-  const msgBox = document.getElementById("message-box");
-  msgBox.innerText = text;
-  msgBox.style.display = "block";
-  setTimeout(() => msgBox.style.display = "none", 3000);
-}
 
-/* ---------------------- DOMContentLoaded ---------------------- */
+<!-- 2. 사용자 코드 -->
+// HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
 document.addEventListener("DOMContentLoaded", () => {
+  
+  /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -181,24 +336,69 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
+  // ✅ 접속현황 패널 열기
   window.openUserPanel = function(viewMode) {
     connectionPanel.classList.remove("open");
     userPanel.classList.add("open");
-    mode = viewMode;
-    showMap();
-    updateUserPanelContent(viewMode);
+    mode = viewMode; // 선택된 모드 반영
+    showMap(); // 지도 갱신
+    updateUserPanelContent(viewMode); // 패널 내용 갱신
+  
+    // 제목 변경
     const titleEl = document.getElementById("user-panel-title");
-    titleEl.textContent =
-      viewMode === "current" ? "현재 접속자 보기" :
-      viewMode === "all" ? "전체 사용자 보기" :
-      viewMode === "paths" ? "경로 보기" : "사용자 정보";
+    if (viewMode === "current") {
+      titleEl.textContent = "현재 접속자 보기";
+    } else if (viewMode === "all") {
+      titleEl.textContent = "전체 사용자 보기";
+    } else if (viewMode === "paths") {
+      titleEl.textContent = "경로 보기";
+    } else {
+      titleEl.textContent = "사용자 정보";
+    }
   };
-
+  
   window.closeUserPanel = function() {
     userPanel.classList.remove("open");
   };
 
-  /* ---------------------- 지도 초기화 ---------------------- */
+  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+  function updateUserPanelContent(viewMode) {
+    const tbody = document.getElementById("user-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let users = [];
+    if (viewMode === "current") {
+      // 최근 5분 이내 갱신된 사용자만 표시
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
+        }
+      });
+      users = Object.values(latestByUser);
+
+    } else if (viewMode === "all") {
+      // 전체 사용자 표시
+      users = allData;
+
+    } else if (viewMode === "paths") {
+      // 경로 보기 모드: 선택된 사용자만 표시
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+    }
+
+    // 테이블 렌더링 함수 호출
+    renderUserTable(users);
+  }
+
+  /* ---------------------- 기기별 지도 ID 선택 ---------------------- */
   function getMapIdByDevice() {
     const ua = navigator.userAgent.toLowerCase();
     if (/android/.test(ua)) return CONFIG.mapIds.android;
@@ -207,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return CONFIG.mapIds.fixed;
   }
 
+  /* ---------------------- 지도 초기화 ---------------------- */
   function initMap() {
     const mapId = getMapIdByDevice();
     map = new google.maps.Map(document.getElementById("map"), {
@@ -215,12 +416,16 @@ document.addEventListener("DOMContentLoaded", () => {
       mapId: mapId
     });
 
+    // ✅ 원래 위치 저장
     const originalCenter = map.getCenter();
+  
+    // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
     google.maps.event.addListener(map, 'rightclick', function() {
       map.setCenter(originalCenter);
       map.setZoom(7);
     });
-
+    
+    // 내 위치 표시
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -233,6 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     }
 
+    // 닫기 버튼 이벤트 연결
     const closeBtn = document.getElementById("close-user-panel");
     if (closeBtn) {
       closeBtn.addEventListener("click", window.closeUserPanel);
@@ -260,15 +466,17 @@ document.addEventListener("DOMContentLoaded", () => {
   window.moveToLatLng = function() {
     const lat = parseFloat(document.getElementById("latInput").value);
     const lng = parseFloat(document.getElementById("lngInput").value);
-
+  
     if (isNaN(lat) || isNaN(lng)) {
       alert("올바른 위도와 경도를 입력하세요.");
       return;
     }
+  
     if (!map) {
       alert("지도가 아직 초기화되지 않았습니다.");
       return;
     }
+  
     map.setCenter({ lat: lat, lng: lng });
     map.setZoom(15);
   };
@@ -276,8 +484,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------------------- 사용자 카드 클릭 시 지도 이동 ---------------------- */
   window.moveToUser = function(lat, lng, phone) {
     if (!map) return;
+  
+    // 지도 이동
     map.setCenter({ lat: lat, lng: lng });
     map.setZoom(15);
+  
+    // 강조 마커 표시
     new google.maps.Marker({
       position: { lat: lat, lng: lng },
       map: map,
@@ -285,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       animation: google.maps.Animation.BOUNCE
     });
   };
-
+  
   /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
   const themeToggle = document.getElementById("themeToggle");
   if (themeToggle) {
@@ -319,41 +531,47 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   };
 
-  /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-  window.renderUserTable = function(users) {
-    const tbody = document.getElementById("user-table-body");
-    tbody.innerHTML = "";
+/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+window.renderUserTable = function(users) {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
 
-    users.forEach(user => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${user.name || "-"}</td>
-        <td>${user.phone}</td>
-        <td>${user.carNo || "-"}</td>
-        <td>${user.status}</td>
-        <td>${user.role || "-"}</td>
-        <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-  };
+  users.forEach(user => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${user.name || "-"}</td>
+      <td>${user.phone}</td>
+      <td>${user.carNo || "-"}</td>
+      <td>${user.status}</td>
+      <td>${user.role || "-"}</td>
+      <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+};
 
-  /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
-  window.focusOnUser = function(lat, lng) {
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(15);
-  };
+/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
+window.focusOnUser = function(lat, lng) {
+  map.setCenter({ lat: lat, lng: lng });
+  map.setZoom(15);
+};
 
-  /* ---------------------- DOMContentLoaded: 버튼 이벤트 연결 ---------------------- */
+/* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
+  // JS에서 이벤트 연결
   document.getElementById("location-check").addEventListener("click", moveToLatLng);
 });
 </script>
 
+<!-- 3. MarkerClusterer 라이브러리 -->
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
+<!-- 4. Google Maps API는 맨 마지막 -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
+</script>
 
 <!-- 스타일 -->
 <style>
-  /* 네가 보여준 스타일 그대로 */
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
   #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
              display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
@@ -366,7 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
                     display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-  .dropdown-panel.open { display:block; }
+  .dropdown-panel.open { display:block; opacity:1; transform:translateY(0); transition:opacity 0.3s ease; }
   .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
   .dropdown-item:hover { background:#e3f2fd; }
 
@@ -377,24 +595,170 @@ document.addEventListener("DOMContentLoaded", () => {
   #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
                       border-radius:4px; font-size:14px; }
   #close-user-panel:hover { background:#c62828; }
+  #user-panel h3 { margin:0; }
 
-  #summaryPanel span { margin-right:20px; font-weight:bold; }
-  #detailCard { border:1px solid #ccc; padding:15px; background:#fafafa; overflow:auto; margin-top:10px; }
-  #detailCard h3 { margin-top:0; }
+  .location-search {
+    display: flex;
+    flex-direction: column;   /* 세로로 배치 */
+    gap: 10px;                /* 요소 간격 */
+    padding: 10px;
+  }
+  
+  .location-search input,
+  .location-search button {
+    width: 100%;              /* 같은 폭 */
+    font-size: 16px;
+    padding: 8px;
+    box-sizing: border-box;   /* 폭 계산 안정화 */
+  }
 
-  #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
-  #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
-  #user-table th { background:#f5f5f5; }
+  /* 모바일 반응형 */
+  @media (max-width: 600px) {
+    .location-search input,
+    .location-search button {
+      font-size: 18px;        /* 모바일에서는 글씨 조금 크게 */
+    }
+  }
 
-  #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-                 background:#333; color:#fff; padding:8px 16px; border-radius:4px;
-                 display:none; z-index:4000; font-size:16px; }
+ /* 버튼 스타일 */ 
+.btn-check {
+  background-color: #4CAF50; /* 초록색 */
+  color: white;             /* 글자색 */
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
+.btn-check:hover {
+  background-color: #45a049; /* 마우스 올렸을 때 조금 더 진한 초록 */
+}
+
+  
+/* 사용자 카드 */
+.user-card { 
+  border: 1px solid #ddd; 
+  border-radius: 6px; 
+  padding: 10px; 
+  margin-bottom: 12px; 
+  background: #fafafa; 
+  font-size: 14px; 
+  line-height: 1.4; 
+  cursor: pointer;              /* 마우스를 올리면 손바닥 모양 */
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+  background-color: #f0f0f0;    /* hover 시 배경색 변경 */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* 살짝 그림자 효과 */
+}
+
+.user-name { 
+  font-weight: bold; 
+  margin-bottom: 6px; 
+}
+
+
+  /* 경로 선택 드롭다운 */
+  #path-select-container { margin:10px 0; }
+  #path-user-select { width:100%; padding:6px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
+
+  /* 메시지 박스 */
+  #message-box { 
+    position:fixed; 
+    bottom:10px; 
+    left:50%; 
+    transform:translateX(-50%);
+    background:#333; 
+    color:#fff; 
+    padding:8px 16px; 
+    border-radius:4px; 
+    display:none; 
+    z-index:4000; 
+    font-size:16px;
+  }
+
+  /* 📱 모바일 반응형 */
   @media (max-width: 768px) {
-    #user-panel { width:100%; height:40%; bottom:0; top:auto; border-left:none; border-top:1px solid #ccc;
-                  border-radius:12px 12px 0 0; }
-    #user-table th, #user-table td { font-size:16px; }
+    #user-panel {
+      width: 100%;          /* 전체 너비 */
+      height: 40%;          /* 화면 하단 40%만 차지 */
+      bottom: 0;            /* 하단 고정 */
+      top: auto;            /* 상단에서 떨어지지 않도록 */
+      border-left: none;
+      border-top: 1px solid #ccc;
+      border-radius: 12px 12px 0 0; /* 위쪽 모서리 둥글게 */
+    }
+    .user-card { font-size:16px; padding:14px; }
+    .user-name { font-size:18px; }
+    .menu-btn { padding:10px 16px; font-size:18px; }
+    #path-user-select { font-size:16px; padding:10px; }
+    #intervalValue, #intervalUnit { font-size:18px; padding:8px; }
     #message-box { font-size:18px; }
+  }
+
+  /* 라이트/다크 모드 */
+  body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+  }
+  body.dark-mode #top-bar {
+    background: #333;
+    color: #fff;
+  }
+  body.dark-mode .dropdown-panel {
+    background: #222;
+    color: #ddd;
+  }
+  body.dark-mode .menu-btn {
+    background: #444;
+    color: #fff;
+  }
+
+  /* 라이트/다크 모드 토글 스위치 */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+  }
+  .switch input { display:none; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: #3949ab;
+  }
+  input:checked + .slider:before {
+    transform: translateX(24px);
+  }
+  /* 사용자 테이블 */
+  #user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  #user-table th, #user-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  #user-table th {
+    background: #f5f5f5;
   }
 </style>
 </head>
@@ -414,12 +778,14 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">경로 보기</div>
+  
+    <!-- 위치찾기 -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
       <div class="location-search">
         <input type="number" id="latInput" placeholder="위도 입력" step="0.0001">
         <input type="number" id="lngInput" placeholder="경도 입력" step="0.0001">
-        <button id="location-check" class="btn-check">확인</button>
+        <button id="location-check" class="btn-check">확인</button> 
       </div>
     </div>
   </div>
@@ -433,78 +799,69 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="slider"></span>
       </label>
     </div>
-    <div class="dropdown-item">
-      <strong>갱신 주기 설정</strong><br>
-      <input type="number" id="intervalValue" value="5" min="1" style="width:70px;">
-      <select id="intervalUnit">
+
+  <div class="dropdown-item">
+    <strong>갱신 주기 설정</strong><br>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <!-- 숫자 입력 박스 폭을 줄임 -->
+      <input type="number" id="intervalValue" value="5" min="1" 
+             style="width:70px; font-size:18px; padding:6px;">
+      <select id="intervalUnit" style="font-size:18px; padding:6px;">
         <option value="minutes">분</option>
         <option value="seconds">초</option>
       </select>
-      <button onclick="setCustomInterval()">적용</button>
+      <button onclick="setCustomInterval()" 
+              style="font-size:18px; padding:6px 12px;">적용</button>
     </div>
-    <div class="dropdown-item"><label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label></div>
-    <div class="dropdown-item"><label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label></div>
   </div>
 
-  <!-- 요약 패널 -->
-  <div id="summaryPanel">
-    <span id="summaryActive" style="color:green;">정상: 0명</span>
-    <span id="summaryBlocked" style="color:red;">차단: 0명</span>
-    <span id="summaryStop" style="color:orange;">해제: 0명</span>
+    <div class="dropdown-item">
+      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+    </div>
+
+    <div class="dropdown-item">
+      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+    </div>
   </div>
 
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
-    </div>
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
+<!-- 사용자 정보 패널 -->
+<div id="user-panel">
+  <div class="panel-header">
+    <h3 id="user-panel-title">사용자 정보</h3>
+    <button id="close-user-panel">✖ 닫기</button>
+  </div>
+  <!-- 경로 선택 드롭다운 -->
+  <div id="path-select-container">
+    <label for="path-user-select">경로 보기 선택:</label>
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
+    </select>
+  </div>
+  <!-- 사용자 목록 테이블 -->
+  <div id="user-content">
     <table id="user-table">
       <thead>
         <tr>
+          <th>이름</th>
           <th>전화번호</th>
+          <th>차량번호</th>
           <th>상태</th>
-          <th>마지막 갱신</th>
-          <th>주소</th>
-          <th>좌표</th>
-          <th>상세</th>
+          <th>권한</th>
+          <th>위치</th>
         </tr>
       </thead>
-      <tbody id="user-table-body"></tbody>
+      <tbody id="user-table-body">
+        <!-- JS에서 사용자 목록을 동적으로 추가 -->
+      </tbody>
     </table>
   </div>
+</div>
 
-  <!-- 상세 카드 -->
-  <div id="detailCard">
-    <h3 id="cardName">사용자 선택 없음</h3>
-    <p><strong>전화번호:</strong> <span id="cardPhone"></span></p>
-    <p><strong>상태:</strong> <span id="cardStatus"></span></p>
-    <p><strong>업데이트:</strong> <span id="cardUpdated"></span></p>
-    <p><strong>위치:</strong> <span id="cardLocation"></span></p>
-    <p><strong>주소:</strong> <span id="cardAddress"></span></p>
-    <p><strong>토큰:</strong> <span id="cardToken"></span></p>
-    <div id="detailMap" style="width:100%; height:250px; margin-top:10px;"></div>
-    <button onclick="closeCard()">닫기</button>
-  </div>
+<!-- 지도 영역 -->
+<div id="map"></div>
 
-  <!-- 지도 영역 -->
-  <div id="map"></div>
-
-  <!-- 메시지 박스 -->
-  <div id="message-box"></div>
-
-  <!-- 3. MarkerClusterer 라이브러리 -->
-  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-  
-  <!-- 4. Google Maps API는 맨 마지막 -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
-  </script>
+<!-- 메시지 박스 -->
+<div id="message-box"></div>
 </body>
 </html>
+
