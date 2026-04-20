@@ -55,6 +55,25 @@
     }
   }
 
+// 데이터 로딩 후 요약 패널 갱신
+async function loadData(token = null) {
+  try {
+    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+    if (token) url += "&token=" + encodeURIComponent(token);
+
+    const response = await fetch(url);
+    allData = await response.json();
+
+    populatePathSelect();
+    showMap();
+    updateSummary(allData); // ✅ 요약 패널 갱신
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+    showMessage("⚠️ 데이터를 불러오지 못했습니다.");
+  }
+}
+
+    
   /* ---------------------- 지도 초기화 보조 ---------------------- */
   function clearMap() {
     if (markerCluster) {
@@ -361,6 +380,39 @@ document.addEventListener("DOMContentLoaded", () => {
     userPanel.classList.remove("open");
   };
 
+  // 요약 패널 업데이트
+function updateSummary(users) {
+  const activeCount = users.filter(u => u.status === "정상" || u.status === "active").length;
+  const blockedCount = users.filter(u => u.status === "차단" || u.status === "blocked").length;
+  const stopCount = users.filter(u => u.status === "해제" || u.status === "stop").length;
+
+  document.getElementById("summaryActive").textContent = `정상: ${activeCount}명`;
+  document.getElementById("summaryBlocked").textContent = `차단: ${blockedCount}명`;
+  document.getElementById("summaryStop").textContent = `해제: ${stopCount}명`;
+}
+
+// 상세 카드 표시
+function showDetailCard(user) {
+  document.getElementById("cardName").textContent = user.phone || "전화번호 없음";
+  document.getElementById("cardPhone").textContent = user.phone || "";
+  document.getElementById("cardStatus").textContent = user.status || "";
+  document.getElementById("cardUpdated").textContent = user.updated || "";
+  document.getElementById("cardLocation").textContent = `${user.lat}, ${user.lng}`;
+  document.getElementById("cardAddress").textContent = user.address || "";
+  document.getElementById("cardToken").textContent = user.token || "";
+}
+
+// 상세 카드 닫기
+function closeCard() {
+  document.getElementById("cardName").textContent = "사용자 선택 없음";
+  document.getElementById("cardPhone").textContent = "";
+  document.getElementById("cardStatus").textContent = "";
+  document.getElementById("cardUpdated").textContent = "";
+  document.getElementById("cardLocation").textContent = "";
+  document.getElementById("cardAddress").textContent = "";
+  document.getElementById("cardToken").textContent = "";
+}
+
   /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
   function updateUserPanelContent(viewMode) {
     const tbody = document.getElementById("user-table-body");
@@ -397,7 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 테이블 렌더링 함수 호출
     renderUserTable(users);
   }
-
+ 
   /* ---------------------- 기기별 지도 ID 선택 ---------------------- */
   function getMapIdByDevice() {
     const ua = navigator.userAgent.toLowerCase();
@@ -658,6 +710,11 @@ window.focusOnUser = function(lat, lng) {
   margin-bottom: 6px; 
 }
 
+/* 기존 CSS 유지 + 관리자 패널용 추가 */
+#summaryPanel span { margin-right:20px; font-weight:bold; }
+#detailCard { border:1px solid #ccc; padding:15px; background:#fafafa; overflow:auto; }
+#detailCard h3 { margin-top:0; }
+  
 
   /* 경로 선택 드롭다운 */
   #path-select-container { margin:10px 0; }
@@ -824,6 +881,13 @@ window.focusOnUser = function(lat, lng) {
     </div>
   </div>
 
+<!-- 요약 패널 -->
+<div id="summaryPanel" style="margin:10px; padding:10px; border:1px solid #ccc; background:#f9f9f9;">
+  <span id="summaryActive" style="color:green;">정상: 0명</span>
+  <span id="summaryBlocked" style="color:red;">차단: 0명</span>
+  <span id="summaryStop" style="color:orange;">해제: 0명</span>
+</div>
+  
 <!-- 사용자 정보 패널 -->
 <div id="user-panel">
   <div class="panel-header">
@@ -857,6 +921,19 @@ window.focusOnUser = function(lat, lng) {
   </div>
 </div>
 
+<!-- 기존 사용자 패널 아래에 상세 카드 추가 -->
+<div id="detailCard">
+  <h3 id="cardName">사용자 선택 없음</h3>
+  <p><strong>전화번호:</strong> <span id="cardPhone"></span></p>
+  <p><strong>상태:</strong> <span id="cardStatus"></span></p>
+  <p><strong>업데이트:</strong> <span id="cardUpdated"></span></p>
+  <p><strong>위치:</strong> <span id="cardLocation"></span></p>
+  <p><strong>주소:</strong> <span id="cardAddress"></span></p>
+  <p><strong>토큰:</strong> <span id="cardToken"></span></p>
+  <div id="map" style="width:100%; height:250px; margin-top:10px;"></div>
+  <button onclick="closeCard()">닫기</button>
+</div>
+  
 <!-- 지도 영역 -->
 <div id="map"></div>
 
