@@ -16,14 +16,14 @@ let map, mode = "current", markers = [], polylines = [], markerCluster, interval
 
 // ---------------------- 거리 계산 함수 ----------------------
 function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // 지구 반지름 (km)
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(dLat/2)**2 +
             Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
             Math.sin(dLng/2)**2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // km
+  return R * c;
 }
 
 // ---------------------- 문자열 기반 색상 함수 ----------------------
@@ -45,10 +45,7 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
-    // 드롭다운 갱신
     populatePathSelect();
-
-    // 데이터 정상 수신 후 지도 표시
     showMap();
   } catch (err) {
     console.error("데이터 로드 실패:", err);
@@ -184,18 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("close-user-panel").onclick = () => {
     userPanel.classList.remove("open");
   };
-
-  function parsePathArray(pathArray) {
-    const points = [];
-    for (let i = 0; i < pathArray.length; i += 2) {
-      const lat = parseFloat(pathArray[i]);
-      const lng = parseFloat(pathArray[i+1]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        points.push({ lat, lng });
-      }
-    }
-    return points;
-  }
 });
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
@@ -254,7 +239,6 @@ function updateUserPanelContent(viewMode = "current") {
       tbody.appendChild(row);
     }
 
-    // 사용자별 distance 계산
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       user.distance = 0;
@@ -269,7 +253,6 @@ function updateUserPanelContent(viewMode = "current") {
     });
   }
 
-  // ✅ 헤더 갱신 + 테이블 출력
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
@@ -409,19 +392,32 @@ function updateTableHeader(viewMode) {
   });
 }
 
+/* ---------------------- 한국 시간 변환 ---------------------- */
+function formatToKST(dateStr) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+}
+
+/* ---------------------- 특정 사용자 위치로 이동 ---------------------- */
+function moveToUser(lat, lng, phone) {
+  if (!map) return;
+  map.setCenter({ lat, lng });
+  map.setZoom(15);
+  showMessage(`📍 ${phone} 위치로 이동했습니다.`);
+}
+
 /* ---------------------- 지도 초기화 ---------------------- */
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 37.5665, lng: 126.9780 }, // 서울 좌표 예시
+    center: { lat: 34.95, lng: 127.49 }, // 순천시 중심 좌표
     zoom: 12
   });
   loadData();
 }
 </script>
 
-
-
-
+  
 <!-- 스타일 -->
 <style>
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
