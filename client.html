@@ -446,7 +446,10 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>(${user.lat}, ${user.lng})</td>
+        <td>
+          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
+          ${user.lng ? user.lng.toFixed(5) : "-"}
+        </td>
       `;
     } else {
       // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
@@ -456,7 +459,10 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
-        <td>(${user.lat}, ${user.lng})</td>
+        <td>
+          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
+          ${user.lng ? user.lng.toFixed(5) : "-"}
+        </td>
       `;
     }
 
