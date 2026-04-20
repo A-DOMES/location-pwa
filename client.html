@@ -265,13 +265,14 @@ function parsePathArray(pathArray) {
   return points;
 }
 
+// 거리 기반 두께 + 색상으로 경로 그리기
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
-  // 거리(km)에 따라 선 두께 계산 (최소 5, 최대 18)
+  // 두께 계산 (최소 5, 최대 18)
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
 
-  // 거리(km)에 따라 색상 단계 구분
+  // 색상 단계
   let color = "#00FF00"; // 0~20km → 초록
   if (distanceKm > 20) color = "#0000FF"; // 20~50km → 파랑
   if (distanceKm > 50) color = "#FFA500"; // 50~100km → 주황
@@ -287,6 +288,7 @@ function drawPath(points, distanceKm) {
 
   pathLine.setMap(map);
 }
+
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
@@ -539,6 +541,13 @@ window.renderUserTable = function(users, viewMode = "current") {
           ${user.lng ? user.lng.toFixed(5) : "-"}
         </td>
       `;
+
+      // ✅ path 값으로 경로 그리기
+      if (user.pathArray && user.pathArray.length > 0) {
+        const points = parsePathArray(user.pathArray);
+        drawPath(points, user.distance || 0);
+      }
+
     } else {
       // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
       row.innerHTML = `
@@ -553,16 +562,17 @@ window.renderUserTable = function(users, viewMode = "current") {
         </td>
       `;
     }
+
     // ✅ 행 클릭 시 해당 사용자 위치로 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
       }
     });
+
     tbody.appendChild(row);
   });
 };
-
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
