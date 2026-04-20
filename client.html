@@ -275,9 +275,9 @@ function drawPath(points, distanceKm) {
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
 
   // 색상 단계
-  let color = "#00FF00"; // 0~20km → 초록
-  if (distanceKm > 20) color = "#0000FF"; // 20~50km → 파랑
-  if (distanceKm > 50) color = "#FFA500"; // 50~100km → 주황
+  let color = "#0000FF"; // 0~20km → 파랑
+  if (distanceKm > 20) color = "#FFA500"; // 20~50km → 주황
+  if (distanceKm > 50) color = "#00FF00"; // 50~100km → 초록
   if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
 
   const pathLine = new google.maps.Polyline({
