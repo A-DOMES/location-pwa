@@ -189,21 +189,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPanel = document.getElementById("user-panel");
   const select = document.getElementById("path-user-select");
 
-  // ✅ 드롭다운 선택 이벤트
-  if (select) {
-    select.addEventListener("change", e => {
-      const selectedPhone = e.target.value;
-      if (selectedPhone === "all") {
-        updateUserPanelContent(mode);
+// ✅ 드롭다운 선택 이벤트
+if (select) {
+  select.addEventListener("change", e => {
+    const selectedPhone = e.target.value;
+
+    if (selectedPhone === "all") {
+      // 전체 사용자 표시
+      updateUserPanelContent("all");
+      renderUserTable(allData, "all");
+    } else {
+      // 특정 사용자만 표시
+      const user = allData.find(u => u.phone === selectedPhone);
+      if (user) {
+        updateUserPanelContent("current");
+        renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
+        moveToUser(user.lat, user.lng, user.phone); // 지도 이동
       } else {
-        const user = allData.find(u => u.phone === selectedPhone);
-        if (user) {
-          updateUserPanelContent(mode);
-          moveToUser(user.lat, user.lng, user.phone); // 지도 이동
-        }
+        // 선택된 사용자가 없으면 테이블 비우기
+        renderUserTable([], "current");
       }
-    });
-  }
+    }
+  });
+}
+
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
   btnConnection.onclick = () => {
