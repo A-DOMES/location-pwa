@@ -183,103 +183,137 @@ function parsePathArray(pathArray) {
 }
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-function updateUserPanelContent(viewMode = "current") {
-  const tbody = document.getElementById("user-table-body");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+document.addEventListener("DOMContentLoaded", () => {
+  /* ---------------------- 패널 동작 ---------------------- */
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
 
-  let users = [];
+  btnConnection.onclick = () => {
+    settingsPanel.classList.remove("open");
+    connectionPanel.classList.toggle("open");
+  };
 
-  if (viewMode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
+  btnSettings.onclick = () => {
+    connectionPanel.classList.remove("open");
+    settingsPanel.classList.toggle("open");
+  };
+
+  // path 배열을 lat/lng 쌍으로 변환
+  function parsePathArray(pathArray) {
+    const points = [];
+    for (let i = 0; i < pathArray.length; i += 2) {
+      const lat = parseFloat(pathArray[i]);
+      const lng = parseFloat(pathArray[i+1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        points.push({ lat, lng });
       }
-    });
-    users = Object.values(latestByUser);
+    }
+    return points;
+  }
 
-  } else if (viewMode === "all") {
-    users = allData;
+  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+  function updateUserPanelContent(viewMode = "current") {
+    const tbody = document.getElementById("user-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
 
-  } else if (viewMode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+    let users = [];
 
-    // 전체 선택 모드일 때 총 이동 거리 표시
-    if (selectedPhone === "all") {
-      const totalDistance = users.reduce((sum, u) => {
-        const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
-        let dist = 0;
+    if (viewMode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
+        }
+      });
+      users = Object.values(latestByUser);
+
+    } else if (viewMode === "all") {
+      users = allData;
+
+    } else if (viewMode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+
+      // 전체 선택 모드일 때 총 이동 거리 표시
+      if (selectedPhone === "all") {
+        const totalDistance = users.reduce((sum, u) => {
+          const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
+          let dist = 0;
+          if (pathPoints.length > 1) {
+            for (let i = 1; i < pathPoints.length; i++) {
+              dist += calculateDistance(
+                pathPoints[i-1].lat, pathPoints[i-1].lng,
+                pathPoints[i].lat, pathPoints[i].lng
+              );
+            }
+          }
+          return sum + dist;
+        }, 0);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td colspan="5" style="font-weight:bold; background:#eef;">
+            전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
+          </td>
+        `;
+        tbody.appendChild(row);
+      }
+
+      // ✅ 사용자별 distance 계산 (paths 모드에서만)
+      users.forEach(user => {
+        const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+        user.distance = 0;
         if (pathPoints.length > 1) {
           for (let i = 1; i < pathPoints.length; i++) {
-            dist += calculateDistance(
+            user.distance += calculateDistance(
               pathPoints[i-1].lat, pathPoints[i-1].lng,
               pathPoints[i].lat, pathPoints[i].lng
             );
           }
         }
-        return sum + dist;
-      }, 0);
-
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td colspan="5" style="font-weight:bold; background:#eef;">
-          전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
-        </td>
-      `;
-      tbody.appendChild(row);
+      });
     }
 
-    // ✅ 사용자별 distance 계산 (paths 모드에서만)
+    // ✅ 모드별 테이블 출력
     users.forEach(user => {
-      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-      user.distance = 0;
-      if (pathPoints.length > 1) {
-        for (let i = 1; i < pathPoints.length; i++) {
-          user.distance += calculateDistance(
-            pathPoints[i-1].lat, pathPoints[i-1].lng,
-            pathPoints[i].lat, pathPoints[i].lng
-          );
-        }
+      const row = document.createElement("tr");
+
+      if (viewMode === "paths") {
+        row.innerHTML = `
+          <td>${user.phone || "-"}</td>
+          <td>${user.address || "-"}</td>
+          <td>${user.updated || "-"}</td>
+          <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+          <td>(${user.lat}, ${user.lng})</td>
+        `;
+      } else {
+        row.innerHTML = `
+          <td>${user.phone || "-"}</td>
+          <td>${user.status || "-"}</td>
+          <td>${user.updated || "-"}</td>
+          <td>${user.address || "-"}</td>
+          <td>(${user.lat}, ${user.lng})</td>
+        `;
       }
+
+      tbody.appendChild(row);
     });
+
+    // 마지막에 renderUserTable 호출
+    renderUserTable(users, viewMode);
   }
+});
 
-  // ✅ 모드별 테이블 출력
-  users.forEach(user => {
-    const row = document.createElement("tr");
-
-    if (viewMode === "paths") {
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>${user.updated || "-"}</td>
-        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>(${user.lat}, ${user.lng})</td>
-      `;
-    } else {
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
-        <td>${user.updated || "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>(${user.lat}, ${user.lng})</td>
-      `;
-    }
-
-    tbody.appendChild(row);
-  });
-
-  // 마지막에 renderUserTable 호출
-  renderUserTable(users, viewMode);
-}
 
 
 
