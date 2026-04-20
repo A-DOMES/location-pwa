@@ -348,23 +348,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnLocation) {
     btnLocation.addEventListener("click", moveToLatLng);
   }
-
-  // 접속현황 버튼
-  const btnConnection = document.getElementById("btn-connection");
-  if (btnConnection) {
-    btnConnection.addEventListener("click", () => {
-      document.getElementById("connection-panel").classList.toggle("open");
-    });
-  }
-
-  // 환경설정 버튼
-  const btnSettings = document.getElementById("btn-settings");
-  if (btnSettings) {
-    btnSettings.addEventListener("click", () => {
-      document.getElementById("settings-panel").classList.toggle("open");
-    });
-  }
 });
+
 </script>
 
 
@@ -643,6 +628,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <option value="all">전체</option>
     </select>
   </div>
+
+  
   <!-- 사용자 목록 테이블 -->
   <div id="user-content">
       <table id="user-table">
