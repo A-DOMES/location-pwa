@@ -284,7 +284,7 @@ function updateTableHeader(viewMode) {
 
   if (viewMode === "paths") {
     headerRow.innerHTML = `
-      <th>닉네임</th>
+      <th>이름</th>
       <th>주소</th>
       <th>로그인<br>시각</th>
       <th>최근 갱신</th>
@@ -293,7 +293,7 @@ function updateTableHeader(viewMode) {
     `;
   } else {
     headerRow.innerHTML = `
-      <th>닉네임</th>
+      <th>이름</th>
       <th>상태</th>
       <th>로그인<br>시각</th>
       <th>최근 갱신</th>
@@ -517,13 +517,13 @@ if (btnLocation) {
 /* 닉네임(전화번호) 열 폭 늘리기 */
 #user-table th:nth-child(1),
 #user-table td:nth-child(1) {
-  width: 150px;   /* 원하는 폭으로 조정 */
+  width: 50px;   /* 원하는 폭으로 조정 */
 }
 
 /* 상태 열 폭 늘리기 */
 #user-table th:nth-child(2),
 #user-table td:nth-child(2) {
-  width: 100px;   /* 원하는 폭으로 조정 */
+  width: 50px;   /* 원하는 폭으로 조정 */
 }
 
   #user-panel.open { display:block; }
