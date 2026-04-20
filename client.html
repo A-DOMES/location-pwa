@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-  <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
-  <script src="config.js"></script>
+<!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
+<script src="config.js"></script>
 
-  <!-- 2. 사용자 코드 -->
+<!-- 2. 사용자 코드 -->
 <script>
 // ---------------------- 전역 변수 ----------------------
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
+const btnConnection = document.getElementById("btn-connection");
+const connectionPanel = document.getElementById("connection-panel");
+const btnSettings = document.getElementById("btn-settings");
+const settingsPanel = document.getElementById("settings-panel");
 
 /* ---------------------- 거리 계산 ---------------------- */
 function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -233,7 +237,7 @@ function updateUserPanelContent(viewMode) {
       tbody.appendChild(row);
     });
   };
-
+}   // ← updateUserPanelContent 함수 닫기
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
