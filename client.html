@@ -284,7 +284,7 @@ function updateTableHeader(viewMode) {
 
   if (viewMode === "paths") {
     headerRow.innerHTML = `
-      <th>전화번호</th>
+      <th>닉네임</th>
       <th>주소</th>
       <th>로그인 시각</th>
       <th>최근 갱신</th>
@@ -293,7 +293,7 @@ function updateTableHeader(viewMode) {
     `;
   } else {
     headerRow.innerHTML = `
-      <th>전화번호</th>
+      <th>닉네임</th>
       <th>상태</th>
       <th>로그인 시각</th>
       <th>최근 갱신</th>
@@ -415,6 +415,21 @@ window.setCustomInterval = function() {
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
 
+/* ---------------------- 한국표준시설정 ---------------------- */  
+function formatToKST(isoString) {
+  if (!isoString) return "-";
+  const date = new Date(isoString);
+  return date.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -428,8 +443,8 @@ window.renderUserTable = function(users, viewMode = "current") {
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.address || "-"}</td>
-        <td>${user.time || "-"}</td>
-        <td>${user.updated || "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>(${user.lat}, ${user.lng})</td>
       `;
@@ -438,8 +453,8 @@ window.renderUserTable = function(users, viewMode = "current") {
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
-        <td>${user.time || "-"}</td>
-        <td>${user.updated || "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
         <td>(${user.lat}, ${user.lng})</td>
       `;
@@ -448,6 +463,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     tbody.appendChild(row);
   });
 };
+
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
