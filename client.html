@@ -169,29 +169,18 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
-  /* ---------------------- 사용자 패널 열기/닫기 ---------------------- */
-  window.openUserPanel = function(viewMode) {
-    connectionPanel.classList.remove("open");
-    userPanel.classList.add("open");
-    mode = viewMode;
-    showMap();
-    updateUserPanelContent(viewMode);
-
-    const titleEl = document.getElementById("user-panel-title");
-    if (viewMode === "current") {
-      titleEl.textContent = "현재 접속자 보기";
-    } else if (viewMode === "all") {
-      titleEl.textContent = "전체 사용자 보기";
-    } else if (viewMode === "paths") {
-      titleEl.textContent = "경로 보기";
-    } else {
-      titleEl.textContent = "사용자 정보";
+// path 배열을 lat/lng 쌍으로 변환
+function parsePathArray(pathArray) {
+  const points = [];
+  for (let i = 0; i < pathArray.length; i += 2) {
+    const lat = parseFloat(pathArray[i]);
+    const lng = parseFloat(pathArray[i+1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      points.push({ lat, lng });
     }
-  };
-
-  window.closeUserPanel = function() {
-    userPanel.classList.remove("open");
-  };
+  }
+  return points;
+}
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
@@ -266,6 +255,7 @@ function updateUserPanelContent(viewMode = "current") {
   // ✅ 모드별로 테이블 출력
   renderUserTable(users, viewMode);
 }
+
 
 
   /* ---------------------- 지도 초기화 ---------------------- */
