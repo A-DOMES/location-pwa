@@ -351,53 +351,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-  <!-- 스타일 -->
-  <style>
-    /* 상단바, 패널, 지도, 카드, 테이블, 반응형, 다크모드 */
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
-    #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
-               display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
-    #menu-buttons { display:flex; gap:20px; margin-top:4px; }
-    .menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none;
-                display:flex; align-items:center; gap:6px; }
-    .icon { font-size:16px; }
-    #title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
-    #map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
+<!-- 스타일 -->
+<style>
+  /* 네가 보여준 스타일 그대로 */
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
+  #top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white;
+             display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
+  #menu-buttons { display:flex; gap:20px; margin-top:4px; }
+  .menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none;
+              display:flex; align-items:center; gap:6px; }
+  .icon { font-size:16px; }
+  #title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
+  #map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
 
-    .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
-                      display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-    .dropdown-panel.open { display:block; }
-    .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
-    .dropdown-item:hover { background:#e3f2fd; }
+  .dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px;
+                    display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
+  .dropdown-panel.open { display:block; }
+  .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
+  .dropdown-item:hover { background:#e3f2fd; }
 
-    #user-panel { position:absolute; top:50px; right:0; width:340px; height:calc(100% - 50px); background:white;
-                  border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
-    #user-panel.open { display:block; }
-    .panel-header { display:flex; justify-content:space-between; align-items:center; }
-    #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
-                        border-radius:4px; font-size:14px; }
-    #close-user-panel:hover { background:#c62828; }
+  #user-panel { position:absolute; top:50px; right:0; width:340px; height:calc(100% - 50px); background:white;
+                border-left:1px solid #ccc; display:none; z-index:3000; padding:15px; overflow-y:auto; }
+  #user-panel.open { display:block; }
+  .panel-header { display:flex; justify-content:space-between; align-items:center; }
+  #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
+                      border-radius:4px; font-size:14px; }
+  #close-user-panel:hover { background:#c62828; }
 
-    #summaryPanel span { margin-right:20px; font-weight:bold; }
-    #detailCard { border:1px solid #ccc; padding:15px; background:#fafafa; overflow:auto; margin-top:10px; }
-    #detailCard h3 { margin-top:0; }
+  #summaryPanel span { margin-right:20px; font-weight:bold; }
+  #detailCard { border:1px solid #ccc; padding:15px; background:#fafafa; overflow:auto; margin-top:10px; }
+  #detailCard h3 { margin-top:0; }
 
-    #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
-    #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
-    #user-table th { background:#f5f5f5; }
+  #user-table { width:100%; border-collapse:collapse; margin-top:10px; }
+  #user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
+  #user-table th { background:#f5f5f5; }
 
-    #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-                   background:#333; color:#fff; padding:8px 16px; border-radius:4px;
-                   display:none; z-index:4000; font-size:16px; }
+  #message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+                 background:#333; color:#fff; padding:8px 16px; border-radius:4px;
+                 display:none; z-index:4000; font-size:16px; }
 
-    /* 모바일 반응형 */
-    @media (max-width: 768px) {
-      #user-panel { width:100%; height:40%; bottom:0; top:auto; border-left:none; border-top:1px solid #ccc;
-                    border-radius:12px 12px 0 0; }
-      #user-table th, #user-table td { font-size:16px; }
-      #message-box { font-size:18px; }
-    }
-  </style>
+  @media (max-width: 768px) {
+    #user-panel { width:100%; height:40%; bottom:0; top:auto; border-left:none; border-top:1px solid #ccc;
+                  border-radius:12px 12px 0 0; }
+    #user-table th, #user-table td { font-size:16px; }
+    #message-box { font-size:18px; }
+  }
+</style>
 </head>
 
 <body>
@@ -490,12 +489,11 @@ document.addEventListener("DOMContentLoaded", () => {
     <p><strong>위치:</strong> <span id="cardLocation"></span></p>
     <p><strong>주소:</strong> <span id="cardAddress"></span></p>
     <p><strong>토큰:</strong> <span id="cardToken"></span></p>
-    <!-- 상세 카드용 지도는 별도 ID -->
     <div id="detailMap" style="width:100%; height:250px; margin-top:10px;"></div>
     <button onclick="closeCard()">닫기</button>
   </div>
-  
-  <!-- 전체 지도 영역 -->
+
+  <!-- 지도 영역 -->
   <div id="map"></div>
 
   <!-- 메시지 박스 -->
