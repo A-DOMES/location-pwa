@@ -543,9 +543,9 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
 
       // ✅ path 값으로 경로 그리기
-      if (user.pathArray && user.pathArray.length > 0) {
-        const points = parsePathArray(user.pathArray);
-        drawPath(points, user.distance || 0);
+      if (user.path && user.path.length > 0) {
+        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
+        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
       }
 
     } else {
@@ -573,6 +573,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     tbody.appendChild(row);
   });
 };
+
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
