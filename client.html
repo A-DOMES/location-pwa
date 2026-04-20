@@ -528,15 +528,15 @@ window.renderUserTable = function(users, viewMode = "current") {
   if (viewMode === "paths-all") {
     users.forEach(user => {
       if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
-        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
+        const points = parsePathArray(user.path);
+        drawPath(points, user.distance || 0);
       }
     });
   }
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
+    row.style.cursor = "pointer";
 
     if (viewMode === "paths-current" || viewMode === "paths-all") {
       // 경로 보기 모드: 전화번호, 주소, 기록 시간, 최근 갱신, 이동거리, 위치
@@ -556,11 +556,11 @@ window.renderUserTable = function(users, viewMode = "current") {
       if (viewMode === "paths-current") {
         row.addEventListener("click", () => {
           if (user.lat && user.lng) {
-            moveToUser(user.lat, user.lng, user.phone); // 지도 이동
+            moveToUser(user.lat, user.lng, user.phone);
           }
           if (user.path && user.path.length > 0) {
             const points = parsePathArray(user.path);
-            drawPath(points, user.distance || 0);       // 선택된 사용자만 경로 표시
+            drawPath(points, user.distance || 0);
           }
         });
       }
@@ -582,9 +582,6 @@ window.renderUserTable = function(users, viewMode = "current") {
 
     tbody.appendChild(row);
   });
-};
-
-
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
@@ -844,7 +841,7 @@ if (btnLocation) {
 </style>
 </head>
 
-<body>
+<body onload="initUsers()">
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
@@ -946,6 +943,8 @@ if (btnLocation) {
 
 <!-- 사용자 패널 드롭다운 동작 JS -->
 <script>
+  
+  
   // 서버에서 사용자 데이터 가져오기
   function fetchUsers() {
     return fetch(CONFIG.USER_URL) // Google Apps Script doGet URL
@@ -955,12 +954,24 @@ if (btnLocation) {
       });
   }
 
-  // 드롭다운 변경 이벤트 핸들러
-  function onPathModeChange(mode) {
-    fetchUsers().then(users => {
-      renderUserTable(users, mode);
-    });
+
+let cachedUsers = [];
+  
+// 최초 데이터 로드
+function initUsers() {
+  fetchUsers().then(users => {
+    cachedUsers = users;
+    renderUserTable(cachedUsers, "paths-current"); // 초기에는 개인 모드
+  });
+}
+
+// 드롭다운 변경 이벤트 핸들러 (수정된 부분)
+function onPathModeChange(mode) {
+  if (cachedUsers.length > 0) {
+    renderUserTable(cachedUsers, mode);
   }
+}
+
 </script>
   
 <!-- 3. MarkerClusterer 라이브러리 -->
