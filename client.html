@@ -193,36 +193,56 @@ document.addEventListener("DOMContentLoaded", () => {
     userPanel.classList.remove("open");
   };
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode) {
-    const tbody = document.getElementById("user-table-body");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+/* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+function updateUserPanelContent(viewMode) {
+  const tbody = document.getElementById("user-table-body");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-    let users = [];
-    if (viewMode === "current") {
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
+  let users = [];
+  if (viewMode === "current") {
+    // 최근 5분 이내 갱신된 사용자만 표시
+    const now = new Date();
+    const latestByUser = {};
+    allData.forEach(user => {
+      const updated = new Date(user.updated);
+      if (now - updated <= 5 * 60 * 1000) {
+        const key = user.phone;
+        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+          latestByUser[key] = user;
         }
-      });
-      users = Object.values(latestByUser);
-    } else if (viewMode === "all") {
-      users = allData;
-    } else if (viewMode === "paths") {
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
-      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-    }
+      }
+    });
+    users = Object.values(latestByUser);
 
-    renderUserTable(users);
+  } else if (viewMode === "all") {
+    // 전체 사용자 표시
+    users = allData;
+
+  } else if (viewMode === "paths") {
+    // 경로 보기 모드: 선택된 사용자만 표시
+    const select = document.getElementById("path-user-select");
+    const selectedPhone = select ? select.value : "all";
+    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+
+    // 각 사용자별 distance 계산
+    users.forEach(user => {
+      const pathPoints = parsePathArray(user.path);
+      user.distance = 0;
+      if (pathPoints.length > 1) {
+        for (let i = 1; i < pathPoints.length; i++) {
+          user.distance += calculateDistance(
+            pathPoints[i-1].lat, pathPoints[i-1].lng,
+            pathPoints[i].lat, pathPoints[i].lng
+          );
+        }
+      }
+    });
   }
+
+  // ✅ 모드까지 같이 넘겨주기
+  renderUserTable(users, viewMode);
+}
 
   /* ---------------------- 지도 초기화 ---------------------- */
   function getMapIdByDevice() {
@@ -333,21 +353,37 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-  window.renderUserTable = function(users) {
-    const tbody = document.getElementById("user-table-body");
-    tbody.innerHTML = "";
-    users.forEach(user => {
-      const row = document.createElement("tr");
+window.renderUserTable = function(users, viewMode = "current") {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
+
+  users.forEach(user => {
+    const row = document.createElement("tr");
+
+    if (viewMode === "paths") {
+      // 경로 보기 모드
+      row.innerHTML = `
+        <td>${user.phone || "-"}</td>
+        <td>${user.address || "-"}</td>
+        <td>${user.updated || "-"}</td>
+        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+        <td>(${user.lat}, ${user.lng})</td>
+      `;
+    } else {
+      // 현재 접속자 보기 / 전체 사용자 보기
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
         <td>${user.updated || "-"}</td>
         <td>${user.address || "-"}</td>
-        <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
+        <td>(${user.lat}, ${user.lng})</td>
       `;
-      tbody.appendChild(row);
-    });
-  };
+    }
+
+    tbody.appendChild(row);
+  });
+};
+
 
   /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
   window.focusOnUser = function(lat, lng) {
