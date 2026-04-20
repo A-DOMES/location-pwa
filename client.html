@@ -152,7 +152,6 @@ function showMap() {
 
 // ---------------------- 사용자 패널 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -169,26 +168,23 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
-// 기존 function openUserPanel(viewMode) { ... } 대신
-window.openUserPanel = function(viewMode) {
-  connectionPanel.classList.remove("open");
-  settingsPanel.classList.remove("open");
-  userPanel.classList.add("open");
+  window.openUserPanel = function(viewMode) {
+    connectionPanel.classList.remove("open");
+    settingsPanel.classList.remove("open");
+    userPanel.classList.add("open");
 
-  const title = document.getElementById("user-panel-title");
-  if (viewMode === "current") title.textContent = "현재 접속자";
-  else if (viewMode === "all") title.textContent = "전체 사용자";
-  else if (viewMode === "paths") title.textContent = "경로 보기";
+    const title = document.getElementById("user-panel-title");
+    if (viewMode === "current") title.textContent = "현재 접속자";
+    else if (viewMode === "all") title.textContent = "전체 사용자";
+    else if (viewMode === "paths") title.textContent = "경로 보기";
 
-  updateUserPanelContent(viewMode);
-};
+    updateUserPanelContent(viewMode);
+  };
 
-// 닫기 버튼 이벤트도 전역으로 연결
-document.getElementById("close-user-panel").onclick = () => {
-  userPanel.classList.remove("open");
-};
+  document.getElementById("close-user-panel").onclick = () => {
+    userPanel.classList.remove("open");
+  };
 
-  // path 배열을 lat/lng 쌍으로 변환
   function parsePathArray(pathArray) {
     const points = [];
     for (let i = 0; i < pathArray.length; i += 2) {
@@ -200,6 +196,7 @@ document.getElementById("close-user-panel").onclick = () => {
     }
     return points;
   }
+});
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
@@ -231,10 +228,8 @@ function updateUserPanelContent(viewMode = "current") {
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
-    // ✅ 드롭다운 채우기
     populateUserDropdown(allData);
 
-    // 전체 선택 모드일 때 총 이동 거리 표시
     if (selectedPhone === "all") {
       const totalDistance = users.reduce((sum, u) => {
         const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
@@ -284,16 +279,13 @@ function populateUserDropdown(users) {
   const select = document.getElementById("path-user-select");
   if (!select) return;
 
-  // 기존 옵션 초기화
   select.innerHTML = "";
 
-  // 전체 보기 옵션 추가
   const allOption = document.createElement("option");
   allOption.value = "all";
   allOption.textContent = "전체";
   select.appendChild(allOption);
 
-  // 사용자별 옵션 추가
   users.forEach(user => {
     const option = document.createElement("option");
     option.value = user.phone;
@@ -347,7 +339,6 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 지도 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
@@ -370,8 +361,64 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
-});  
+
+/* ---------------------- 위치찾기 함수 ---------------------- */
+function moveToLatLng() {
+  const lat = parseFloat(document.getElementById("latInput").value);
+  const lng = parseFloat(document.getElementById("lngInput").value);
+  if (!isNaN(lat) && !isNaN(lng) && map) {
+    map.setCenter({ lat, lng });
+    map.setZoom(15);
+    new google.maps.Marker({
+      position: { lat, lng },
+      map: map,
+      icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+      title: `검색 위치 (${lat}, ${lng})`
+    });
+  } else {
+    showMessage("⚠️ 올바른 위도/경도를 입력하세요.");
+  }
+}
+
+/* ---------------------- 메시지 표시 함수 ---------------------- */
+function showMessage(msg) {
+  const box = document.getElementById("message-box");
+  box.textContent = msg;
+  box.style.display = "block";
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 3000);
+}
+
+/* ---------------------- 테이블 헤더 갱신 ---------------------- */
+function updateTableHeader(viewMode) {
+  const headerRow = document.getElementById("user-table-header");
+  headerRow.innerHTML = "";
+
+  let headers = [];
+  if (viewMode === "paths") {
+    headers = ["닉네임", "주소", "시간", "갱신시각", "이동거리", "좌표"];
+  } else {
+    headers = ["닉네임", "상태", "시간", "갱신시각", "주소", "좌표"];
+  }
+
+  headers.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    headerRow.appendChild(th);
+  });
+}
+
+/* ---------------------- 지도 초기화 ---------------------- */
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 37.5665, lng: 126.9780 }, // 서울 좌표 예시
+    zoom: 12
+  });
+  loadData();
+}
 </script>
+
 
 
 
