@@ -1,3 +1,5 @@
+client.html 관리자용 260421 지도그리기까지 완성(개별지도그리기는 아직미완성)
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -273,8 +275,8 @@ function drawPath(points, distanceKm) {
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
 
   // 색상 단계
-  let color = "#0000FF"; // 0~20km → 파랑
-  if (distanceKm > 20) color = "#00FF00"; // 20~50km → 초록
+  let color = "#00FF00"; // 0~20km → 초록
+  if (distanceKm > 20) color = "#0000FF"; // 20~50km → 파랑
   if (distanceKm > 50) color = "#FFA500"; // 50~100km → 주황
   if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
 
@@ -524,22 +526,12 @@ window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
-  // ✅ 전체 모드일 때는 모든 사용자 경로를 지도에 표시
-  if (viewMode === "paths-all") {
-    users.forEach(user => {
-      if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path);
-        drawPath(points, user.distance || 0);
-      }
-    });
-  }
-
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer";
-
-    if (viewMode === "paths-current" || viewMode === "paths-all") {
-      // 경로 보기 모드: 전화번호, 주소, 기록 시간, 최근 갱신, 이동거리, 위치
+    row.style.cursor = "pointer"; // 손가락 모양 커서
+    
+    if (viewMode === "paths") {
+      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.address || "-"}</td>
@@ -552,21 +544,14 @@ window.renderUserTable = function(users, viewMode = "current") {
         </td>
       `;
 
-      // ✅ 개인 모드일 때는 행 클릭 시 해당 사용자 경로만 지도에 표시
-      if (viewMode === "paths-current") {
-        row.addEventListener("click", () => {
-          if (user.lat && user.lng) {
-            moveToUser(user.lat, user.lng, user.phone);
-          }
-          if (user.path && user.path.length > 0) {
-            const points = parsePathArray(user.path);
-            drawPath(points, user.distance || 0);
-          }
-        });
+      // ✅ path 값으로 경로 그리기
+      if (user.path && user.path.length > 0) {
+        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
+        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
       }
 
     } else {
-      // 일반 모드: 전화번호, 상태, 기록 시간, 최근 갱신, 주소, 위치
+      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -580,8 +565,17 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동
+    row.addEventListener("click", () => {
+      if (user.lat && user.lng) {
+        moveToUser(user.lat, user.lng, user.phone);
+      }
+    });
+
     tbody.appendChild(row);
   });
+};
+
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
@@ -800,30 +794,6 @@ if (btnLocation) {
   input:checked + .slider:before {
     transform: translateX(24px);
   }
-
-  /* 경로 선택 드롭다운 컨테이너 */
-#path-select-container {
-  margin: 15px 0;
-  font-size: 15px;
-  font-weight: bold;
-}
-
-/* 드롭다운 스타일 */
-#path-user-select {
-  width: 100%;
-  padding: 8px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #fafafa;
-  cursor: pointer;
-}
-
-/* hover 효과 */
-#path-user-select:hover {
-  background-color: #f0f0f0;
-}
-
   /* 사용자 테이블 */
   #user-table {
     width: 100%;
@@ -841,7 +811,7 @@ if (btnLocation) {
 </style>
 </head>
 
-<body onload="initUsers()">
+<body>
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
@@ -902,22 +872,19 @@ if (btnLocation) {
     </div>
   </div>
 
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
-    </div>
-    
+<!-- 사용자 정보 패널 -->
+<div id="user-panel">
+  <div class="panel-header">
+    <h3 id="user-panel-title">사용자 정보</h3>
+    <button id="close-user-panel">✖ 닫기</button>
+  </div>
   <!-- 경로 선택 드롭다운 -->
   <div id="path-select-container">
     <label for="path-user-select">경로 보기 선택:</label>
-    <select id="path-user-select" onchange="onPathModeChange(this.value)">
-      <option value="paths-all">전체 경로 보기</option>
-      <option value="paths-current">개인 경로 보기</option>
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
     </select>
   </div>
-
 
   
     <!-- 사용자 목록 테이블 -->
@@ -941,39 +908,6 @@ if (btnLocation) {
 <!-- 메시지 박스 -->
 <div id="message-box"></div>
 
-<!-- 사용자 패널 드롭다운 동작 JS -->
-<script>
-  
-  
-  // 서버에서 사용자 데이터 가져오기
-  function fetchUsers() {
-    return fetch(CONFIG.USER_URL) // Google Apps Script doGet URL
-      .then(response => response.json())
-      .then(data => {
-        return data; // 서버에서 내려온 사용자 배열
-      });
-  }
-
-
-let cachedUsers = [];
-  
-// 최초 데이터 로드
-function initUsers() {
-  fetchUsers().then(users => {
-    cachedUsers = users;
-    renderUserTable(cachedUsers, "paths-current"); // 초기에는 개인 모드
-  });
-}
-
-// 드롭다운 변경 이벤트 핸들러 (수정된 부분)
-function onPathModeChange(mode) {
-  if (cachedUsers.length > 0) {
-    renderUserTable(cachedUsers, mode);
-  }
-}
-
-</script>
-  
 <!-- 3. MarkerClusterer 라이브러리 -->
 <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
