@@ -11,12 +11,8 @@
 <script>
 // ---------------------- 전역 변수 ----------------------
 let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
-const btnConnection = document.getElementById("btn-connection");
-const connectionPanel = document.getElementById("connection-panel");
-const btnSettings = document.getElementById("btn-settings");
-const settingsPanel = document.getElementById("settings-panel");
 
-/* ---------------------- 거리 계산 ---------------------- */
+/* ---------------------- 거리 계산 함수 ---------------------- */
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -28,7 +24,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 
-/* ---------------------- 색상 함수 ---------------------- */
+/* ---------------------- 문자열 기반 색상 ---------------------- */
 function stringToColor(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -49,8 +45,6 @@ async function loadData(token = null) {
 
     populatePathSelect();
     showMap();
-    updateSummary(allData);
-    updateUserPanelContent(mode);
   } catch (err) {
     console.error("데이터 로드 실패:", err);
     showMessage("⚠️ 데이터를 불러오지 못했습니다.");
@@ -95,6 +89,7 @@ function showMap() {
       });
       markers.push(marker);
     });
+
   } else if (mode === "all") {
     allData.forEach(user => {
       const marker = new google.maps.Marker({
@@ -104,6 +99,7 @@ function showMap() {
       });
       markers.push(marker);
     });
+
   } else if (mode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
@@ -126,6 +122,15 @@ function showMap() {
           map: map
         });
         polylines.push(polyline);
+
+        const last = pathCoords[pathCoords.length - 1];
+        const marker = new google.maps.Marker({
+          position: last,
+          map: map,
+          title: `${user.phone} / ${user.updated}`,
+          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+        });
+        markers.push(marker);
       }
     });
   }
@@ -133,9 +138,10 @@ function showMap() {
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
+  updateUserPanelContent(mode);
 }
 
-/* ---------------------- 드롭다운 채우기 ---------------------- */
+/* ---------------------- 사용자 목록 드롭다운 ---------------------- */
 function populatePathSelect() {
   const select = document.getElementById("path-user-select");
   if (!select) return;
@@ -157,233 +163,192 @@ function showMessage(text) {
   setTimeout(() => msgBox.style.display = "none", 3000);
 }
 
-/* ---------------------- 요약 패널 ---------------------- */
-function updateSummary(users) {
-  const activeCount = users.filter(u => u.status === "정상" || u.status === "active").length;
-  const blockedCount = users.filter(u => u.status === "차단" || u.status === "blocked").length;
-  const stopCount = users.filter(u => u.status === "해제" || u.status === "stop").length;
+/* ---------------------- DOMContentLoaded ---------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
 
-  document.getElementById("summaryActive").textContent = `정상: ${activeCount}명`;
-  document.getElementById("summaryBlocked").textContent = `차단: ${blockedCount}명`;
-  document.getElementById("summaryStop").textContent = `해제: ${stopCount}명`;
-}
+  btnConnection.onclick = () => {
+    settingsPanel.classList.remove("open");
+    connectionPanel.classList.toggle("open");
+  };
 
-/* ---------------------- 상세 카드 ---------------------- */
-function showDetailCard(user) {
-  document.getElementById("cardName").textContent = user.phone || "전화번호 없음";
-  document.getElementById("cardPhone").textContent = user.phone || "";
-  document.getElementById("cardStatus").textContent = user.status || "";
-  document.getElementById("cardUpdated").textContent = user.updated || "";
-  document.getElementById("cardLocation").textContent = `${user.lat}, ${user.lng}`;
-  document.getElementById("cardAddress").textContent = user.address || "";
-  document.getElementById("cardToken").textContent = user.token || "";
-}
-function closeCard() {
-  document.getElementById("cardName").textContent = "사용자 선택 없음";
-  document.getElementById("cardPhone").textContent = "";
-  document.getElementById("cardStatus").textContent = "";
-  document.getElementById("cardUpdated").textContent = "";
-  document.getElementById("cardLocation").textContent = "";
-  document.getElementById("cardAddress").textContent = "";
-  document.getElementById("cardToken").textContent = "";
-}
+  btnSettings.onclick = () => {
+    connectionPanel.classList.remove("open");
+    settingsPanel.classList.toggle("open");
+  };
 
-/* ---------------------- 사용자 패널 업데이트 ---------------------- */
-function updateUserPanelContent(viewMode) {
-  const tbody = document.getElementById("user-table-body");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+  window.openUserPanel = function(viewMode) {
+    connectionPanel.classList.remove("open");
+    userPanel.classList.add("open");
+    mode = viewMode;
+    showMap();
+    updateUserPanelContent(viewMode);
+    const titleEl = document.getElementById("user-panel-title");
+    titleEl.textContent =
+      viewMode === "current" ? "현재 접속자 보기" :
+      viewMode === "all" ? "전체 사용자 보기" :
+      viewMode === "paths" ? "경로 보기" : "사용자 정보";
+  };
 
-  let users = [];
-  if (viewMode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
-      }
-    });
-    users = Object.values(latestByUser);
-  } else if (viewMode === "all") {
-    users = allData;
-  } else if (viewMode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+  window.closeUserPanel = function() {
+    userPanel.classList.remove("open");
+  };
+
+  /* ---------------------- 지도 초기화 ---------------------- */
+  function getMapIdByDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android/.test(ua)) return CONFIG.mapIds.android;
+    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
+    return CONFIG.mapIds.fixed;
   }
 
-  // 테이블 렌더링
+  function initMap() {
+    const mapId = getMapIdByDevice();
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
+      zoom: 7,
+      mapId: mapId
+    });
+
+    const originalCenter = map.getCenter();
+    google.maps.event.addListener(map, 'rightclick', function() {
+      map.setCenter(originalCenter);
+      map.setZoom(7);
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
+        },
+        () => {
+          new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
+        }
+      );
+    }
+
+    const closeBtn = document.getElementById("close-user-panel");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", window.closeUserPanel);
+    }
+
+    // 외부 클릭 시 패널 닫기
+    document.addEventListener("click", function(e) {
+      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+        connectionPanel.classList.remove("open");
+      }
+      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+        settingsPanel.classList.remove("open");
+      }
+    });
+
+    // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
+    loadData();
+    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+  }
+
+  // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
+  window.initMap = initMap;
+
+  /* ---------------------- 위치찾기 기능 ---------------------- */
+  window.moveToLatLng = function() {
+    const lat = parseFloat(document.getElementById("latInput").value);
+    const lng = parseFloat(document.getElementById("lngInput").value);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      alert("올바른 위도와 경도를 입력하세요.");
+      return;
+    }
+    if (!map) {
+      alert("지도가 아직 초기화되지 않았습니다.");
+      return;
+    }
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
+  };
+
+  /* ---------------------- 사용자 카드 클릭 시 지도 이동 ---------------------- */
+  window.moveToUser = function(lat, lng, phone) {
+    if (!map) return;
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
+    new google.maps.Marker({
+      position: { lat: lat, lng: lng },
+      map: map,
+      title: `사용자: ${phone}`,
+      animation: google.maps.Animation.BOUNCE
+    });
+  };
+
+  /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      if (themeToggle.checked) {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+    });
+  }
+
+  /* ---------------------- 갱신 주기 설정 ---------------------- */
+  window.setCustomInterval = function() {
+    const value = parseInt(document.getElementById("intervalValue").value, 10);
+    const unit = document.getElementById("intervalUnit").value;
+
+    let intervalMs = 300000; // 기본 5분
+    if (unit === "minutes") {
+      intervalMs = value * 60000;
+    } else if (unit === "seconds") {
+      intervalMs = value * 1000;
+    }
+
+    clearInterval(intervalId);
+    intervalId = setInterval(loadData, intervalMs);
+
+    const msgBox = document.getElementById("message-box");
+    msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
+    msgBox.style.display = "block";
+    setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+  };
+
+  /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
   window.renderUserTable = function(users) {
     const tbody = document.getElementById("user-table-body");
     tbody.innerHTML = "";
-  
+
     users.forEach(user => {
       const row = document.createElement("tr");
       row.innerHTML = `
+        <td>${user.name || "-"}</td>
         <td>${user.phone}</td>
+        <td>${user.carNo || "-"}</td>
         <td>${user.status}</td>
-        <td>${user.updated}</td>
-        <td>${user.address || "-"}</td>
-        <td>(${user.lat}, ${user.lng})</td>
-        <td>
-          <button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button>
-          <button onclick='showDetailCard(${JSON.stringify(user)})'>상세 보기</button>
-        </td>
+        <td>${user.role || "-"}</td>
+        <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
       `;
       tbody.appendChild(row);
     });
   };
-}   // ← updateUserPanelContent 함수 닫기
 
-/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
-window.focusOnUser = function(lat, lng) {
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-};
+  /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
+  window.focusOnUser = function(lat, lng) {
+    map.setCenter({ lat: lat, lng: lng });
+    map.setZoom(15);
+  };
 
-/* ---------------------- 지도 초기화 ---------------------- */
-function getMapIdByDevice() {
-  const ua = navigator.userAgent.toLowerCase();
-  if (/android/.test(ua)) return CONFIG.mapIds.android;
-  if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
-  if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
-  return CONFIG.mapIds.fixed;
-}
-
-function initMap() {
-  const mapId = getMapIdByDevice();
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
-    zoom: 7,
-    mapId: mapId
-  });
-
-  const originalCenter = map.getCenter();
-  google.maps.event.addListener(map, 'rightclick', function() {
-    map.setCenter(originalCenter);
-    map.setZoom(7);
-  });
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
-      },
-      () => {
-        new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
-      }
-    );
-  }
-
-  const closeBtn = document.getElementById("close-user-panel");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", window.closeUserPanel);
-  }
-
-  document.addEventListener("click", function(e) {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-      connectionPanel.classList.remove("open");
-    }
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-      settingsPanel.classList.remove("open");
-    }
-  });
-
-  loadData();
-  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
-}
-
-window.initMap = initMap;
-
-/* ---------------------- 위치찾기 기능 ---------------------- */
-window.moveToLatLng = function() {
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    alert("올바른 위도와 경도를 입력하세요.");
-    return;
-  }
-  if (!map) {
-    alert("지도가 아직 초기화되지 않았습니다.");
-    return;
-  }
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-};
-
-/* ---------------------- 사용자 카드 클릭 시 지도 이동 ---------------------- */
-window.moveToUser = function(lat, lng, phone) {
-  if (!map) return;
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-  new google.maps.Marker({
-    position: { lat: lat, lng: lng },
-    map: map,
-    title: `사용자: ${phone}`,
-    animation: google.maps.Animation.BOUNCE
-  });
-};
-
-/* ---------------------- 라이트/다크 모드 전환 ---------------------- */
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    if (themeToggle.checked) {
-      document.body.classList.add("dark-mode");
-    } else {
-      document.body.classList.remove("dark-mode");
-    }
-  });
-}
-
-/* ---------------------- 갱신 주기 설정 ---------------------- */
-window.setCustomInterval = function() {
-  const value = parseInt(document.getElementById("intervalValue").value, 10);
-  const unit = document.getElementById("intervalUnit").value;
-
-  let intervalMs = 300000;
-  if (unit === "minutes") {
-    intervalMs = value * 60000;
-  } else if (unit === "seconds") {
-    intervalMs = value * 1000;
-  }
-
-  clearInterval(intervalId);
-  intervalId = setInterval(loadData, intervalMs);
-
-  const msgBox = document.getElementById("message-box");
-  msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-  msgBox.style.display = "block";
-  setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-};
-
-/* ---------------------- DOMContentLoaded: 버튼 이벤트 연결 ---------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const connectionPanel = document.getElementById("connection-panel");
-  const btnSettings = document.getElementById("btn-settings");
-  const settingsPanel = document.getElementById("settings-panel");
-
-  // 접속현황 버튼
-  btnConnection.addEventListener("click", () => {
-    connectionPanel.classList.toggle("open");
-  });
-
-  // 환경설정 버튼
-  btnSettings.addEventListener("click", () => {
-    settingsPanel.classList.toggle("open");
-  });
-
-  // 위치찾기 버튼
+  /* ---------------------- DOMContentLoaded: 버튼 이벤트 연결 ---------------------- */
   document.getElementById("location-check").addEventListener("click", moveToLatLng);
 });
 </script>
+
 
 
   <!-- 스타일 -->
