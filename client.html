@@ -342,11 +342,27 @@ window.focusOnUser = function(lat, lng) {
   map.setZoom(15);
 };
   
-/* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
+/* ---------------------- DOMContentLoaded: 버튼 이벤트 안전 연결 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("location-check");
-  if (btn) {
-    btn.addEventListener("click", moveToLatLng);
+  const btnLocation = document.getElementById("location-check");
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
+
+  // 접속현황 버튼
+  const btnConnection = document.getElementById("btn-connection");
+  if (btnConnection) {
+    btnConnection.addEventListener("click", () => {
+      document.getElementById("connection-panel").classList.toggle("open");
+    });
+  }
+
+  // 환경설정 버튼
+  const btnSettings = document.getElementById("btn-settings");
+  if (btnSettings) {
+    btnSettings.addEventListener("click", () => {
+      document.getElementById("settings-panel").classList.toggle("open");
+    });
   }
 });
 </script>
