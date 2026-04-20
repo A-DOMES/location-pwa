@@ -8,24 +8,23 @@
   <script src="config.js"></script>
 
   <!-- 2. 사용자 코드 -->
-  <script>
+<script>
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], polylines = [], markerCluster, intervalId, allData = [];
-
-   /* ----------------------  거리 계산 함수 (전역에 추가) ---------------------- */
+  
+  // ---------------------- 거리 계산 함수 ----------------------
   function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // 지구 반지름 (km)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // km
-}
-
-  // 문자열(전화번호/닉네임) 기반 색상 함수
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+              Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // km
+  }
+  
+  // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -34,6 +33,7 @@
     const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
     return "#" + "00000".substring(0, 6 - c.length) + c;
   }
+
     
   /* ---------------------- 데이터 로딩 ---------------------- */
   async function loadData(token = null) {
@@ -149,387 +149,173 @@
     updateUserPanelContent(mode);
   }
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  // path 배열을 lat/lng 쌍으로 변환
-  function parsePathArray(pathArray) {
-    const points = [];
-    for (let i = 0; i < pathArray.length; i += 2) {
-      const lat = parseFloat(pathArray[i]);
-      const lng = parseFloat(pathArray[i+1]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        points.push({ lat, lng });
-      }
-    }
-    return points;
-  }
-  
-  function updateUserPanelContent(viewMode = "current") {
-    const panel = document.getElementById("user-content");
-    panel.innerHTML = "";
-  
-    if (viewMode === "current") {
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
+/* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
+function updateUserPanelContent(viewMode) {
+  const tbody = document.getElementById("user-table-body");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  let users = [];
+  if (viewMode === "current") {
+    // 최근 5분 이내 갱신된 사용자만 표시
+    const now = new Date();
+    const latestByUser = {};
+    allData.forEach(user => {
+      const updated = new Date(user.updated);
+      if (now - updated <= 5 * 60 * 1000) {
+        const key = user.phone;
+        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+          latestByUser[key] = user;
         }
-      });
-      if (Object.keys(latestByUser).length === 0) {
-        panel.innerHTML = `<div class="no-user">현재 접속자가 없습니다</div>`;
-        return;
       }
-      Object.values(latestByUser).forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 마지막 갱신: ${user.updated}<br>
-            상태: ${user.status}<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
-      });
-  
-    } else if (viewMode === "all") {
-      allData.forEach(user => {
-        panel.innerHTML += `
-          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 마지막 갱신: ${user.updated}<br>
-            상태: ${user.status}<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
-      });
-  
-    } else if (viewMode === "paths") {
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
-  
-      let users = allData;
-      if (selectedPhone !== "all") {
-        users = allData.filter(u => u.phone === selectedPhone);
-      }
-  
-      // ✅ 전체 선택 모드일 때 총합을 먼저 계산해서 드롭다운 바로 아래에 표시
-      if (selectedPhone === "all") {
-        const totalDistance = users.reduce((sum, u) => {
-          const pathPoints = parsePathArray(u.path);
-          let dist = 0;
-          if (pathPoints.length > 1) {
-            for (let i = 1; i < pathPoints.length; i++) {
-              dist += calculateDistance(
-                pathPoints[i-1].lat, pathPoints[i-1].lng,
-                pathPoints[i].lat, pathPoints[i].lng
-              );
-            }
-          }
-          return sum + dist;
-        }, 0);
-  
-        panel.innerHTML += `
-          <div class="user-card" style="font-weight:bold; background:#eef;">
-            전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
-          </div>
-        `;
-      }
-  
-      // ✅ 사용자별 카드 출력
-      users.forEach(user => {
-        const pathPoints = parsePathArray(user.path);
-  
-        user.distance = 0;
-        if (pathPoints.length > 1) {
-          for (let i = 1; i < pathPoints.length; i++) {
-            user.distance += calculateDistance(
-              pathPoints[i-1].lat, pathPoints[i-1].lng,
-              pathPoints[i].lat, pathPoints[i].lng
-            );
-          }
-  
-          new google.maps.Polyline({
-            path: pathPoints,
-            strokeWeight: user.distance > 5000 ? 5 : 2,
-            strokeColor: stringToColor(user.phone),
-            strokeOpacity: 0.8,
-            map: map
-          });
-        }
-  
-        panel.innerHTML += `
-          <div class="user-card" onclick="moveToUser(${user.lat}, ${user.lng}, '${user.phone}')">
-            <div class="user-name">👤 ${user.phone}</div>
-            📍 위치: ${user.address}<br>
-            🕒 마지막 갱신: ${user.updated}<br>
-            경로 길이: ${user.distance.toFixed(2)} km<br>
-            좌표: (${user.lat}, ${user.lng})
-          </div>
-        `;
-      });
-    }
-  }
-  
-  /* ---------------------- 사용자 목록 드롭다운 채우기 ---------------------- */
-  function populatePathSelect() {
+    });
+    users = Object.values(latestByUser);
+
+  } else if (viewMode === "all") {
+    // 전체 사용자 표시
+    users = allData;
+
+  } else if (viewMode === "paths") {
+    // 경로 보기 모드: 선택된 사용자만 표시
     const select = document.getElementById("path-user-select");
-    if (!select) return;
-  
-    select.innerHTML = `<option value="all">전체</option>`;
-    const phones = [...new Set(allData.map(u => u.phone))];
-    phones.forEach(phone => {
-      const opt = document.createElement("option");
-      opt.value = phone;
-      opt.textContent = phone;
-      select.appendChild(opt);
-    });
+    const selectedPhone = select ? select.value : "all";
+    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
   }
 
-  /* ---------------------- 갱신 주기 설정 ---------------------- */
-  function setCustomInterval() {
-    const value = parseInt(document.getElementById("intervalValue").value);
-    const unit = document.getElementById("intervalUnit").value;
+  // ✅ 테이블 렌더링 함수 호출
+  renderUserTable(users);
+}
 
-    if (isNaN(value) || value <= 0) {
-      showMessage("⚠️ 1 이상의 값을 입력하세요.");
-      return;
+/* ---------------------- 기기별 지도 ID 선택 ---------------------- */
+function getMapIdByDevice() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/android/.test(ua)) return CONFIG.mapIds.android;
+  if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+  if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
+  return CONFIG.mapIds.fixed;
+}
+
+/* ---------------------- 지도 초기화 ---------------------- */
+function initMap() {
+  const mapId = getMapIdByDevice();
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
+    zoom: 7,
+    mapId: mapId
+  });
+
+  // ✅ 원래 위치 저장
+  const originalCenter = map.getCenter();
+
+  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
+  google.maps.event.addListener(map, 'rightclick', function() {
+    map.setCenter(originalCenter);
+    map.setZoom(7);
+  });
+  
+  // 내 위치 표시
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
+      },
+      () => {
+        new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
+      }
+    );
+  }
+
+  // 닫기 버튼 이벤트 연결
+  const closeBtn = document.getElementById("close-user-panel");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", window.closeUserPanel);
+  }
+
+  // 외부 클릭 시 패널 닫기
+  document.addEventListener("click", function(e) {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.classList.remove("open");
     }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.classList.remove("open");
+    }
+  });
 
-    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-    clearInterval(intervalId);
-    intervalId = setInterval(loadData, newInterval);
-    showMessage(`✅ 갱신 주기가 ${value} ${unit}로 변경되었습니다.`);
+  // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
+  loadData();
+  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+}
+
+// Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
+window.initMap = initMap;
+
+/* ---------------------- 위치찾기 기능 ---------------------- */
+window.moveToLatLng = function() {
+  const lat = parseFloat(document.getElementById("latInput").value);
+  const lng = parseFloat(document.getElementById("lngInput").value);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    alert("올바른 위도와 경도를 입력하세요.");
+    return;
   }
 
-    // 메시지를 화면에 표시하는 함수  
-  function showMessage(text) {
-    const msgBox = document.getElementById("message-box");
-    msgBox.innerText = text;
-    msgBox.style.display = "block";
-    setTimeout(() => msgBox.style.display = "none", 3000); // 3초 후 자동 숨김
+  if (!map) {
+    alert("지도가 아직 초기화되지 않았습니다.");
+    return;
   }
 
+  map.setCenter({ lat: lat, lng: lng });
+  map.setZoom(15);
+};
 
-<!-- 2. 사용자 코드 -->
-// HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
-document.addEventListener("DOMContentLoaded", () => {
-  
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
+/* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
+window.moveToUser = function(lat, lng, phone) {
+  if (!map) return;
 
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
+  map.setCenter({ lat: lat, lng: lng });
+  map.setZoom(15);
 
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
+  new google.maps.Marker({
+    position: { lat: lat, lng: lng },
+    map: map,
+    title: `사용자: ${phone}`,
+    animation: google.maps.Animation.BOUNCE
+  });
+};
 
-  // ✅ 접속현황 패널 열기
-  window.openUserPanel = function(viewMode) {
-    connectionPanel.classList.remove("open");
-    userPanel.classList.add("open");
-    mode = viewMode; // 선택된 모드 반영
-    showMap(); // 지도 갱신
-    updateUserPanelContent(viewMode); // 패널 내용 갱신
-  
-    // 제목 변경
-    const titleEl = document.getElementById("user-panel-title");
-    if (viewMode === "current") {
-      titleEl.textContent = "현재 접속자 보기";
-    } else if (viewMode === "all") {
-      titleEl.textContent = "전체 사용자 보기";
-    } else if (viewMode === "paths") {
-      titleEl.textContent = "경로 보기";
+/* ---------------------- 라이트/다크 모드 전환 ---------------------- */
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+  themeToggle.addEventListener("change", () => {
+    if (themeToggle.checked) {
+      document.body.classList.add("dark-mode");
     } else {
-      titleEl.textContent = "사용자 정보";
+      document.body.classList.remove("dark-mode");
     }
-  };
-  
-  window.closeUserPanel = function() {
-    userPanel.classList.remove("open");
-  };
+  });
+}
 
-  /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-  function updateUserPanelContent(viewMode) {
-    const tbody = document.getElementById("user-table-body");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+/* ---------------------- 갱신 주기 설정 ---------------------- */
+window.setCustomInterval = function() {
+  const value = parseInt(document.getElementById("intervalValue").value, 10);
+  const unit = document.getElementById("intervalUnit").value;
 
-    let users = [];
-    if (viewMode === "current") {
-      // 최근 5분 이내 갱신된 사용자만 표시
-      const now = new Date();
-      const latestByUser = {};
-      allData.forEach(user => {
-        const updated = new Date(user.updated);
-        if (now - updated <= 5 * 60 * 1000) {
-          const key = user.phone;
-          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-            latestByUser[key] = user;
-          }
-        }
-      });
-      users = Object.values(latestByUser);
-
-    } else if (viewMode === "all") {
-      // 전체 사용자 표시
-      users = allData;
-
-    } else if (viewMode === "paths") {
-      // 경로 보기 모드: 선택된 사용자만 표시
-      const select = document.getElementById("path-user-select");
-      const selectedPhone = select ? select.value : "all";
-      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-    }
-
-    // 테이블 렌더링 함수 호출
-    renderUserTable(users);
+  let intervalMs = 300000; // 기본 5분
+  if (unit === "minutes") {
+    intervalMs = value * 60000;
+  } else if (unit === "seconds") {
+    intervalMs = value * 1000;
   }
 
-  /* ---------------------- 기기별 지도 ID 선택 ---------------------- */
-  function getMapIdByDevice() {
-    const ua = navigator.userAgent.toLowerCase();
-    if (/android/.test(ua)) return CONFIG.mapIds.android;
-    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
-    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
-    return CONFIG.mapIds.fixed;
-  }
+  clearInterval(intervalId);
+  intervalId = setInterval(loadData, intervalMs);
 
-  /* ---------------------- 지도 초기화 ---------------------- */
-  function initMap() {
-    const mapId = getMapIdByDevice();
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapId: mapId
-    });
-
-    // ✅ 원래 위치 저장
-    const originalCenter = map.getCenter();
-  
-    // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
-    google.maps.event.addListener(map, 'rightclick', function() {
-      map.setCenter(originalCenter);
-      map.setZoom(7);
-    });
-    
-    // 내 위치 표시
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
-        },
-        () => {
-          new google.maps.Marker({ position: CONFIG.DEFAULT_CENTER, map: map, title: "기본 위치" });
-        }
-      );
-    }
-
-    // 닫기 버튼 이벤트 연결
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", window.closeUserPanel);
-    }
-
-    // 외부 클릭 시 패널 닫기
-    document.addEventListener("click", function(e) {
-      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.classList.remove("open");
-      }
-      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.classList.remove("open");
-      }
-    });
-
-    // 첫 데이터 로드 및 주기적 갱신 (기본 5분)
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
-  }
-
-  // Google Maps API에서 callback으로 initMap을 호출할 수 있도록 window에 등록
-  window.initMap = initMap;
-
-  /* ---------------------- 위치찾기 기능 ---------------------- */
-  window.moveToLatLng = function() {
-    const lat = parseFloat(document.getElementById("latInput").value);
-    const lng = parseFloat(document.getElementById("lngInput").value);
-  
-    if (isNaN(lat) || isNaN(lng)) {
-      alert("올바른 위도와 경도를 입력하세요.");
-      return;
-    }
-  
-    if (!map) {
-      alert("지도가 아직 초기화되지 않았습니다.");
-      return;
-    }
-  
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(15);
-  };
-
-  /* ---------------------- 사용자 카드 클릭 시 지도 이동 ---------------------- */
-  window.moveToUser = function(lat, lng, phone) {
-    if (!map) return;
-  
-    // 지도 이동
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(15);
-  
-    // 강조 마커 표시
-    new google.maps.Marker({
-      position: { lat: lat, lng: lng },
-      map: map,
-      title: `사용자: ${phone}`,
-      animation: google.maps.Animation.BOUNCE
-    });
-  };
-  
-  /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      if (themeToggle.checked) {
-        document.body.classList.add("dark-mode");
-      } else {
-        document.body.classList.remove("dark-mode");
-      }
-    });
-  }
-
-  /* ---------------------- 갱신 주기 설정 ---------------------- */
-  window.setCustomInterval = function() {
-    const value = parseInt(document.getElementById("intervalValue").value, 10);
-    const unit = document.getElementById("intervalUnit").value;
-
-    let intervalMs = 300000; // 기본 5분
-    if (unit === "minutes") {
-      intervalMs = value * 60000;
-    } else if (unit === "seconds") {
-      intervalMs = value * 1000;
-    }
-
-    clearInterval(intervalId);
-    intervalId = setInterval(loadData, intervalMs);
-
-    const msgBox = document.getElementById("message-box");
-    msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-    msgBox.style.display = "block";
-    setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-  };
+  const msgBox = document.getElementById("message-box");
+  msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
+  msgBox.style.display = "block";
+  setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+};
 
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users) {
@@ -539,28 +325,32 @@ window.renderUserTable = function(users) {
   users.forEach(user => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${user.name || "-"}</td>
-      <td>${user.phone}</td>
-      <td>${user.carNo || "-"}</td>
-      <td>${user.status}</td>
-      <td>${user.role || "-"}</td>
+      <td>${user.phone || "-"}</td>
+      <td>${user.status || "-"}</td>
+      <td>${user.updated || "-"}</td>
+      <td>${user.address || "-"}</td>
       <td><button onclick="focusOnUser(${user.lat}, ${user.lng})">위치 보기</button></td>
     `;
     tbody.appendChild(row);
   });
 };
 
+
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 };
-
+  
 /* ---------------------- DOMContentLoaded: 버튼 이벤트만 안전하게 연결 ---------------------- */
-  // JS에서 이벤트 연결
-  document.getElementById("location-check").addEventListener("click", moveToLatLng);
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("location-check");
+  if (btn) {
+    btn.addEventListener("click", moveToLatLng);
+  }
 });
 </script>
+
 
 <!-- 3. MarkerClusterer 라이브러리 -->
 <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
@@ -839,21 +629,20 @@ window.focusOnUser = function(lat, lng) {
   </div>
   <!-- 사용자 목록 테이블 -->
   <div id="user-content">
-    <table id="user-table">
-      <thead>
-        <tr>
-          <th>이름</th>
-          <th>전화번호</th>
-          <th>차량번호</th>
-          <th>상태</th>
-          <th>권한</th>
-          <th>위치</th>
-        </tr>
-      </thead>
-      <tbody id="user-table-body">
-        <!-- JS에서 사용자 목록을 동적으로 추가 -->
-      </tbody>
-    </table>
+      <table id="user-table">
+        <thead>
+          <tr>
+            <th>닉네임</th>
+            <th>상태</th>
+            <th>최근 갱신</th>
+            <th>주소</th>
+            <th>위치</th>
+          </tr>
+        </thead>
+        <tbody id="user-table-body">
+          <!-- JS에서 사용자 목록을 동적으로 추가 -->
+        </tbody>
+      </table>
   </div>
 </div>
 
