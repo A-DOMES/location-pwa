@@ -188,6 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const settingsPanel = document.getElementById("settings-panel");
   const userPanel = document.getElementById("user-panel");
   const select = document.getElementById("path-user-select");
+
+  // ✅ 드롭다운 선택 이벤트
   if (select) {
     select.addEventListener("change", e => {
       const selectedPhone = e.target.value;
@@ -202,8 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-});
-  
+
+  // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
   btnConnection.onclick = () => {
     settingsPanel.classList.remove("open");
     connectionPanel.classList.toggle("open");
@@ -214,8 +216,21 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
+  // ✅ 닫기 버튼 이벤트도 DOMContentLoaded 안에서 연결
+  const closeBtn = document.getElementById("close-user-panel");
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      userPanel.classList.remove("open");
+    };
+  }
+});
+
 // 기존 function openUserPanel(viewMode) { ... } 대신
 window.openUserPanel = function(viewMode) {
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
+
   connectionPanel.classList.remove("open");
   settingsPanel.classList.remove("open");
   userPanel.classList.add("open");
@@ -228,23 +243,19 @@ window.openUserPanel = function(viewMode) {
   updateUserPanelContent(viewMode);
 };
 
-// 닫기 버튼 이벤트도 전역으로 연결
-document.getElementById("close-user-panel").onclick = () => {
-  userPanel.classList.remove("open");
-};
-
-  // path 배열을 lat/lng 쌍으로 변환
-  function parsePathArray(pathArray) {
-    const points = [];
-    for (let i = 0; i < pathArray.length; i += 2) {
-      const lat = parseFloat(pathArray[i]);
-      const lng = parseFloat(pathArray[i+1]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        points.push({ lat, lng });
-      }
+// path 배열을 lat/lng 쌍으로 변환
+function parsePathArray(pathArray) {
+  const points = [];
+  for (let i = 0; i < pathArray.length; i += 2) {
+    const lat = parseFloat(pathArray[i]);
+    const lng = parseFloat(pathArray[i+1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      points.push({ lat, lng });
     }
-    return points;
   }
+  return points;
+}
+
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
