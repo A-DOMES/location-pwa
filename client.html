@@ -948,7 +948,7 @@ if (btnLocation) {
 <script>
   // 서버에서 사용자 데이터 가져오기
   function fetchUsers() {
-    return fetch("YOUR_SERVER_URL") // Google Apps Script doGet URL
+    return fetch(CONFIG.USER_URL) // Google Apps Script doGet URL
       .then(response => response.json())
       .then(data => {
         return data; // 서버에서 내려온 사용자 배열
