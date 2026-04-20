@@ -151,37 +151,6 @@
 
 <!-- 2. 사용자 코드 -->
 // HTML이 모두 로드된 뒤에 실행되도록 DOMContentLoaded 이벤트로 감쌉니다.
-document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
-
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
-
-// path 배열을 lat/lng 쌍으로 변환
-function parsePathArray(pathArray) {
-  const points = [];
-  for (let i = 0; i < pathArray.length; i += 2) {
-    const lat = parseFloat(pathArray[i]);
-    const lng = parseFloat(pathArray[i+1]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      points.push({ lat, lng });
-    }
-  }
-  return points;
-}
-
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   /* ---------------------- 패널 동작 ---------------------- */
@@ -201,6 +170,38 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsPanel.classList.toggle("open");
   };
 
+function openUserPanel(viewMode) {
+  const userPanel = document.getElementById("user-panel");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+
+  // 다른 패널 닫기
+  connectionPanel.classList.remove("open");
+  settingsPanel.classList.remove("open");
+
+  // 사용자 패널 열기
+  userPanel.classList.add("open");
+
+  // 제목 업데이트
+  const title = document.getElementById("user-panel-title");
+  if (viewMode === "current") {
+    title.textContent = "현재 접속자";
+  } else if (viewMode === "all") {
+    title.textContent = "전체 사용자";
+  } else if (viewMode === "paths") {
+    title.textContent = "경로 보기";
+  }
+
+  // 사용자 목록 갱신
+  updateUserPanelContent(viewMode);
+}
+
+// 닫기 버튼 이벤트
+document.getElementById("close-user-panel").onclick = () => {
+  document.getElementById("user-panel").classList.remove("open");
+};
+
+  
   // path 배열을 lat/lng 쌍으로 변환
   function parsePathArray(pathArray) {
     const points = [];
@@ -242,12 +243,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (viewMode === "paths") {
       const select = document.getElementById("path-user-select");
       const selectedPhone = select ? select.value : "all";
-      users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+      users = selectedPhone === "all" ? allData : allData.filter(u => user.phone === selectedPhone);
 
       // 전체 선택 모드일 때 총 이동 거리 표시
       if (selectedPhone === "all") {
         const totalDistance = users.reduce((sum, u) => {
-          const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
+          const pathPoints = Array.isArray(user.path) ? parsePathArray(uesr.path) : [];
           let dist = 0;
           if (pathPoints.length > 1) {
             for (let i = 1; i < pathPoints.length; i++) {
@@ -314,9 +315,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-
-
+    /* ---------------------- 기기별 지도 ID 선택 ---------------------- */
+  function getMapIdByDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android/.test(ua)) return CONFIG.mapIds.android;
+    if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
+    if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
+    return CONFIG.mapIds.fixed;
+  }
 
   /* ---------------------- 지도 초기화 ---------------------- */
   function getMapIdByDevice() {
@@ -335,6 +341,10 @@ document.addEventListener("DOMContentLoaded", () => {
       mapId: mapId
     });
 
+    // ✅ 원래 위치 저장
+    const originalCenter = map.getCenter();
+    
+    // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
     const originalCenter = map.getCenter();
     google.maps.event.addListener(map, 'rightclick', function() {
       map.setCenter(originalCenter);
