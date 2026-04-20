@@ -297,7 +297,7 @@ function populateUserDropdown(users) {
   users.forEach(user => {
     const option = document.createElement("option");
     option.value = user.phone;
-    option.textContent = user.phone; // 닉네임/전화번호 등 원하는 표시값
+    option.textContent = user.phone;
     select.appendChild(option);
   });
 }
@@ -305,16 +305,15 @@ function populateUserDropdown(users) {
 /* ---------------------- 선택한 사용자 위치로 지도 이동 ---------------------- */  
 document.getElementById("path-user-select").addEventListener("change", e => {
   const selectedPhone = e.target.value;
-  if (selectedPhone === "all") return; // 전체 모드일 때는 이동하지 않음
+  if (selectedPhone === "all") return;
 
   const user = allData.find(u => u.phone === selectedPhone);
   if (user && user.lat && user.lng) {
-    map.setCenter({ lat: user.lat, lng: user.lng });
-    map.setZoom(15);
+    focusOnUser(user.lat, user.lng);
   }
 });
 
-/* ---------------------- 패널에서 특정 사용자 클릭 시 지도 이동 ---------------------- */  
+/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
@@ -351,14 +350,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ 행 클릭 시 지도 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        map.setCenter({ lat: user.lat, lng: user.lng });
-        map.setZoom(15);
-        new google.maps.Marker({
-          position: { lat: user.lat, lng: user.lng },
-          map: map,
-          title: `사용자: ${user.phone}`,
-          animation: google.maps.Animation.BOUNCE
-        });
+        moveToUser(user.lat, user.lng, user.phone);
       }
     });
 
@@ -368,6 +360,7 @@ window.renderUserTable = function(users, viewMode = "current") {
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
+  if (!map) return;
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 };
@@ -377,6 +370,7 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
+});  
 </script>
 
 
