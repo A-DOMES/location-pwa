@@ -365,8 +365,20 @@ window.setCustomInterval = function() {
 
 /* ---------------------- DOMContentLoaded: 버튼 이벤트 연결 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
+  // 위치찾기 버튼
   document.getElementById("location-check").addEventListener("click", moveToLatLng);
+
+  // 접속현황 버튼
+  btnConnection.addEventListener("click", () => {
+    connectionPanel.classList.toggle("open");
+  });
+
+  // 환경설정 버튼
+  btnSettings.addEventListener("click", () => {
+    settingsPanel.classList.toggle("open");
+  });
 });
+
 </script>
 
 
