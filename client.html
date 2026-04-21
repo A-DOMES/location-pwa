@@ -195,16 +195,39 @@ if (select) {
     const selectedPhone = e.target.value;
 
     if (selectedPhone === "all") {
-      // 전체 사용자 표시
+      // 전체 사용자 표시 (경로 없음)
       updateUserPanelContent("all");
       renderUserTable(allData, "all");
     } else {
       // 특정 사용자만 표시
       const user = allData.find(u => u.phone === selectedPhone);
       if (user) {
+        // 기본적으로 현재 사용자 패널 갱신
         updateUserPanelContent("current");
         renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
-        moveToUser(user.lat, user.lng, user.phone); // 지도 이동
+
+        // ✅ 현재 패널 제목 확인
+        const title = document.getElementById("user-panel-title");
+
+        if (title && title.textContent === "위치/경로 보기") {
+          // 위치/경로보기 모드일 때만 경로를 그림
+          const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+          if (pathPoints.length > 0) {
+            // 거리 계산
+            let distanceKm = 0;
+            for (let i = 1; i < pathPoints.length; i++) {
+              distanceKm += calculateDistance(
+                pathPoints[i-1].lat, pathPoints[i-1].lng,
+                pathPoints[i].lat, pathPoints[i].lng
+              );
+            }
+            // ✅ drawPath 실행 (경로 표시)
+            drawPath(pathPoints, distanceKm);
+          }
+        } else {
+          // 현재접속자보기 / 전체사용자보기 모드에서는 지도 이동만 하고 경로는 그리지 않음
+          moveToUser(user.lat, user.lng, user.phone);
+        }
       } else {
         // 선택된 사용자가 없으면 테이블 비우기
         renderUserTable([], "current");
@@ -212,6 +235,7 @@ if (select) {
     }
   });
 }
+
 
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
