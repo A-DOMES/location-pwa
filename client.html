@@ -452,6 +452,49 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
+  const closeBtn = document.getElementById("close-user-panel");
+
+  // ✅ 접속현황 버튼 클릭 → 접속현황 패널 열기/닫기
+  if (btnConnection && connectionPanel) {
+    btnConnection.addEventListener("click", () => {
+      settingsPanel.classList.remove("open"); // 환경설정 패널 닫기
+      connectionPanel.classList.toggle("open"); // 접속현황 패널 토글
+    });
+  }
+
+  // ✅ 환경설정 버튼 클릭 → 환경설정 패널 열기/닫기
+  if (btnSettings && settingsPanel) {
+    btnSettings.addEventListener("click", () => {
+      connectionPanel.classList.remove("open"); // 접속현황 패널 닫기
+      settingsPanel.classList.toggle("open");   // 환경설정 패널 토글
+    });
+  }
+
+  // ✅ 사용자 패널 닫기 버튼
+  if (closeBtn && userPanel) {
+    closeBtn.addEventListener("click", () => {
+      userPanel.classList.remove("open");
+    });
+  }
+
+  // ✅ 바깥 클릭 시 패널 닫기
+  document.addEventListener("click", (e) => {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.classList.remove("open");
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.classList.remove("open");
+    }
+  });
+});
+  
 </script>
 
 
