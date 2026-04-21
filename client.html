@@ -319,6 +319,9 @@ function drawPath(points, distanceKm) {
 }
 
 
+// 전역 변수로 경로 저장 배열 선언
+// let pathLines = [];
+
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -342,9 +345,17 @@ function updateUserPanelContent(viewMode = "current") {
     });
     users = Object.values(latestByUser);
 
+    // ✅ 모드 전환 시 기존 경로 지우기
+    pathLines.forEach(line => line.setMap(null));
+    pathLines = [];
+
   } else if (viewMode === "all") {
     // ✅ 전체 사용자 보기
     users = allData;
+
+    // ✅ 모드 전환 시 기존 경로 지우기
+    pathLines.forEach(line => line.setMap(null));
+    pathLines = [];
 
   } else if (viewMode === "paths") {
     // ✅ 위치/경로 보기
@@ -352,7 +363,7 @@ function updateUserPanelContent(viewMode = "current") {
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
-    // 사용자별 distance 계산
+    // 사용자별 distance 계산 + drawPath 실행
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       user.distance = 0;
@@ -364,6 +375,9 @@ function updateUserPanelContent(viewMode = "current") {
           );
         }
       }
+      if (pathPoints.length > 0) {
+        drawPath(pathPoints, user.distance);
+      }
     });
   }
 
@@ -371,6 +385,7 @@ function updateUserPanelContent(viewMode = "current") {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
