@@ -544,15 +544,12 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>
           ${user.lat ? user.lat.toFixed(5) : "-"}<br>
           ${user.lng ? user.lng.toFixed(5) : "-"}
-        <td>${user.address || "-"}</td>
         </td>
+        <td>${user.address || "-"}</td>
       `;
 
-      // ✅ path 값으로 경로 그리기
-      if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
-        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
-      }
+      // ❌ 여기서는 drawPath 호출 제거 → 테이블만 출력
+      // drawPath(points, user.distance) 는 updateUserPanelContent("paths")에서만 실행
 
     } else {
       // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
@@ -569,7 +566,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동 (paths 모드에서는 클릭 시 이동만, drawPath는 하지 않음)
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
