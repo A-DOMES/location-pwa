@@ -679,7 +679,7 @@ window.moveToLatLng = function() {
     title: "입력한 위치",
     animation: google.maps.Animation.DROP
   });
-
+ 
   // ✅ 모달창 띄우기 (자동 닫힘)
   showModal(`위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`, true);
 };
@@ -692,6 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+
+  
 // ============================
 // 📌 모달창 표시/닫기
 // ============================
