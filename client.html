@@ -241,6 +241,7 @@ function updateUserPanelContent(viewMode = "current") {
   renderUserTable(users, viewMode);
 }
 
+<script>
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
@@ -248,7 +249,6 @@ function updateTableHeader(viewMode) {
   headerRow.innerHTML = "";
 
   if (viewMode === "paths") {
-    // ✅ 위치/경로 보기 모드: 이동거리 포함
     headerRow.innerHTML = `
       <th>닉네임</th>
       <th>이동<br>거리</th>
@@ -258,7 +258,6 @@ function updateTableHeader(viewMode) {
       <th>주소</th>
     `;
   } else {
-    // ✅ 현재 접속자 / 전체 사용자 모드: 상태 포함
     headerRow.innerHTML = `
       <th>닉네임</th>
       <th>상태</th>
@@ -287,10 +286,7 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 원래 위치 저장
   const originalCenter = map.getCenter();
-  
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
     map.setCenter(originalCenter);
     map.setZoom(7);
@@ -308,7 +304,6 @@ function initMap() {
     );
   }
 
-  // ✅ 패널 닫기 처리
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -404,10 +399,9 @@ window.renderUserTable = function(users, viewMode = "current") {
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
+    row.style.cursor = "pointer";
     
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함, 테이블만 출력
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -416,10 +410,7 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
-      // ❌ drawPath 호출 제거 → 테이블만 출력
-
     } else {
-      // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -430,7 +421,6 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
@@ -439,12 +429,6 @@ window.renderUserTable = function(users, viewMode = "current") {
 
     tbody.appendChild(row);
   });
-};
-
-/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
-window.focusOnUser = function(lat, lng) {
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
 };
 
 /* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
@@ -462,26 +446,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPanel = document.getElementById("user-panel");
   const closeBtn = document.getElementById("close-user-panel");
 
+  // ✅ 접속현황 버튼 클릭 → 접속현황 패널 열기/닫기
   if (btnConnection && connectionPanel) {
     btnConnection.addEventListener("click", () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
+      settingsPanel.classList.remove("open"); // 환경설정 패널 닫기
+      connectionPanel.classList.toggle("open"); // 접속현황 패널 토글
     });
   }
 
+  // ✅ 환경설정 버튼 클릭 → 환경설정 패널 열기/닫기
   if (btnSettings && settingsPanel) {
     btnSettings.addEventListener("click", () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
+      connectionPanel.classList.remove("open"); // 접속현황 패널 닫기
+      settingsPanel.classList.toggle("open");   // 환경설정 패널 토글
     });
   }
 
+  // ✅ 사용자 패널 닫기 버튼
   if (closeBtn && userPanel) {
     closeBtn.addEventListener("click", () => {
       userPanel.classList.remove("open");
     });
   }
 
+  // ✅ 바깥 클릭 시 패널 닫기
   document.addEventListener("click", (e) => {
     if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
       connectionPanel.classList.remove("open");
@@ -491,10 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
 </script>
-
-
 
 <!-- 스타일 -->
 <style>
@@ -813,47 +798,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- 3. MarkerClusterer 라이브러리 -->
 <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-
-<!-- ✅ 버튼 이벤트 연결 코드 -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-  const closeBtn = document.getElementById("close-user-panel");
-
-  if (btnConnection && connectionPanel) {
-    btnConnection.addEventListener("click", () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    });
-  }
-
-  if (btnSettings && settingsPanel) {
-    btnSettings.addEventListener("click", () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    });
-  }
-
-  if (closeBtn && userPanel) {
-    closeBtn.addEventListener("click", () => {
-      userPanel.classList.remove("open");
-    });
-  }
-
-  document.addEventListener("click", (e) => {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-      connectionPanel.classList.remove("open");
-    }
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-      settingsPanel.classList.remove("open");
-    }
-  });
-});
-</script>  
 
 <!-- 4. Google Maps API는 맨 마지막 -->
 <script async defer
