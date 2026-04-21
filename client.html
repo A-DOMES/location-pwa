@@ -494,6 +494,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+
+<!-- ✅ 버튼 이벤트 연결 코드 -->
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
+  const closeBtn = document.getElementById("close-user-panel");
+
+  if (btnConnection && connectionPanel) {
+    btnConnection.addEventListener("click", () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
+    });
+  }
+
+  if (btnSettings && settingsPanel) {
+    btnSettings.addEventListener("click", () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    });
+  }
+
+  if (closeBtn && userPanel) {
+    closeBtn.addEventListener("click", () => {
+      userPanel.classList.remove("open");
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.classList.remove("open");
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.classList.remove("open");
+    }
+  });
+});
+  
   
 </script>
 
