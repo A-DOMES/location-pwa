@@ -299,6 +299,7 @@ function updateUserPanelContent(viewMode = "current") {
   let users = [];
 
   if (viewMode === "current") {
+    // ✅ 현재 접속자 보기 → 경로는 그리지 않음
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -313,39 +314,16 @@ function updateUserPanelContent(viewMode = "current") {
     users = Object.values(latestByUser);
 
   } else if (viewMode === "all") {
+    // ✅ 전체 사용자 보기 → 경로는 그리지 않음
     users = allData;
 
   } else if (viewMode === "paths") {
+    // ✅ 위치/경로 보기 → 여기서만 경로를 그림
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
-    // 전체 선택 모드일 때 총 이동 거리 표시
-    if (selectedPhone === "all") {
-      const totalDistance = users.reduce((sum, u) => {
-        const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
-        let dist = 0;
-        if (pathPoints.length > 1) {
-          for (let i = 1; i < pathPoints.length; i++) {
-            dist += calculateDistance(
-              pathPoints[i-1].lat, pathPoints[i-1].lng,
-              pathPoints[i].lat, pathPoints[i].lng
-            );
-          }
-        }
-        return sum + dist;
-      }, 0);
-
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td colspan="6" style="font-weight:bold; background:#eef;">
-          전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
-        </td>
-      `;
-      tbody.appendChild(row);
-    }
-
-    // 사용자별 distance 계산
+    // 사용자별 distance 계산 및 경로 그리기
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       user.distance = 0;
@@ -357,6 +335,11 @@ function updateUserPanelContent(viewMode = "current") {
           );
         }
       }
+
+      // ✅ paths 모드일 때만 drawPath 실행
+      if (pathPoints.length > 0) {
+        drawPath(pathPoints, user.distance);
+      }
     });
   }
 
@@ -364,6 +347,7 @@ function updateUserPanelContent(viewMode = "current") {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
