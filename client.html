@@ -407,26 +407,26 @@ function showMap() {
   updateUserPanelContent(mode);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnConnection = document.getElementById("btn-connection");
+    const btnSettings = document.getElementById("btn-settings");
+    const connectionPanel = document.getElementById("connection-panel");
+    const settingsPanel = document.getElementById("settings-panel");
 
-  if (btnConnection && connectionPanel) {
-    btnConnection.addEventListener("click", () => {
-      settingsPanel?.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    });
-  }
+    if (btnConnection && connectionPanel) {
+      btnConnection.addEventListener("click", () => {
+        settingsPanel?.classList.remove("open");
+        connectionPanel.classList.toggle("open");
+      });
+    }
 
-  if (btnSettings && settingsPanel) {
-    btnSettings.addEventListener("click", () => {
-      connectionPanel?.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    });
-  }
-});
+    if (btnSettings && settingsPanel) {
+      btnSettings.addEventListener("click", () => {
+        connectionPanel?.classList.remove("open");
+        settingsPanel.classList.toggle("open");
+      });
+    }
+  });
 
 </script>
  
