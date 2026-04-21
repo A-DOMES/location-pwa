@@ -304,17 +304,16 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
     // 최근 5분 내 접속자만
     users = allData.filter(u =>
       (!selectedPhone || u.phone === selectedPhone) &&
-      u.states === "active" &&
       (now - new Date(u.updated)) < 5*60*1000
     );
     updateTableHeader("current");
-    renderUserTableCurrent(users);
+    renderUserTable(users, "current");
 
   } else if (viewMode === "all") {
     // 전체 사용자
     users = allData.filter(u => u.phone);
     updateTableHeader("all");
-    renderUserTableAll(users);
+    renderUserTable(users, "all");
 
   } else if (viewMode === "paths") {
     // 경로 보기
@@ -337,10 +336,9 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
     });
 
     updateTableHeader("paths");
-    renderUserTablePaths(users, selectedPhone);
+    renderUserTable(users, "paths");
   }
 }
-
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
@@ -371,6 +369,7 @@ function updateTableHeader(viewMode) {
     `;
   }
 }
+
 
 
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
