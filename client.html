@@ -284,8 +284,16 @@ function parsePathArray(pathArray) {
 }
 
 // ---------------------- 경로 그리기 ----------------------
+// 전역 변수로 경로 저장 배열 선언
+let pathLines = [];
+
+// 거리 기반 두께 + 색상으로 경로 그리기
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
+
+  // ✅ 기존 경로 지우기
+  pathLines.forEach(line => line.setMap(null));
+  pathLines = [];
 
   // 두께 계산 (최소 5, 최대 18)
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
@@ -305,7 +313,11 @@ function drawPath(points, distanceKm) {
   });
 
   pathLine.setMap(map);
+
+  // ✅ 새 경로를 배열에 저장
+  pathLines.push(pathLine);
 }
+
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
