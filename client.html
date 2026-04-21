@@ -197,23 +197,24 @@ if (select) {
     const selectedPhone = e.target.value;
 
     if (selectedPhone === "all") {
-      // 전체 사용자 표시
-      updateUserPanelContent("all");
-      renderUserTable(allData, "all");
+      // 전체 사용자 경로 보기
+      updateUserPanelContent("paths", "all");
+      renderUserTable(allData.filter(u => u.phone), "paths");
     } else {
-      // 특정 사용자만 표시
+      // 특정 사용자 경로 보기
       const user = allData.find(u => u.phone === selectedPhone);
       if (user) {
-        updateUserPanelContent("current");
-        renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
+        updateUserPanelContent("paths", selectedPhone);
+        renderUserTable([user], "paths"); // 배열로 감싸서 한 명만 표시
         moveToUser(user.lat, user.lng, user.phone); // 지도 이동
       } else {
         // 선택된 사용자가 없으면 테이블 비우기
-        renderUserTable([], "current");
+        renderUserTable([], "paths");
       }
     }
   });
 }
+
 
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
