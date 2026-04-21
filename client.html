@@ -367,6 +367,55 @@ function updateUserPanelContent(viewMode = "current") {
   renderUserTable(users, viewMode);
 }
 
+/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+window.renderUserTable = function(users, viewMode = "current") {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
+
+  users.forEach(user => {
+    const row = document.createElement("tr");
+    row.style.cursor = "pointer"; // 손가락 모양 커서
+    
+    if (viewMode === "paths") {
+      // 경로 보기 모드: 테이블만 출력
+      row.innerHTML = `
+        <td>${user.phone || "-"}</td>
+        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
+        <td>
+          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
+          ${user.lng ? user.lng.toFixed(5) : "-"}
+        </td>
+        <td>${user.address || "-"}</td>
+      `;
+      // ❌ drawPath 호출 제거 → 테이블만 출력
+
+    } else {
+      // current / all 모드: 테이블만 출력
+      row.innerHTML = `
+        <td>${user.phone || "-"}</td>
+        <td>${user.status || "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.address || "-"}</td>
+        <td>
+          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
+          ${user.lng ? user.lng.toFixed(5) : "-"}
+        </td>
+      `;
+    }
+
+    // ✅ 행 클릭 시 위치 이동 (paths 모드에서도 클릭 시 이동만, drawPath는 하지 않음)
+    row.addEventListener("click", () => {
+      if (user.lat && user.lng) {
+        moveToUser(user.lat, user.lng, user.phone);
+      }
+    });
+
+    tbody.appendChild(row);
+  });
+};
 
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
@@ -533,7 +582,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.style.cursor = "pointer"; // 손가락 모양 커서
     
     if (viewMode === "paths") {
-      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
+      // 경로 보기 모드: 테이블만 출력
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -545,12 +594,10 @@ window.renderUserTable = function(users, viewMode = "current") {
         </td>
         <td>${user.address || "-"}</td>
       `;
-
-      // ❌ 여기서는 drawPath 호출 제거 → 테이블만 출력
-      // drawPath(points, user.distance) 는 updateUserPanelContent("paths")에서만 실행
+      // ❌ drawPath 호출 제거 → 테이블만 출력
 
     } else {
-      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
+      // current / all 모드: 테이블만 출력
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -564,7 +611,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동 (paths 모드에서는 클릭 시 이동만, drawPath는 하지 않음)
+    // ✅ 행 클릭 시 위치 이동 (paths 모드에서도 클릭 시 이동만, drawPath는 하지 않음)
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
@@ -573,7 +620,6 @@ window.renderUserTable = function(users, viewMode = "current") {
 
     tbody.appendChild(row);
   });
-};
 
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
