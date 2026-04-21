@@ -293,34 +293,30 @@ function drawPath(points, distanceKm) {
 
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-function updateUserPanelContent(viewMode = "current") {
+function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   let users = [];
+  const now = new Date();
 
   if (viewMode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
-      }
-    });
-    users = Object.values(latestByUser);
+    // 개인 모드: phone + states + updated 기준
+    users = allData.filter(u =>
+      (!selectedPhone || u.phone === selectedPhone) &&
+      u.states === "active" &&
+      (now - new Date(u.updated)) < 5*60*1000
+    );
 
   } else if (viewMode === "all") {
-    users = allData;
+    // 전체 모드: phone 값 기준
+    users = allData.filter(u => u.phone);
 
   } else if (viewMode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
-    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
+    users = selectedPhone === "all" ? allData.filter(u => u.phone) : allData.filter(u => u.phone === selectedPhone);
 
     // 전체 선택 모드일 때 총 이동 거리 표시
     if (selectedPhone === "all") {
@@ -366,6 +362,7 @@ function updateUserPanelContent(viewMode = "current") {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
@@ -592,19 +589,8 @@ window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
-  clearPaths(); // 항상 기존 경로 지우기
+  clearPaths(); // 기존 경로 지우기
 
-  const now = new Date();
-
-  // 48시간 지난 데이터 제외
-  users = users.filter(u => (now - new Date(u.time)) < 48*60*60*1000);
-
-  // 현재 접속자 보기: 최근 5분 이내 갱신된 사용자만 표시
-  if (viewMode === "current") {
-    users = users.filter(u => (now - new Date(u.updated)) < 5*60*1000);
-  }
-
-  // 사용자 목록 테이블 렌더링
   users.forEach(user => {
     const row = document.createElement("tr");
     row.style.cursor = "pointer";
@@ -619,18 +605,15 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
       `;
-
-      // 경로 표시
       if (user.path && user.path.length > 0) {
         const points = parsePathArray(user.path);
         drawPath(points, user.distance || 0);
       }
-
     } else {
       // 현재 접속자(current) / 전체 사용자(all) 모드
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
+        <td>${user.states || user.status || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
@@ -638,12 +621,11 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // 행 클릭 시 동작
+    // 행 클릭 시 지도 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
       }
-      // 경로 모드일 때만 클릭 시 경로 표시
       if (viewMode === "paths" && user.path && user.path.length > 0) {
         const points = parsePathArray(user.path);
         drawPath(points, user.distance || 0);
