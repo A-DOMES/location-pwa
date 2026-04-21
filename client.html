@@ -629,13 +629,26 @@ window.moveToLatLng = function() {
     title: "입력한 위치",
     animation: google.maps.Animation.DROP
   });
+
+  // ✅ 메시지 박스 표시
+  const msgBox = document.getElementById("message-box");
+  msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
+  msgBox.style.display = "block";
+
+  // 3초 후 자동 숨김
+  setTimeout(() => {
+    msgBox.style.display = "none";
+  }, 3000);
 };
 
 // 버튼 이벤트 연결
-const btnLocation = document.getElementById("location-check");
-if (btnLocation) {
-  btnLocation.addEventListener("click", moveToLatLng);
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const btnLocation = document.getElementById("location-check");
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
+});
+
   
 </script>
 
