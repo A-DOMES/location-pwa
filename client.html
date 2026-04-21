@@ -104,7 +104,7 @@ window.openUserPanel = function(viewMode) {
   document.getElementById("settings-panel")?.classList.remove("open");
   document.getElementById("user-panel")?.classList.add("open");
 
-  mode = viewMode; // ✅ 현재 모드 갱신
+  mode = viewMode; // ✅ 모드 갱신
 
   const title = document.getElementById("user-panel-title");
   if (title) {
@@ -114,8 +114,10 @@ window.openUserPanel = function(viewMode) {
   }
 
   updateUserPanelContent(viewMode);
-  showMap(); // ✅ 모드 갱신 후 지도 다시 그림
+  showMap(); // ✅ 모드 반영 후 지도 다시 그림
 };
+
+
 
 
 
@@ -427,6 +429,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
 
 </script>
  
