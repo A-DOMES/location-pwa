@@ -374,13 +374,13 @@ window.focusOnUser = function(lat, lng) {
 };
 
 /* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
-const btnLocation = document.getElementById("location-check");
-if (btnLocation) {
-  btnLocation.addEventListener("click", moveToLatLng);
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const btnLocation = document.getElementById("location-check");
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
 
-/* ---------------------- 패널 버튼 이벤트 연결 ---------------------- */
-window.onload = () => {
+  /* ---------------------- 패널 버튼 이벤트 연결 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -389,46 +389,25 @@ window.onload = () => {
   const closeBtn = document.getElementById("close-user-panel");
 
   if (btnConnection && connectionPanel) {
-    btnConnection.onclick = () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    };
-  }
-
-  if (btnSettings && settingsPanel) {
-    btnSettings.onclick = () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    };
-  }
-
-  if (closeBtn && userPanel) {
-    closeBtn.onclick = () => {
-      userPanel.classList.remove("open");
-    };
-  }
-
-window.onload = () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-
-  if (btnConnection && connectionPanel) {
     btnConnection.addEventListener("click", () => {
-      settingsPanel.classList.remove("open");
+      settingsPanel?.classList.remove("open");
       connectionPanel.classList.toggle("open");
     });
   }
 
   if (btnSettings && settingsPanel) {
     btnSettings.addEventListener("click", () => {
-      connectionPanel.classList.remove("open");
+      connectionPanel?.classList.remove("open");
       settingsPanel.classList.toggle("open");
     });
   }
-};
 
+  if (closeBtn && userPanel) {
+    closeBtn.addEventListener("click", () => {
+      userPanel.classList.remove("open");
+    });
+  }
+});
 
 </script>
 
