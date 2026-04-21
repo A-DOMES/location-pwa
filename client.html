@@ -294,33 +294,19 @@ function drawPath(points, distanceKm) {
 
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
-function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
+function updateUserPanelContent(viewMode = "paths", selectedPhone = "all") {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   let users = [];
-  const now = new Date();
 
-  if (viewMode === "current") {
-    // 개인 모드: phone + states + updated 기준
-    users = allData.filter(u =>
-      (!selectedPhone || u.phone === selectedPhone) &&
-      u.states === "active" &&
-      (now - new Date(u.updated)) < 5*60*1000
-    );
-
-  } else if (viewMode === "all") {
-    // 전체 모드: phone 값 기준
-    users = allData.filter(u => u.phone);
-
-  } else if (viewMode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    users = selectedPhone === "all" ? allData.filter(u => u.phone) : allData.filter(u => u.phone === selectedPhone);
-
-    // 전체 선택 모드일 때 총 이동 거리 표시
+  if (viewMode === "paths") {
     if (selectedPhone === "all") {
+      // 전체 사용자 표시
+      users = allData.filter(u => u.phone);
+
+      // 총 이동거리 계산
       const totalDistance = users.reduce((sum, u) => {
         const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
         let dist = 0;
@@ -342,6 +328,10 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
         </td>
       `;
       tbody.appendChild(row);
+
+    } else {
+      // 특정 사용자 표시
+      users = allData.filter(u => u.phone === selectedPhone);
     }
 
     // 사용자별 distance 계산
@@ -360,38 +350,80 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   }
 
   // ✅ 헤더 갱신 + 테이블 출력
-  updateTableHeader(viewMode);
-  renderUserTable(users, viewMode);
+  updateTableHeader("paths");
+  renderUserTable(users, "paths");
 }
-
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
-  const headerRow = document.getElementById("user-table-header");
-  if (!headerRow) return;
-  headerRow.innerHTML = "";
+  const thead = document.getElementById("user-table-head");
+  if (!thead) return;
 
   if (viewMode === "paths") {
-    headerRow.innerHTML = `
-      <th>닉네임</th>
-      <th>주소</th>
-      <th>로그인<br>시각</th>
-      <th>최근 갱신</th>
-      <th>이동거리</th>
-      <th>경도/위도</th>
-    `;
-  } else {
-    headerRow.innerHTML = `
-      <th>닉네임</th>
-      <th>상태</th>
-      <th>로그인<br>시각</th>
-      <th>최근 갱신</th>
-      <th>주소</th>
-      <th>경도/위도</th>
+    thead.innerHTML = `
+      <tr>
+        <th>닉네임</th>
+        <th>주소</th>
+        <th>로그인 시각</th>
+        <th>최근 갱신</th>
+        <th>이동거리</th>
+        <th>위도/경도</th>
+      </tr>
     `;
   }
 }
 
+/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+window.renderUserTable = function(users, viewMode = "paths") {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
+
+  clearPaths(); // 기존 경로 지우기
+
+  users.forEach(user => {
+    const row = document.createElement("tr");
+    row.style.cursor = "pointer";
+
+    // 경로 보기 모드
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.time ? formatToKST(user.time) : "-"}</td>
+      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+      <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+    `;
+
+    // 경로 표시
+    if (user.path && user.path.length > 0) {
+      const points = parsePathArray(user.path);
+      drawPath(points, user.distance || 0);
+    }
+
+    // 행 클릭 시 지도 이동
+    row.addEventListener("click", () => {
+      if (user.lat && user.lng) {
+        moveToUser(user.lat, user.lng, user.phone);
+      }
+      if (user.path && user.path.length > 0) {
+        const points = parsePathArray(user.path);
+        drawPath(points, user.distance || 0);
+      }
+    });
+
+    tbody.appendChild(row);
+  });
+};
+
+/* ---------------------- 드롭다운 이벤트 핸들러 ---------------------- */
+const select = document.getElementById("path-user-select");
+if (select) {
+  select.addEventListener("change", e => {
+    const selectedPhone = e.target.value;
+    updateUserPanelContent("paths", selectedPhone);
+  });
+}
+  
 /* ---------------------- 지도 초기화 ---------------------- */
 function getMapIdByDevice() {
   const ua = navigator.userAgent.toLowerCase();
@@ -586,7 +618,7 @@ function formatToKST(timeStr) {
 }
 
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-window.renderUserTable = function(users, viewMode = "current") {
+window.renderUserTable = function(users, viewMode = "paths") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
@@ -596,30 +628,20 @@ window.renderUserTable = function(users, viewMode = "current") {
     const row = document.createElement("tr");
     row.style.cursor = "pointer";
 
-    if (viewMode === "paths") {
-      // 경로 보기 모드
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-      `;
-      if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path);
-        drawPath(points, user.distance || 0);
-      }
-    } else {
-      // 현재 접속자(current) / 전체 사용자(all) 모드
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.states || user.status || "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-      `;
+    // 경로 보기 모드
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.time ? formatToKST(user.time) : "-"}</td>
+      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+      <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+    `;
+
+    // 경로 표시
+    if (user.path && user.path.length > 0) {
+      const points = parsePathArray(user.path);
+      drawPath(points, user.distance || 0);
     }
 
     // 행 클릭 시 지도 이동
@@ -627,7 +649,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
       }
-      if (viewMode === "paths" && user.path && user.path.length > 0) {
+      if (user.path && user.path.length > 0) {
         const points = parsePathArray(user.path);
         drawPath(points, user.distance || 0);
       }
@@ -637,6 +659,7 @@ window.renderUserTable = function(users, viewMode = "current") {
   });
 };
 
+  
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
