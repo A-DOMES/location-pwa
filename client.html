@@ -189,51 +189,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPanel = document.getElementById("user-panel");
   const select = document.getElementById("path-user-select");
 
-  // ✅ 드롭다운 선택 이벤트
-  if (select) {
-    select.addEventListener("change", e => {
-      const selectedPhone = e.target.value;
+// ✅ 드롭다운 선택 이벤트
+if (select) {
+  select.addEventListener("change", e => {
+    const selectedPhone = e.target.value;
 
-      if (selectedPhone === "all") {
-        // 전체 사용자 표시 (경로 없음)
-        updateUserPanelContent("all");
-        renderUserTable(allData, "all");
+    if (selectedPhone === "all") {
+      // 전체 사용자 표시
+      updateUserPanelContent("all");
+      renderUserTable(allData, "all");
+    } else {
+      // 특정 사용자만 표시
+      const user = allData.find(u => u.phone === selectedPhone);
+      if (user) {
+        updateUserPanelContent("current");
+        renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
+        moveToUser(user.lat, user.lng, user.phone); // 지도 이동
       } else {
-        // 특정 사용자만 표시
-        const user = allData.find(u => u.phone === selectedPhone);
-        if (user) {
-          updateUserPanelContent("current");
-          renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
-
-          // ✅ 현재 패널 제목 확인
-          const title = document.getElementById("user-panel-title");
-
-          if (title && title.textContent === "위치/경로 보기") {
-            // 위치/경로보기 모드일 때만 경로를 그림
-            const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-            if (pathPoints.length > 0) {
-              // 거리 계산
-              let distanceKm = 0;
-              for (let i = 1; i < pathPoints.length; i++) {
-                distanceKm += calculateDistance(
-                  pathPoints[i-1].lat, pathPoints[i-1].lng,
-                  pathPoints[i].lat, pathPoints[i].lng
-                );
-              }
-              // ✅ drawPath 실행 (경로 표시)
-              drawPath(pathPoints, distanceKm);
-            }
-          } else {
-            // 현재접속자보기 / 전체사용자보기 모드에서는 지도 이동만 하고 경로는 그리지 않음
-            moveToUser(user.lat, user.lng, user.phone);
-          }
-        } else {
-          // 선택된 사용자가 없으면 테이블 비우기
-          renderUserTable([], "current");
-        }
+        // 선택된 사용자가 없으면 테이블 비우기
+        renderUserTable([], "current");
       }
-    });
-  }
+    }
+  });
+}
+
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
   btnConnection.onclick = () => {
@@ -255,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ---------------------- 사용자 패널 열기 ----------------------
+// 기존 function openUserPanel(viewMode) { ... } 대신
 window.openUserPanel = function(viewMode) {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
@@ -273,7 +252,7 @@ window.openUserPanel = function(viewMode) {
   updateUserPanelContent(viewMode);
 };
 
-// ---------------------- path 배열 변환 ----------------------
+// path 배열을 lat/lng 쌍으로 변환
 function parsePathArray(pathArray) {
   const points = [];
   for (let i = 0; i < pathArray.length; i += 2) {
@@ -286,7 +265,7 @@ function parsePathArray(pathArray) {
   return points;
 }
 
-// ---------------------- 경로 그리기 ----------------------
+// 거리 기반 두께 + 색상으로 경로 그리기
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
@@ -311,7 +290,6 @@ function drawPath(points, distanceKm) {
 }
 
 
-
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -321,7 +299,6 @@ function updateUserPanelContent(viewMode = "current") {
   let users = [];
 
   if (viewMode === "current") {
-    // 현재 접속자 보기 → 경로 없음
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -336,15 +313,39 @@ function updateUserPanelContent(viewMode = "current") {
     users = Object.values(latestByUser);
 
   } else if (viewMode === "all") {
-    // 전체 사용자 보기 → 경로 없음
     users = allData;
 
   } else if (viewMode === "paths") {
-    // 위치/경로 보기 → 여기서만 경로를 그림
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
+    // 전체 선택 모드일 때 총 이동 거리 표시
+    if (selectedPhone === "all") {
+      const totalDistance = users.reduce((sum, u) => {
+        const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
+        let dist = 0;
+        if (pathPoints.length > 1) {
+          for (let i = 1; i < pathPoints.length; i++) {
+            dist += calculateDistance(
+              pathPoints[i-1].lat, pathPoints[i-1].lng,
+              pathPoints[i].lat, pathPoints[i].lng
+            );
+          }
+        }
+        return sum + dist;
+      }, 0);
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td colspan="6" style="font-weight:bold; background:#eef;">
+          전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    // 사용자별 distance 계산
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       user.distance = 0;
@@ -356,67 +357,13 @@ function updateUserPanelContent(viewMode = "current") {
           );
         }
       }
-      // ✅ paths 모드일 때만 drawPath 실행
-      if (pathPoints.length > 0) {
-        drawPath(pathPoints, user.distance);
-      }
     });
   }
 
-  // ✅ 테이블 출력 (renderUserTable은 테이블만 담당)
+  // ✅ 헤더 갱신 + 테이블 출력
+  updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
-
-/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-window.renderUserTable = function(users, viewMode = "current") {
-  const tbody = document.getElementById("user-table-body");
-  tbody.innerHTML = "";
-
-  users.forEach(user => {
-    const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
-    
-    if (viewMode === "paths") {
-      // 경로 보기 모드: 테이블만 출력
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
-        <td>${user.address || "-"}</td>
-      `;
-      // ❌ drawPath 호출 제거 → 테이블만 출력
-
-    } else {
-      // current / all 모드: 테이블만 출력
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
-      `;
-    }
-
-    // ✅ 행 클릭 시 위치 이동 (paths 모드에서도 클릭 시 이동만, drawPath는 하지 않음)
-    row.addEventListener("click", () => {
-      if (user.lat && user.lng) {
-        moveToUser(user.lat, user.lng, user.phone);
-      }
-    });
-
-    tbody.appendChild(row);
-  });
-};
-
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
@@ -582,7 +529,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.style.cursor = "pointer"; // 손가락 모양 커서
     
     if (viewMode === "paths") {
-      // 경로 보기 모드: 테이블만 출력
+      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -591,13 +538,18 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>
           ${user.lat ? user.lat.toFixed(5) : "-"}<br>
           ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
         <td>${user.address || "-"}</td>
+        </td>
       `;
-      // ❌ drawPath 호출 제거 → 테이블만 출력
+
+      // ✅ path 값으로 경로 그리기
+      if (user.path && user.path.length > 0) {
+        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
+        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
+      }
 
     } else {
-      // current / all 모드: 테이블만 출력
+      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -611,7 +563,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 위치 이동 (paths 모드에서도 클릭 시 이동만, drawPath는 하지 않음)
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         moveToUser(user.lat, user.lng, user.phone);
@@ -620,6 +572,7 @@ window.renderUserTable = function(users, viewMode = "current") {
 
     tbody.appendChild(row);
   });
+};
 
 
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
@@ -633,91 +586,6 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
-
-
-/* ---------------------- 위치 이동 코드 ---------------------- */
-// 위치찾기용 마커 저장 변수
-let locationMarker = null;
-
-function smoothZoom(map, targetZoom, step) {
-  if (map.getZoom() === targetZoom) return;
-  else {
-    const newZoom = map.getZoom() + step;
-    map.setZoom(newZoom);
-    setTimeout(() => smoothZoom(map, targetZoom, step), 80); // 속도 조절
-  }
-}
-
-window.moveToLatLng = function() {
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    alert("올바른 위도와 경도를 입력하세요.");
-    return;
-  }
-  if (!map) {
-    alert("지도가 아직 초기화되지 않았습니다.");
-    return;
-  }
-
-  // 중심을 부드럽게 이동
-  map.panTo({ lat, lng });
-
-  // 줌을 부드럽게 변경 (현재 줌에서 목표 줌까지)
-  const targetZoom = 15;
-  smoothZoom(map, targetZoom, map.getZoom() < targetZoom ? 1 : -1);
-
-  // 기존 마커 제거
-  if (locationMarker) locationMarker.setMap(null);
-
-  // 새 마커 표시
-  locationMarker = new google.maps.Marker({
-    position: { lat, lng },
-    map: map,
-    title: "입력한 위치",
-    animation: google.maps.Animation.DROP
-  });
-
-  // ✅ 모달창 띄우기 (자동 닫힘)
-  showModal(`위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`, true);
-};
-
-// 버튼 이벤트 연결
-document.addEventListener("DOMContentLoaded", () => {
-  const btnLocation = document.getElementById("location-check");
-  if (btnLocation) {
-    btnLocation.addEventListener("click", moveToLatLng);
-  }
-});
-
-// ============================
-// 📌 모달창 표시/닫기
-// ============================
-window.showModal = function(message, autoClose = false) {
-  // 기존 모달 제거
-  document.querySelectorAll(".modal").forEach(m => m.remove());
-
-  // 모달 생성
-  const modal = document.createElement("div");
-  modal.className = "modal";
-
-  const content = document.createElement("div");
-  content.className = "modal-content";
-  content.innerText = message;
-
-  modal.appendChild(content);
-  document.body.appendChild(modal);
-
-  modal.style.display = "block";
-
-  // 자동 닫기 옵션
-  if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
-};
-
-window.closeModal = function() {
-  document.querySelectorAll(".modal").forEach(m => m.remove());
-};
 
 </script>
 
@@ -938,35 +806,8 @@ window.closeModal = function() {
   #user-table th {
     background: #f5f5f5;
   }
-
-
-.modal {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.4); /* 반투명 검정 배경 */
-  z-index:6000;
-}
-
-.modal-content {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%, -50%);
-  background: linear-gradient(135deg, #2c3e50, #4ca1af); /* 네이비 → 청록 투톤 */
-  color:#fff;
-  border:2px solid #2c3e50;
-  border-radius:12px;
-  padding:20px 30px;
-  font-size:18px;
-  font-weight:bold;
-  text-align:center;
-  box-shadow:0 4px 12px rgba(0,0,0,0.4);
-}
-
 </style>
 </head>
-
 
 <body>
   <!-- 상단바 -->
