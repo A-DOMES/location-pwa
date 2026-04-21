@@ -373,14 +373,13 @@ window.focusOnUser = function(lat, lng) {
   map.setZoom(15);
 };
 
-/* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
+/* ---------------------- 위치찾기 버튼 이벤트 연결 + 패널 버튼 이벤트 연결 ---------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const btnLocation = document.getElementById("location-check");
   if (btnLocation) {
     btnLocation.addEventListener("click", moveToLatLng);
   }
 
-  /* ---------------------- 패널 버튼 이벤트 연결 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
