@@ -189,54 +189,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPanel = document.getElementById("user-panel");
   const select = document.getElementById("path-user-select");
 
-// ✅ 드롭다운 선택 이벤트
-if (select) {
-  select.addEventListener("change", e => {
-    const selectedPhone = e.target.value;
+  // ✅ 드롭다운 선택 이벤트
+  if (select) {
+    select.addEventListener("change", e => {
+      const selectedPhone = e.target.value;
 
-    if (selectedPhone === "all") {
-      // 전체 사용자 표시 (경로 없음)
-      updateUserPanelContent("all");
-      renderUserTable(allData, "all");
-    } else {
-      // 특정 사용자만 표시
-      const user = allData.find(u => u.phone === selectedPhone);
-      if (user) {
-        // 기본적으로 현재 사용자 패널 갱신
-        updateUserPanelContent("current");
-        renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
+      if (selectedPhone === "all") {
+        // 전체 사용자 표시 (경로 없음)
+        updateUserPanelContent("all");
+        renderUserTable(allData, "all");
+      } else {
+        // 특정 사용자만 표시
+        const user = allData.find(u => u.phone === selectedPhone);
+        if (user) {
+          updateUserPanelContent("current");
+          renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
 
-        // ✅ 현재 패널 제목 확인
-        const title = document.getElementById("user-panel-title");
+          // ✅ 현재 패널 제목 확인
+          const title = document.getElementById("user-panel-title");
 
-        if (title && title.textContent === "위치/경로 보기") {
-          // 위치/경로보기 모드일 때만 경로를 그림
-          const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-          if (pathPoints.length > 0) {
-            // 거리 계산
-            let distanceKm = 0;
-            for (let i = 1; i < pathPoints.length; i++) {
-              distanceKm += calculateDistance(
-                pathPoints[i-1].lat, pathPoints[i-1].lng,
-                pathPoints[i].lat, pathPoints[i].lng
-              );
+          if (title && title.textContent === "위치/경로 보기") {
+            // 위치/경로보기 모드일 때만 경로를 그림
+            const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+            if (pathPoints.length > 0) {
+              // 거리 계산
+              let distanceKm = 0;
+              for (let i = 1; i < pathPoints.length; i++) {
+                distanceKm += calculateDistance(
+                  pathPoints[i-1].lat, pathPoints[i-1].lng,
+                  pathPoints[i].lat, pathPoints[i].lng
+                );
+              }
+              // ✅ drawPath 실행 (경로 표시)
+              drawPath(pathPoints, distanceKm);
             }
-            // ✅ drawPath 실행 (경로 표시)
-            drawPath(pathPoints, distanceKm);
+          } else {
+            // 현재접속자보기 / 전체사용자보기 모드에서는 지도 이동만 하고 경로는 그리지 않음
+            moveToUser(user.lat, user.lng, user.phone);
           }
         } else {
-          // 현재접속자보기 / 전체사용자보기 모드에서는 지도 이동만 하고 경로는 그리지 않음
-          moveToUser(user.lat, user.lng, user.phone);
+          // 선택된 사용자가 없으면 테이블 비우기
+          renderUserTable([], "current");
         }
-      } else {
-        // 선택된 사용자가 없으면 테이블 비우기
-        renderUserTable([], "current");
       }
-    }
-  });
-}
-
-
+    });
+  }
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
   btnConnection.onclick = () => {
@@ -258,7 +255,7 @@ if (select) {
   }
 });
 
-// 기존 function openUserPanel(viewMode) { ... } 대신
+// ---------------------- 사용자 패널 열기 ----------------------
 window.openUserPanel = function(viewMode) {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
@@ -276,7 +273,7 @@ window.openUserPanel = function(viewMode) {
   updateUserPanelContent(viewMode);
 };
 
-// path 배열을 lat/lng 쌍으로 변환
+// ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
   for (let i = 0; i < pathArray.length; i += 2) {
@@ -289,7 +286,7 @@ function parsePathArray(pathArray) {
   return points;
 }
 
-// 거리 기반 두께 + 색상으로 경로 그리기
+// ---------------------- 경로 그리기 ----------------------
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
@@ -312,6 +309,7 @@ function drawPath(points, distanceKm) {
 
   pathLine.setMap(map);
 }
+
 
 
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
