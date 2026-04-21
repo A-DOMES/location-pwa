@@ -603,7 +603,7 @@ window.moveToLatLng = function() {
     return;
   }
 
-  // 지도 중심 이동 + 확대
+  // 지도 이동
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
@@ -620,15 +620,16 @@ window.moveToLatLng = function() {
     animation: google.maps.Animation.DROP
   });
 
-  // ✅ 메시지 박스 표시
-  const msgBox = document.getElementById("message-box");
-  msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
-  msgBox.style.display = "block";
+  // ✅ 모달창 표시
+  const modal = document.getElementById("location-modal");
+  const modalText = document.getElementById("location-modal-text");
+  modalText.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
+  modal.style.display = "block";
 
-  // 3초 후 자동 숨김
+  // 2.5초 후 자동 닫기
   setTimeout(() => {
-    msgBox.style.display = "none";
-  }, 3000);
+    modal.style.display = "none";
+  }, 2500);
 };
 
 // 버튼 이벤트 연결
@@ -638,6 +639,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnLocation.addEventListener("click", moveToLatLng);
   }
 });
+
 
 </script>
 
@@ -861,6 +863,24 @@ document.addEventListener("DOMContentLoaded", () => {
 </style>
 </head>
 
+<!-- 모달창 -->
+<div id="location-modal" style="
+  display:none; 
+  position:fixed; 
+  top:50%; left:50%; 
+  transform:translate(-50%, -50%);
+  background:white; 
+  border:1px solid #ccc; 
+  border-radius:8px; 
+  padding:20px; 
+  z-index:5000; 
+  box-shadow:0 4px 12px rgba(0,0,0,0.3); 
+  text-align:center;
+">
+  <p id="location-modal-text"></p>
+</div>
+
+  
 <body>
   <!-- 상단바 -->
   <div id="top-bar">
