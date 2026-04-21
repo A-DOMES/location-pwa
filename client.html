@@ -592,15 +592,30 @@ if (btnLocation) {
 // 위치찾기용 마커 저장 변수
 let locationMarker = null;
 
-function smoothZoom(map, targetZoom, step) {
-  if (map.getZoom() === targetZoom) return;
-  else {
-    const newZoom = map.getZoom() + step;
-    map.setZoom(newZoom);
-    setTimeout(() => smoothZoom(map, targetZoom, step), 80); // 속도 조절
-  }
+// 원래 위치 저장 변수
+let originalCenter = null;
+let originalZoom = null;
+
+// 지도 초기화 시 원래 위치 저장
+function initMap() {
+  originalCenter = { lat: 37.5665, lng: 126.9780 }; // 예: 서울 좌표
+  originalZoom = 10;
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: originalCenter,
+    zoom: originalZoom
+  });
 }
 
+// 줌을 부드럽게 변경하는 함수
+function smoothZoom(map, targetZoom, step) {
+  if (map.getZoom() === targetZoom) return;
+  const newZoom = map.getZoom() + step;
+  map.setZoom(newZoom);
+  setTimeout(() => smoothZoom(map, targetZoom, step), 80); // 속도 조절
+}
+
+// 위치 이동 함수
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
   const lng = parseFloat(document.getElementById("lngInput").value);
@@ -617,7 +632,7 @@ window.moveToLatLng = function() {
   // 중심을 부드럽게 이동
   map.panTo({ lat, lng });
 
-  // 줌을 부드럽게 변경 (현재 줌에서 목표 줌까지)
+  // 줌을 부드럽게 변경
   const targetZoom = 15;
   smoothZoom(map, targetZoom, map.getZoom() < targetZoom ? 1 : -1);
 
@@ -632,15 +647,32 @@ window.moveToLatLng = function() {
     animation: google.maps.Animation.DROP
   });
 
-  // ✅ 모달창 띄우기 (자동 닫힘)
+  // 모달창 띄우기
   showModal(`위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`, true);
 };
+
+// 원래 위치로 돌아가는 함수
+function returnToOriginal() {
+  if (!map || !originalCenter) return;
+
+  map.panTo(originalCenter);
+  smoothZoom(map, originalZoom, map.getZoom() < originalZoom ? 1 : -1);
+
+  showModal("원래 위치로 돌아왔습니다.", true);
+}
 
 // 버튼 이벤트 연결
 document.addEventListener("DOMContentLoaded", () => {
   const btnLocation = document.getElementById("location-check");
   if (btnLocation) {
     btnLocation.addEventListener("click", moveToLatLng);
+  }
+
+  // 우클릭 시 원래 위치로 복귀
+  if (map) {
+    map.addListener("rightclick", () => {
+      returnToOriginal();
+    });
   }
 });
 
