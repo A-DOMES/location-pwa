@@ -373,10 +373,10 @@ function updateTableHeader(viewMode) {
 
   if (viewMode === "paths") {
     headerRow.innerHTML = `
-      <th>닉네임</th>      
-      <th>로그인<br>시각</th>
-      <th>최근 갱신</th>
+      <th>닉네임</th>
       <th>이동<br>거리</th>
+      <th>로그인<br>시각</th>
+      <th>최근 갱신</th>      
       <th>위도/경도</th>
       <th>주소</th>
     `;
@@ -531,10 +531,10 @@ window.renderUserTable = function(users, viewMode = "current") {
     if (viewMode === "paths") {
       // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
       row.innerHTML = `
-        <td>${user.phone || "-"}</td>        
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
         <td>
           ${user.lat ? user.lat.toFixed(5) : "-"}<br>
           ${user.lng ? user.lng.toFixed(5) : "-"}
