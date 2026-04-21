@@ -521,56 +521,138 @@ function formatToKST(isoString) {
   });
 }
 
+
+/* ---------------------- 보조 함수 ---------------------- */
+
+// 경로 배열을 lat/lng 객체 배열로 변환
+function parsePathArray(pathArray) {
+  const points = [];
+  for (let i = 0; i < pathArray.length; i += 2) {
+    const lat = parseFloat(pathArray[i]);
+    const lng = parseFloat(pathArray[i+1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      points.push({ lat, lng });
+    }
+  }
+  return points;
+}
+
+// 경로 그리기
+let drawnPaths = [];
+function drawPath(points, distanceKm) {
+  if (!map || !points || points.length === 0) return;
+
+  // 두께 계산 (최소 5, 최대 18)
+  let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
+
+  // 색상 단계
+  let color = "#0000FF"; // 0~20km → 파랑
+  if (distanceKm > 20) color = "#FFA500"; // 20~50km → 주황
+  if (distanceKm > 50) color = "#00FF00"; // 50~100km → 초록
+  if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
+
+  const pathLine = new google.maps.Polyline({
+    path: points,
+    geodesic: true,
+    strokeColor: color,
+    strokeOpacity: 1.0,
+    strokeWeight: weight,
+    map: map
+  });
+
+  drawnPaths.push(pathLine); // 배열에 저장
+  return pathLine;
+}
+
+// 기존 경로 지우기
+function clearPaths() {
+  drawnPaths.forEach(p => p.setMap(null));
+  drawnPaths = [];
+}
+
+// 특정 사용자 위치로 지도 이동
+function moveToUser(lat, lng, phone) {
+  const pos = { lat: lat, lng: lng };
+  map.setCenter(pos);
+  map.setZoom(15);
+  new google.maps.InfoWindow({
+    content: `사용자: ${phone}`
+  }).open(map, new google.maps.Marker({ position: pos, map: map }));
+}
+
+// UTC 시간을 KST로 변환
+function formatToKST(timeStr) {
+  if (!timeStr) return "-";
+  const date = new Date(timeStr);
+  return date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+}
+
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
+  clearPaths(); // 항상 기존 경로 지우기
+
+  const now = new Date();
+
+  // 48시간 지난 데이터 제외
+  users = users.filter(u => (now - new Date(u.time)) < 48*60*60*1000);
+
+  // 개인 모드에서 최근 갱신된 사용자만 표시 (예: 10분 이내)
+  if (viewMode === "current") {
+    users = users.filter(u => (now - new Date(u.updated)) < 10*60*1000);
+  }
+
+  // 전체 경로 보기 모드일 때만 지도에 모든 경로 표시
+  if (viewMode === "paths") {
+    users.forEach(user => {
+      if (user.path && user.path.length > 0) {
+        const points = parsePathArray(user.path);
+        drawPath(points, user.distance || 0);
+      }
+    });
+  }
+
+  // 사용자 목록 테이블 렌더링
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
-    
+    row.style.cursor = "pointer";
+
     if (viewMode === "paths") {
-      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
+      // 경로 보기 모드
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.address || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
       `;
-
-      // ✅ path 값으로 경로 그리기
-      if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
-        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
-      }
-
     } else {
-      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
+      // 개인(current) / 전체(all) 모드
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동
-    row.addEventListener("click", () => {
-      if (user.lat && user.lng) {
-        moveToUser(user.lat, user.lng, user.phone);
-      }
-    });
+    // 개인 모드에서만 행 클릭 시 경로 표시
+    if (viewMode === "current") {
+      row.addEventListener("click", () => {
+        if (user.lat && user.lng) {
+          moveToUser(user.lat, user.lng, user.phone);
+        }
+        if (user.path && user.path.length > 0) {
+          const points = parsePathArray(user.path);
+          drawPath(points, user.distance || 0);
+        }
+      });
+    }
 
     tbody.appendChild(row);
   });
