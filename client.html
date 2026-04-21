@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-<!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
-<script src="config.js"></script>
+  <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
+  <script src="config.js"></script>
 
-<!-- 2. 사용자 코드 -->
-<script>
+  <!-- 2. 사용자 코드 -->
+  <script>
 // ---------------------- 전역 변수 ----------------------
 let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
 let pathLines = []; // 경로 Polyline 저장 배열
@@ -42,12 +42,14 @@ function initMap() {
     mapId: mapId
   });
 
+  // 원래 위치 저장 및 우클릭 복귀
   const originalCenter = map.getCenter();
   google.maps.event.addListener(map, 'rightclick', () => {
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
 
+  // 내 위치 표시
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => new google.maps.Marker({ position: { lat: pos.coords.latitude, lng: pos.coords.longitude }, map, title: "내 위치" }),
@@ -116,8 +118,6 @@ window.openUserPanel = function(viewMode) {
   updateUserPanelContent(viewMode);
   showMap(); // ✅ 모드 반영 후 지도 다시 그림
 };
-
-
 
 // ---------------------- 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
@@ -273,163 +273,28 @@ if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
 
-// ---------------------- 데이터 로딩 ----------------------
-async function loadData(token = null) {
-  try {
-    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-    if (token) url += "&token=" + encodeURIComponent(token);
+// ---------------------- 접속현황/환경설정 버튼 이벤트 연결 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
 
-    const response = await fetch(url);
-    allData = await response.json();
-
-    // 드롭다운 갱신
-    populatePathSelect();
-
-    // 데이터 정상 수신 후 지도 표시
-    showMap();
-  } catch (err) {
-    console.error("데이터 로드 실패:", err);
-    const msgBox = document.getElementById("message-box");
-    if (msgBox) {
-      msgBox.textContent = "⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.";
-      msgBox.style.display = "block";
-    }
-  }
-}
-
-// ---------------------- 드롭다운 갱신 ----------------------
-function populatePathSelect(viewMode = "all") {
-  const select = document.getElementById("path-user-select");
-  if (!select) return;
-  select.innerHTML = "";
-
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = "전체";
-  select.appendChild(allOption);
-
-  let users = [];
-  if (viewMode === "current") {
-    const now = new Date();
-    users = allData.filter(u => {
-      const updated = new Date(u.updated);
-      return (now - updated <= 5 * 60 * 1000);
-    });
-  } else {
-    users = allData;
-  }
-
-  users.forEach(user => {
-    const option = document.createElement("option");
-    option.value = user.phone;
-    option.textContent = user.phone;
-    select.appendChild(option);
-  });
-}
-
-// ---------------------- 지도 표시 ----------------------
-function showMap() {
-  // 기존 마커/경로 제거
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-    markerCluster = null;
-  }
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-  pathLines.forEach(p => p.setMap(null));
-  pathLines = [];
-
-  if (!map) return;
-
-  if (mode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        if (!latestByUser[user.phone] || updated > new Date(latestByUser[user.phone].updated)) {
-          latestByUser[user.phone] = user;
-        }
-      }
-    });
-    Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map,
-        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-        title: `${user.phone} (${user.status}, ${user.updated})`
-      });
-      markers.push(marker);
-    });
-  } else if (mode === "all") {
-    allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map,
-        title: `${user.phone} (${user.status}, ${user.time})`
-      });
-      markers.push(marker);
-    });
-  } else if (mode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    let users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-    users.forEach(user => {
-      const pathCoords = parsePathArray(user.path || []);
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map
-        });
-        pathLines.push(polyline);
-
-        const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map,
-          title: `${user.phone} / ${user.updated}`,
-          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-        markers.push(marker);
-      }
+  if (btnConnection && connectionPanel) {
+    btnConnection.addEventListener("click", () => {
+      settingsPanel?.classList.remove("open");
+      connectionPanel.classList.toggle("open");
     });
   }
 
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map, markers });
+  if (btnSettings && settingsPanel) {
+    btnSettings.addEventListener("click", () => {
+      connectionPanel?.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    });
   }
-
-  updateUserPanelContent(mode);
-}
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const btnConnection = document.getElementById("btn-connection");
-    const btnSettings = document.getElementById("btn-settings");
-    const connectionPanel = document.getElementById("connection-panel");
-    const settingsPanel = document.getElementById("settings-panel");
-
-    if (btnConnection && connectionPanel) {
-      btnConnection.addEventListener("click", () => {
-        settingsPanel?.classList.remove("open");
-        connectionPanel.classList.toggle("open");
-      });
-    }
-
-    if (btnSettings && settingsPanel) {
-      btnSettings.addEventListener("click", () => {
-        connectionPanel?.classList.remove("open");
-        settingsPanel.classList.toggle("open");
-      });
-    }
-  });
-
+});
 </script>
- 
 
 <!-- 스타일 -->
 <style>
