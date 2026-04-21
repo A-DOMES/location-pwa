@@ -15,7 +15,6 @@ let map, mode = "current", markers = [], markerCluster, intervalId, allData = []
 // ✅ 경로 Polyline 저장 배열 (경로 관리 전용)
 let pathLines = [];
 
-
 // ---------------------- 거리 계산 함수 ----------------------
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371; // 지구 반지름 (km)
@@ -88,7 +87,6 @@ function populatePathSelect(viewMode = "all") {
   });
 }
 
-  
 /* ---------------------- 지도 초기화 보조 ---------------------- */
 function clearMap() {
   if (markerCluster) {
@@ -97,224 +95,10 @@ function clearMap() {
   }
   markers.forEach(m => m.setMap(null));
   markers = [];
-  polylines.forEach(p => p.setMap(null));
-  polylines = [];
-}
-
-/* ---------------------- 지도 표시 ---------------------- */
-function showMap() {
-  clearMap();
-  if (!map) return;
-
-  if (mode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
-      }
-    });
-    Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-        title: `${user.phone} (${user.status}, ${user.updated})`
-      });
-      markers.push(marker);
-    });
-
-  } else if (mode === "all") {
-    allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        title: `${user.phone} (${user.status}, ${user.time})`
-      });
-      markers.push(marker);
-    });
-
-  } else if (mode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-
-    let users = allData;
-    if (selectedPhone !== "all") {
-      users = allData.filter(u => u.phone === selectedPhone);
-    }
-
-    users.forEach(user => {
-      const pathCoords = [];
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) pathCoords.push({ lat, lng });
-      }
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        polylines.push(polyline);
-
-        const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map: map,
-          title: `${user.phone} / ${user.updated}`,
-          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-        markers.push(marker);
-      }
-    });
-  }
-
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
-  }
-  updateUserPanelContent(mode);
-}
-
-// ---------------------- 사용자 패널 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-  const select = document.getElementById("path-user-select");
-
-  // ✅ 드롭다운 선택 이벤트
-  if (select) {
-    select.addEventListener("change", e => {
-      const selectedPhone = e.target.value;
-      const title = document.getElementById("user-panel-title"); // 현재 패널 제목 확인
-
-      if (selectedPhone === "all") {
-        // 전체 사용자 표시
-        updateUserPanelContent("all");
-        renderUserTable(allData, "all");
-      } else {
-        // 특정 사용자만 표시
-        const user = allData.find(u => u.phone === selectedPhone);
-        if (user) {
-          // 테이블 갱신
-          updateUserPanelContent(title.textContent === "위치/경로 보기" ? "paths" : "current");
-          renderUserTable([user], title.textContent === "위치/경로 보기" ? "paths" : "current");
-
-          if (title && title.textContent === "위치/경로 보기") {
-            // ✅ 위치/경로보기 모드일 때만 경로 그리기
-            const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-            if (pathPoints.length > 0) {
-              let distanceKm = 0;
-              for (let i = 1; i < pathPoints.length; i++) {
-                distanceKm += calculateDistance(
-                  pathPoints[i-1].lat, pathPoints[i-1].lng,
-                  pathPoints[i].lat, pathPoints[i].lng
-                );
-              }
-              drawPath(pathPoints, distanceKm);
-            }
-          } else {
-            // ✅ 현재접속자 / 전체 사용자 모드에서는 지도 이동만
-            moveToUser(user.lat, user.lng, user.phone);
-          }
-        } else {
-          // 선택된 사용자가 없으면 테이블 비우기
-          renderUserTable([], "current");
-        }
-      }
-    });
-  }
-
-  // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
-
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
-
-  // ✅ 닫기 버튼 이벤트도 DOMContentLoaded 안에서 연결
-  const closeBtn = document.getElementById("close-user-panel");
-  if (closeBtn) {
-    closeBtn.onclick = () => {
-      userPanel.classList.remove("open");
-    };
-  }
-});
-
-// ---------------------- 사용자 패널 열기 ----------------------
-window.openUserPanel = function(viewMode) {
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-
-  connectionPanel.classList.remove("open");
-  settingsPanel.classList.remove("open");
-  userPanel.classList.add("open");
-
-  const title = document.getElementById("user-panel-title");
-  if (viewMode === "current") title.textContent = "현재 접속자";
-  else if (viewMode === "all") title.textContent = "전체 사용자";
-  else if (viewMode === "paths") title.textContent = "위치/경로 보기";
-
-  updateUserPanelContent(viewMode);
-};
-
-// ---------------------- path 배열 변환 ----------------------
-function parsePathArray(pathArray) {
-  const points = [];
-  for (let i = 0; i < pathArray.length; i += 2) {
-    const lat = parseFloat(pathArray[i]);
-    const lng = parseFloat(pathArray[i+1]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      points.push({ lat, lng });
-    }
-  }
-  return points;
-}
-
-// ---------------------- 경로 그리기 ----------------------
-function drawPath(points, distanceKm) {
-  if (!map || !points || points.length === 0) return;
-
-  // ✅ 기존 경로 지우기
-  pathLines.forEach(line => line.setMap(null));
+  pathLines.forEach(p => p.setMap(null)); // ✅ 수정: polylines → pathLines
   pathLines = [];
-
-  // 두께 계산 (최소 5, 최대 18)
-  let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
-
-  // 색상 단계
-  let color = "#0000FF"; // 0~20km → 파랑
-  if (distanceKm > 20) color = "#FFA500"; // 20~50km → 주황
-  if (distanceKm > 50) color = "#00FF00"; // 50~100km → 초록
-  if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
-
-  const pathLine = new google.maps.Polyline({
-    path: points,
-    geodesic: true,
-    strokeColor: color,
-    strokeOpacity: 1.0,
-    strokeWeight: weight
-  });
-
-  pathLine.setMap(map);
-  pathLines.push(pathLine); // ✅ 새 경로 저장
 }
+
 
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
@@ -383,7 +167,6 @@ function updateUserPanelContent(viewMode = "current") {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
-
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
@@ -546,10 +329,10 @@ window.renderUserTable = function(users, viewMode = "current") {
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
+    row.style.cursor = "pointer"; 
     
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함, 테이블만 출력
+      // ✅ paths 모드: 이동거리 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -558,8 +341,6 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
-      // ❌ drawPath 호출 제거 → 테이블만 출력
-
     } else {
       // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
@@ -594,6 +375,45 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
+
+/* ---------------------- 패널 버튼 이벤트 연결 ---------------------- */
+window.onload = () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
+  const closeBtn = document.getElementById("close-user-panel");
+
+  if (btnConnection && connectionPanel) {
+    btnConnection.onclick = () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
+    };
+  }
+
+  if (btnSettings && settingsPanel) {
+    btnSettings.onclick = () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    };
+  }
+
+  if (closeBtn && userPanel) {
+    closeBtn.onclick = () => {
+      userPanel.classList.remove("open");
+    };
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+      connectionPanel.classList.remove("open");
+    }
+    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+      settingsPanel.classList.remove("open");
+    }
+  });
+};
 </script>
 
 
