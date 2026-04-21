@@ -240,13 +240,16 @@ function initMap() {
   const settingsPanel = document.getElementById("settings-panel");
 
   document.addEventListener("click", function(e) {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+    if (btnConnection && connectionPanel &&
+        !btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
       connectionPanel.classList.remove("open");
     }
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+    if (btnSettings && settingsPanel &&
+        !btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
       settingsPanel.classList.remove("open");
     }
   });
+
 
   loadData();
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
