@@ -405,7 +405,7 @@ window.onload = () => {
     };
   }
 
-document.addEventListener("DOMContentLoaded", () => {
+window.onload = () => {
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -424,7 +424,8 @@ document.addEventListener("DOMContentLoaded", () => {
       settingsPanel.classList.toggle("open");
     });
   }
-});
+};
+
 
 </script>
 
