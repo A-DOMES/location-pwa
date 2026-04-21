@@ -587,8 +587,19 @@ if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
 
+
+/* ---------------------- 위치 이동 코드 ---------------------- */
 // 위치찾기용 마커 저장 변수
 let locationMarker = null;
+
+function smoothZoom(map, targetZoom, step) {
+  if (map.getZoom() === targetZoom) return;
+  else {
+    const newZoom = map.getZoom() + step;
+    map.setZoom(newZoom);
+    setTimeout(() => smoothZoom(map, targetZoom, step), 80); // 속도 조절
+  }
+}
 
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -603,9 +614,12 @@ window.moveToLatLng = function() {
     return;
   }
 
-  // 지도 이동
-  map.setCenter({ lat, lng });
-  map.setZoom(15);
+  // 중심을 부드럽게 이동
+  map.panTo({ lat, lng });
+
+  // 줌을 부드럽게 변경 (현재 줌에서 목표 줌까지)
+  const targetZoom = 15;
+  smoothZoom(map, targetZoom, map.getZoom() < targetZoom ? 1 : -1);
 
   // 기존 마커 제거
   if (locationMarker) locationMarker.setMap(null);
