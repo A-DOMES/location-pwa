@@ -587,6 +587,58 @@ if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
 
+// 위치찾기용 마커 저장 변수
+let locationMarker = null;
+
+window.moveToLatLng = function() {
+  const lat = parseFloat(document.getElementById("latInput").value);
+  const lng = parseFloat(document.getElementById("lngInput").value);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    alert("올바른 위도와 경도를 입력하세요.");
+    return;
+  }
+  if (!map) {
+    alert("지도가 아직 초기화되지 않았습니다.");
+    return;
+  }
+
+  // 지도 중심 이동 + 확대
+  map.setCenter({ lat: lat, lng: lng });
+  map.setZoom(15);
+
+  // 기존 마커 제거
+  if (locationMarker) {
+    locationMarker.setMap(null);
+  }
+
+  // 새 마커 표시
+  locationMarker = new google.maps.Marker({
+    position: { lat: lat, lng: lng },
+    map: map,
+    title: "입력한 위치",
+    animation: google.maps.Animation.DROP
+  });
+
+  // ✅ 메시지 박스 표시
+  const msgBox = document.getElementById("message-box");
+  msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
+  msgBox.style.display = "block";
+
+  // 3초 후 자동 숨김
+  setTimeout(() => {
+    msgBox.style.display = "none";
+  }, 3000);
+};
+
+// 버튼 이벤트 연결
+document.addEventListener("DOMContentLoaded", () => {
+  const btnLocation = document.getElementById("location-check");
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
+});
+
 </script>
 
 
