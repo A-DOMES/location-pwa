@@ -189,30 +189,48 @@ document.addEventListener("DOMContentLoaded", () => {
   const userPanel = document.getElementById("user-panel");
   const select = document.getElementById("path-user-select");
 
-// ✅ 드롭다운 선택 이벤트
-if (select) {
-  select.addEventListener("change", e => {
-    const selectedPhone = e.target.value;
+  // ✅ 드롭다운 선택 이벤트
+  if (select) {
+    select.addEventListener("change", e => {
+      const selectedPhone = e.target.value;
+      const title = document.getElementById("user-panel-title"); // 현재 패널 제목 확인
 
-    if (selectedPhone === "all") {
-      // 전체 사용자 표시
-      updateUserPanelContent("all");
-      renderUserTable(allData, "all");
-    } else {
-      // 특정 사용자만 표시
-      const user = allData.find(u => u.phone === selectedPhone);
-      if (user) {
-        updateUserPanelContent("current");
-        renderUserTable([user], "current"); // 배열로 감싸서 한 명만 표시
-        moveToUser(user.lat, user.lng, user.phone); // 지도 이동
+      if (selectedPhone === "all") {
+        // 전체 사용자 표시
+        updateUserPanelContent("all");
+        renderUserTable(allData, "all");
       } else {
-        // 선택된 사용자가 없으면 테이블 비우기
-        renderUserTable([], "current");
-      }
-    }
-  });
-}
+        // 특정 사용자만 표시
+        const user = allData.find(u => u.phone === selectedPhone);
+        if (user) {
+          // 테이블 갱신
+          updateUserPanelContent(title.textContent === "위치/경로 보기" ? "paths" : "current");
+          renderUserTable([user], title.textContent === "위치/경로 보기" ? "paths" : "current");
 
+          if (title && title.textContent === "위치/경로 보기") {
+            // ✅ 위치/경로보기 모드일 때만 경로 그리기
+            const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+            if (pathPoints.length > 0) {
+              let distanceKm = 0;
+              for (let i = 1; i < pathPoints.length; i++) {
+                distanceKm += calculateDistance(
+                  pathPoints[i-1].lat, pathPoints[i-1].lng,
+                  pathPoints[i].lat, pathPoints[i].lng
+                );
+              }
+              drawPath(pathPoints, distanceKm);
+            }
+          } else {
+            // ✅ 현재접속자 / 전체 사용자 모드에서는 지도 이동만
+            moveToUser(user.lat, user.lng, user.phone);
+          }
+        } else {
+          // 선택된 사용자가 없으면 테이블 비우기
+          renderUserTable([], "current");
+        }
+      }
+    });
+  }
 
   // ✅ 버튼 이벤트를 DOMContentLoaded 안으로 이동
   btnConnection.onclick = () => {
@@ -234,7 +252,7 @@ if (select) {
   }
 });
 
-// 기존 function openUserPanel(viewMode) { ... } 대신
+// ---------------------- 사용자 패널 열기 ----------------------
 window.openUserPanel = function(viewMode) {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
@@ -252,7 +270,7 @@ window.openUserPanel = function(viewMode) {
   updateUserPanelContent(viewMode);
 };
 
-// path 배열을 lat/lng 쌍으로 변환
+// ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
   for (let i = 0; i < pathArray.length; i += 2) {
@@ -265,7 +283,7 @@ function parsePathArray(pathArray) {
   return points;
 }
 
-// 거리 기반 두께 + 색상으로 경로 그리기
+// ---------------------- 경로 그리기 ----------------------
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
@@ -289,7 +307,6 @@ function drawPath(points, distanceKm) {
   pathLine.setMap(map);
 }
 
-
 /* ---------------------- 사용자 패널 내용 업데이트 ---------------------- */
 function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -299,6 +316,7 @@ function updateUserPanelContent(viewMode = "current") {
   let users = [];
 
   if (viewMode === "current") {
+    // ✅ 현재 접속자 보기: 최근 5분 내 접속자만 표시
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -313,37 +331,14 @@ function updateUserPanelContent(viewMode = "current") {
     users = Object.values(latestByUser);
 
   } else if (viewMode === "all") {
+    // ✅ 전체 사용자 보기
     users = allData;
 
   } else if (viewMode === "paths") {
+    // ✅ 위치/경로 보기
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-    // 전체 선택 모드일 때 총 이동 거리 표시
-    if (selectedPhone === "all") {
-      const totalDistance = users.reduce((sum, u) => {
-        const pathPoints = Array.isArray(u.path) ? parsePathArray(u.path) : [];
-        let dist = 0;
-        if (pathPoints.length > 1) {
-          for (let i = 1; i < pathPoints.length; i++) {
-            dist += calculateDistance(
-              pathPoints[i-1].lat, pathPoints[i-1].lng,
-              pathPoints[i].lat, pathPoints[i].lng
-            );
-          }
-        }
-        return sum + dist;
-      }, 0);
-
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td colspan="6" style="font-weight:bold; background:#eef;">
-          전체 사용자 총 이동 거리: ${totalDistance.toFixed(2)} km
-        </td>
-      `;
-      tbody.appendChild(row);
-    }
 
     // 사용자별 distance 계산
     users.forEach(user => {
@@ -504,7 +499,7 @@ window.setCustomInterval = function() {
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
 
-/* ---------------------- 한국표준시설정 ---------------------- */  
+/* ---------------------- 한국표준시 변환 ---------------------- */  
 function formatToKST(isoString) {
   if (!isoString) return "-";
   const date = new Date(isoString);
@@ -529,37 +524,26 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.style.cursor = "pointer"; // 손가락 모양 커서
     
     if (viewMode === "paths") {
-      // 경로 보기 모드: 닉네임, 주소, 로그인 시각, 최근 갱신, 이동거리, 위치
+      // ✅ paths 모드: 이동거리 포함, 테이블만 출력
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
-        </td>
       `;
-
-      // ✅ path 값으로 경로 그리기
-      if (user.path && user.path.length > 0) {
-        const points = parsePathArray(user.path); // path 배열을 lat/lng 쌍으로 변환
-        drawPath(points, user.distance || 0);     // 거리 기반 두께 + 색상으로 경로 그리기
-      }
+      // ❌ drawPath 호출 제거 → 테이블만 출력
 
     } else {
-      // 개인(current) / 전체(all) 모드: 닉네임, 상태, 로그인 시각, 최근 갱신, 주소, 위치
+      // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
-        <td>
-          ${user.lat ? user.lat.toFixed(5) : "-"}<br>
-          ${user.lng ? user.lng.toFixed(5) : "-"}
-        </td>
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
       `;
     }
 
@@ -574,7 +558,6 @@ window.renderUserTable = function(users, viewMode = "current") {
   });
 };
 
-
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
@@ -586,9 +569,7 @@ const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
   btnLocation.addEventListener("click", moveToLatLng);
 }
-
 </script>
-
 
 
 <!-- 스타일 -->
