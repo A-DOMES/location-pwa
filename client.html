@@ -1024,14 +1024,6 @@ document.addEventListener("DOMContentLoaded", () => {
   <!-- 메시지 박스 -->
   <div id="message-box"></div>
 
-  <!-- 3. MarkerClusterer 라이브러리 -->
-  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-
-  <!-- 4. Google Maps API -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
-  </script>
-
   <!-- ✅ 라이트/다크 스타일 JSON 정의 및 이벤트 연결 -->
   <script>
     const lightStyle = [ /* ... 앞서 드린 라이트 스타일 JSON ... */ ];
@@ -1060,6 +1052,14 @@ document.addEventListener("DOMContentLoaded", () => {
       intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
     }
     window.initMap = initMap;
+
+      <!-- 3. MarkerClusterer 라이브러리 -->
+  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+
+  <!-- 4. Google Maps API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
   </script>
+
 </body>
 </html>
