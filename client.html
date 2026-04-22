@@ -12,8 +12,7 @@
 <!-- 2. 사용자 코드 -->
 <script>
 // ---------------------- 전역 변수 ----------------------
-let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-let polylines = []; // 경로 Polyline 저장 배열
+let map, mode = "current", markers = [], markerCluster, intervalId, allData = [], pathLines = [];
 
 // ---------------------- 마커 제거 함수 ----------------------
 function clearMarkers() {
@@ -23,7 +22,7 @@ function clearMarkers() {
 
 // ---------------------- 거리 계산 함수 ----------------------
 function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // 지구 반지름 (km)
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(dLat/2)**2 +
@@ -52,14 +51,11 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
-    // 드롭다운 갱신
     populatePathSelect();
-
-    // ✅ 데이터 정상 수신 후 지도 표시
     showMap();
   } catch (err) {
     console.error("데이터 로드 실패:", err);
-    showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+    showMessage("⚠️ 데이터를 불러오지 못했습니다.");
   }
 }
 
@@ -74,7 +70,6 @@ function setCustomInterval() {
   }
 
   let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-
   clearInterval(intervalId);
   intervalId = setInterval(loadData, newInterval);
 
@@ -89,11 +84,10 @@ const themeToggle = document.getElementById("themeToggle");
 if (themeToggle) {
   themeToggle.addEventListener("change", () => {
     document.body.classList.toggle("dark-mode", themeToggle.checked);
-
     if (themeToggle.checked) {
-      map.setOptions({ styles: darkStyle }); // darkStyle은 별도 정의 필요
+      map.setOptions({ styles: darkStyle });
     } else {
-      map.setOptions({ styles: lightStyle }); // lightStyle은 별도 정의 필요
+      map.setOptions({ styles: lightStyle });
     }
   });
 }
@@ -103,10 +97,9 @@ window.onload = () => {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 36.5, lng: 127.5 },
     zoom: 7,
-    styles: lightStyle // 기본 라이트 모드
+    styles: lightStyle
   });
 
-  // ✅ 버튼 열기/닫기 처리
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -116,13 +109,12 @@ window.onload = () => {
     connectionPanel.classList.toggle("open");
     settingsPanel.classList.remove("open");
   });
-
   btnSettings.addEventListener("click", () => {
     settingsPanel.classList.toggle("open");
     connectionPanel.classList.remove("open");
   });
 
-  document.addEventListener("click", function(e) {
+  document.addEventListener("click", e => {
     if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
       connectionPanel.classList.remove("open");
     }
@@ -131,7 +123,6 @@ window.onload = () => {
     }
   });
 
-  // ✅ 데이터 로딩 및 기본 갱신 주기
   loadData();
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 };
@@ -174,8 +165,8 @@ function clearMap() {
   }
   markers.forEach(m => m.setMap(null));
   markers = [];
-  polylines.forEach(p => p.setMap(null));
-  polylines = [];
+  pathLines.forEach(p => p.setMap(null));
+  pathLines = [];
 }
 
 // ---------------------- 지도 표시 ----------------------
@@ -204,7 +195,6 @@ function showMap() {
       });
       markers.push(marker);
     });
-
   } else if (mode === "all") {
     allData.forEach(user => {
       const marker = new google.maps.Marker({
@@ -214,16 +204,13 @@ function showMap() {
       });
       markers.push(marker);
     });
-
   } else if (mode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
-
     let users = allData;
     if (selectedPhone !== "all") {
       users = allData.filter(u => u.phone === selectedPhone);
     }
-
     users.forEach(user => {
       const pathCoords = [];
       for (let j = 0; j < user.path.length; j += 2) {
@@ -240,8 +227,7 @@ function showMap() {
           strokeWeight: 2,
           map: map
         });
-        polylines.push(polyline);
-
+        pathLines.push(polyline);
         const last = pathCoords[pathCoords.length - 1];
         const marker = new google.maps.Marker({
           position: last,
@@ -262,7 +248,6 @@ function showMap() {
 
 // ---------------------- 사용자 패널 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
