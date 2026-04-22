@@ -312,8 +312,8 @@ window.openUserPanel = function(viewMode) {
 
   // ✅ 기존 마커/경로 제거
   clearMarkers();
-  pathLines.forEach(line => line.setMap(null));
-  pathLines = [];
+  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines = [];
 
   // 패널 제목 갱신
   const title = document.getElementById("user-panel-title");
@@ -345,8 +345,8 @@ function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
   // ✅ 기존 경로 지우기
-  pathLines.forEach(line => line.setMap(null));
-  pathLines = [];
+  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines = [];
 
   // 두께 계산 (최소 5, 최대 18)
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
@@ -366,9 +366,10 @@ function drawPath(points, distanceKm) {
   });
 
   pathLine.setMap(map);
-  pathLines.push(pathLine);
+  polylines.push(pathLine);  // ← polylines에만 추가
 }
 
+    
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -391,14 +392,14 @@ function updateUserPanelContent(viewMode = "current") {
       }
     });
     users = Object.values(latestByUser);
-    pathLines.forEach(line => line.setMap(null));
-    pathLines = [];
+    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+    polylines = [];
 
   } else if (viewMode === "all") {
     clearMarkers();
     users = allData;
-    pathLines.forEach(line => line.setMap(null));
-    pathLines = [];
+    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+    polylines = [];
 
   } else if (viewMode === "paths") {
     clearMarkers();
@@ -406,8 +407,8 @@ function updateUserPanelContent(viewMode = "current") {
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
-    pathLines.forEach(line => line.setMap(null));
-    pathLines = [];
+    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+    polylines = [];
 
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
