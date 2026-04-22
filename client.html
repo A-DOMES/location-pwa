@@ -89,7 +89,8 @@
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 36.5, lng: 127.5 },
       zoom: 7,
-      styles: lightStyle // 기본 라이트 모드
+      mapTypeId: "roadmap",   // 기본 지도 타입
+      styles: null            // ✅ 스타일 적용하지 않음 → 일반지도
     });
 
     // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
