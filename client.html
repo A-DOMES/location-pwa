@@ -45,7 +45,7 @@ function stringToColor(str) {
   return "#" + "00000".substring(0, 6 - c.length) + c;
 }
 
-/* ---------------------- 데이터 로딩 ---------------------- */
+// ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
   try {
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
@@ -54,16 +54,81 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
+    // ✅ 최근 50개 데이터만 사용
+    const latestData = allData.slice(-50);
+
     // 드롭다운 갱신
     populatePathSelect();
 
-    // 데이터 정상 수신 후 지도 표시
+    // ✅ 테이블 갱신
+    renderUserTable(latestData, mode);
+
+    // ✅ 마커 클러스터링 갱신
+    clearMarkers();
+    markers = latestData.map(user => new google.maps.Marker({
+      position: { lat: user.lat, lng: user.lng },
+      map,
+      title: `사용자: ${user.phone}`
+    }));
+
+    markerCluster = new MarkerClusterer({ map, markers });
+
+    // 지도 표시
     showMap();
   } catch (err) {
     console.error("데이터 로드 실패:", err);
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
+
+// ---------------------- 갱신 주기 설정 ----------------------
+function setCustomInterval() {
+  const value = parseInt(document.getElementById("intervalValue").value);
+  const unit = document.getElementById("intervalUnit").value;
+
+  if (isNaN(value) || value <= 0) {
+    alert("1 이상의 값을 입력하세요.");
+    return;
+  }
+
+  let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+
+  clearInterval(intervalId);
+  intervalId = setInterval(loadData, newInterval);
+
+  const msgBox = document.getElementById("message-box");
+  msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
+  msgBox.style.display = "block";
+  setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+}
+
+// ---------------------- 라이트/다크 모드 전환 ----------------------
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+  themeToggle.addEventListener("change", () => {
+    document.body.classList.toggle("dark-mode", themeToggle.checked);
+
+    // ✅ 지도 스타일도 함께 변경
+    if (themeToggle.checked) {
+      map.setOptions({ styles: darkStyle }); // darkStyle은 별도 정의 필요
+    } else {
+      map.setOptions({ styles: [] }); // 기본 라이트 모드
+    }
+  });
+}
+
+// ---------------------- 초기 실행 ----------------------
+window.onload = () => {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 36.5, lng: 127.5 },
+    zoom: 7
+  });
+
+  loadData();
+  intervalId = setInterval(loadData, 300000); // 기본 5분 갱신
+};
+
+  
 
 function populatePathSelect(viewMode = "all") {
   const select = document.getElementById("path-user-select");
@@ -526,9 +591,18 @@ window.moveToUser = function(lat, lng, phone) {
 const themeToggle = document.getElementById("themeToggle");
 if (themeToggle) {
   themeToggle.addEventListener("change", () => {
+    // body 클래스 토글
     document.body.classList.toggle("dark-mode", themeToggle.checked);
+
+    // 지도 스타일도 함께 변경
+    if (themeToggle.checked) {
+      map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
+    } else {
+      map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
+    }
   });
 }
+
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -938,72 +1012,96 @@ document.addEventListener("DOMContentLoaded", () => {
       </label>
     </div>
 
-  <div class="dropdown-item">
-    <strong>갱신 주기 설정</strong><br>
-    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-      <!-- 숫자 입력 박스 폭을 줄임 -->
-      <input type="number" id="intervalValue" value="5" min="1" 
-             style="width:70px; font-size:18px; padding:6px;">
-      <select id="intervalUnit" style="font-size:18px; padding:6px;">
-        <option value="minutes">분</option>
-        <option value="seconds">초</option>
-      </select>
-      <button onclick="setCustomInterval()" 
-              style="font-size:18px; padding:6px 12px;">적용</button>
+    <!-- 갱신 주기 설정 -->  
+    <div class="dropdown-item">
+      <strong>갱신 주기 설정</strong><br>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+        <input type="number" id="intervalValue" value="5" min="1" 
+               style="width:70px; font-size:18px; padding:6px;">
+        <select id="intervalUnit" style="font-size:18px; padding:6px;">
+          <option value="minutes">분</option>
+          <option value="seconds">초</option>
+        </select>
+        <button onclick="setCustomInterval()" 
+                style="font-size:18px; padding:6px 12px;">적용</button>
+      </div>
     </div>
-  </div>
 
+    <!-- 마커 클러스터링 옵션 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
     </div>
 
+    <!-- 최근 50개 데이터만 표시 옵션 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
     </div>
   </div>
 
-<!-- 사용자 정보 패널 -->
-<div id="user-panel">
-  <div class="panel-header">
-    <h3 id="user-panel-title">사용자 정보</h3>
-    <button id="close-user-panel">✖ 닫기</button>
-  </div>
-  <!-- 경로 선택 드롭다운 -->
-  <div id="path-select-container">
-    <label for="path-user-select">경로 보기 선택:</label>
-    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-      <option value="all">전체</option>
-    </select>
-  </div>
-
-  
-    <!-- 사용자 목록 테이블 -->
+  <!-- 사용자 정보 패널 -->
+  <div id="user-panel">
+    <div class="panel-header">
+      <h3 id="user-panel-title">사용자 정보</h3>
+      <button id="close-user-panel">✖ 닫기</button>
+    </div>
+    <div id="path-select-container">
+      <label for="path-user-select">경로 보기 선택:</label>
+      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+        <option value="all">전체</option>
+      </select>
+    </div>
     <div id="user-content">
       <table id="user-table">
         <thead>
-          <tr id="user-table-header">
-            <!-- JS에서 모드별로 헤더를 동적으로 채움 -->
-          </tr>
+          <tr id="user-table-header"></tr>
         </thead>
-        <tbody id="user-table-body">
-          <!-- JS에서 사용자 목록을 동적으로 추가 -->
-        </tbody>
+        <tbody id="user-table-body"></tbody>
       </table>
     </div>
   </div>
 
-<!-- 지도 영역 -->
-<div id="map"></div>
+  <!-- 지도 영역 -->
+  <div id="map"></div>
 
-<!-- 메시지 박스 -->
-<div id="message-box"></div>
+  <!-- 메시지 박스 -->
+  <div id="message-box"></div>
 
-<!-- 3. MarkerClusterer 라이브러리 -->
-<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+  <!-- 3. MarkerClusterer 라이브러리 -->
+  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
-<!-- 4. Google Maps API는 맨 마지막 -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
-</script>
+  <!-- 4. Google Maps API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap">
+  </script>
+
+  <!-- ✅ 라이트/다크 스타일 JSON 정의 및 이벤트 연결 -->
+  <script>
+    const lightStyle = [ /* ... 앞서 드린 라이트 스타일 JSON ... */ ];
+    const darkStyle = [ /* ... 앞서 드린 다크 스타일 JSON ... */ ];
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 36.5, lng: 127.5 },
+        zoom: 7,
+        styles: lightStyle // 기본 라이트 모드
+      });
+
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.addEventListener("change", () => {
+          document.body.classList.toggle("dark-mode", themeToggle.checked);
+          if (themeToggle.checked) {
+            map.setOptions({ styles: darkStyle });
+          } else {
+            map.setOptions({ styles: lightStyle });
+          }
+        });
+      }
+
+      loadData();
+      intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+    }
+    window.initMap = initMap;
+  </script>
 </body>
 </html>
