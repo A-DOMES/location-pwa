@@ -279,8 +279,7 @@ window.openUserPanel = function(viewMode) {
 
   updateUserPanelContent(viewMode);
 };
-
-
+  
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
@@ -602,7 +601,6 @@ window.renderUserTable = function(users, viewMode = "current") {
     tbody.appendChild(row);
   });
 };
-
    
 /* ---------------------- 행 클릭 이벤트(renderUserTable) ---------------------- */
 row.addEventListener("click", () => {
