@@ -1,4 +1,5 @@
-성공적인 코드 1, 전역변수가 아직 남아있음(필요없는 전역변수 하나가 있음)
+성공적인 코드 2, 전역변수가 아직 남아있음(필요없는 전역변수 하나가 있음, 모달창을 만든 코드)-진행중
+
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -16,6 +17,7 @@ let map, mode = "current", markers = [], markerCluster, intervalId, allData = []
 
 // ✅ 경로 Polyline 저장 배열 (경로 관리 전용)
 let pathLines = [];
+
 
 // ---------------------- 거리 계산 함수 ----------------------
 function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -274,7 +276,8 @@ window.openUserPanel = function(viewMode) {
 
   updateUserPanelContent(viewMode);
 };
-  
+
+
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
@@ -384,6 +387,7 @@ function updateUserPanelContent(viewMode = "current") {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
@@ -498,7 +502,7 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
-  
+
 /* ---------------------- 라이트/다크 모드 전환 ---------------------- */
 const themeToggle = document.getElementById("themeToggle");
 if (themeToggle) {
@@ -582,7 +586,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     tbody.appendChild(row);
   });
 };
-    
+
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
@@ -648,6 +652,78 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// 위치찾기용 마커 저장 변수
+let locationMarker = null;
+
+window.moveToLatLng = function() {
+  const lat = parseFloat(document.getElementById("latInput").value);
+  const lng = parseFloat(document.getElementById("lngInput").value);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    alert("올바른 위도와 경도를 입력하세요.");
+    return;
+  }
+  if (!map) {
+    alert("지도가 아직 초기화되지 않았습니다.");
+    return;
+  }
+
+  // 지도 이동
+  map.setCenter({ lat, lng });
+  map.setZoom(15);
+
+  // 기존 마커 제거
+  if (locationMarker) locationMarker.setMap(null);
+
+  // 새 마커 표시
+  locationMarker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map,
+    title: "입력한 위치",
+    animation: google.maps.Animation.DROP
+  });
+ 
+  // ✅ 모달창 띄우기 (자동 닫힘)
+  showModal(`위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`, true);
+};
+
+// 버튼 이벤트 연결
+document.addEventListener("DOMContentLoaded", () => {
+  const btnLocation = document.getElementById("location-check");
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
+});
+
+
+  
+// ============================
+// 📌 모달창 표시/닫기
+// ============================
+window.showModal = function(message, autoClose = false) {
+  // 기존 모달 제거
+  document.querySelectorAll(".modal").forEach(m => m.remove());
+
+  // 모달 생성
+  const modal = document.createElement("div");
+  modal.className = "modal";
+
+  const content = document.createElement("div");
+  content.className = "modal-content";
+  content.innerText = message;
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  modal.style.display = "block";
+
+  // 자동 닫기 옵션
+  if (autoClose) setTimeout(() => { modal.remove(); }, 2000);
+};
+
+window.closeModal = function() {
+  document.querySelectorAll(".modal").forEach(m => m.remove());
+};
   
 </script>
 
@@ -867,6 +943,33 @@ document.addEventListener("DOMContentLoaded", () => {
   #user-table th {
     background: #f5f5f5;
   }
+
+
+  
+.modal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.4); /* 반투명 검정 배경 */
+  z-index:6000;
+}
+
+.modal-content {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  background:#bbdefb;          /* 진한 파랑 배경 */
+  color:#fff;                  /* 흰색 글자 */
+  border:2px solid #64b5f6;    /* 테두리 진한 남색 */
+  border-radius:12px;
+  padding:20px 30px;
+  font-size:18px;
+  font-weight:bold;
+  text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+
 </style>
 </head>
 
