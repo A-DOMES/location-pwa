@@ -572,7 +572,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.style.cursor = "pointer"; // 손가락 모양 커서
     
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함, 테이블만 출력
+      // ✅ paths 모드: 이동거리 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -581,8 +581,6 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
-      // ❌ drawPath 호출 제거 → 테이블만 출력
-
     } else {
       // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
@@ -595,39 +593,32 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 마커 하나만 표시
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        moveToUser(user.lat, user.lng, user.phone);
+        clearMarkers(); // 이전 마커 제거
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map,
+          title: `사용자: ${user.phone}`,
+          animation: google.maps.Animation.BOUNCE
+        });
+        markers.push(marker);
+        map.setCenter({ lat: user.lat, lng: user.lng });
+        map.setZoom(15);
       }
     });
 
     tbody.appendChild(row);
   });
 };
-    
+
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 };
 
-/* ---------------------- 행 클릭 이벤트 ---------------------- */
-row.addEventListener("click", () => {
-  if (user.lat && user.lng) {
-    clearMarkers(); // ✅ 이전 마커 제거
-    const marker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map,
-      title: `사용자: ${user.phone}`,
-      animation: google.maps.Animation.BOUNCE
-    });
-    markers.push(marker);
-    map.setCenter({ lat: user.lat, lng: user.lng });
-    map.setZoom(15);
-  }
-});
-  
   
 /* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
 const btnLocation = document.getElementById("location-check");
