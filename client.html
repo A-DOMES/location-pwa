@@ -553,15 +553,16 @@ if (themeToggle) {
     // body 클래스 토글
     document.body.classList.toggle("dark-mode", themeToggle.checked);
 
-    // 지도 스타일도 함께 변경
-    if (themeToggle.checked) {
-      map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
-    } else {
-      map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
+    // ✅ 벡터 지도(roadmap)일 때만 스타일 적용
+    if (map.getMapTypeId() === "roadmap") {
+      if (themeToggle.checked) {
+        map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
+      } else {
+        map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
+      }
     }
   });
 }
-
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -1027,24 +1028,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- ✅ 라이트/다크 스타일 JSON 정의 및 이벤트 연결 -->
   <script>
-    const lightStyle = [ /* ... 앞서 드린 라이트 스타일 JSON ... */ ];
-    const darkStyle = [ /* ... 앞서 드린 다크 스타일 JSON ... */ ];
+    const lightStyle = [
+      { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9e6ff" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#dcedc8" }] }
+    ];
+
+    const darkStyle = [
+      { elementType: "geometry", stylers: [{ color: "#212121" }] },
+      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#383838" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#616161" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f1c2c" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1b5e20" }] }
+    ];
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.5, lng: 127.5 },
         zoom: 7,
-        styles: lightStyle // 기본 라이트 모드
+        mapTypeId: "roadmap",   // 기본은 벡터 지도
+        styles: lightStyle      // 기본 라이트 모드
       });
 
       const themeToggle = document.getElementById("themeToggle");
       if (themeToggle) {
         themeToggle.addEventListener("change", () => {
           document.body.classList.toggle("dark-mode", themeToggle.checked);
-          if (themeToggle.checked) {
-            map.setOptions({ styles: darkStyle });
-          } else {
-            map.setOptions({ styles: lightStyle });
+
+          // ✅ 벡터 지도일 때만 스타일 적용
+          if (map.getMapTypeId() === "roadmap") {
+            if (themeToggle.checked) {
+              map.setOptions({ styles: darkStyle });
+            } else {
+              map.setOptions({ styles: lightStyle });
+            }
           }
         });
       }
@@ -1053,8 +1078,9 @@ document.addEventListener("DOMContentLoaded", () => {
       intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
     }
     window.initMap = initMap;
+  </script>
 
-      <!-- 3. MarkerClusterer 라이브러리 -->
+  <!-- 3. MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
   <!-- 4. Google Maps API -->
