@@ -82,9 +82,8 @@
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-  // ---------------------- 초기 실행 ----------------------
+  // ---------------------- 지도 초기화 ----------------------
   window.onload = () => {
-    // ✅ 지도 초기화
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 36.5, lng: 127.5 },
       zoom: 7,
@@ -99,31 +98,6 @@
         map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
       });
     }
-
-    // ✅ 버튼 열기/닫기 처리
-    const btnConnection = document.getElementById("btn-connection");
-    const btnSettings = document.getElementById("btn-settings");
-    const connectionPanel = document.getElementById("connection-panel");
-    const settingsPanel = document.getElementById("settings-panel");
-
-    btnConnection.addEventListener("click", () => {
-      connectionPanel.classList.toggle("open");
-      settingsPanel.classList.remove("open");
-    });
-
-    btnSettings.addEventListener("click", () => {
-      settingsPanel.classList.toggle("open");
-      connectionPanel.classList.remove("open");
-    });
-
-    document.addEventListener("click", function(e) {
-      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-        connectionPanel.classList.remove("open");
-      }
-      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-        settingsPanel.classList.remove("open");
-      }
-    });
 
     // ✅ 데이터 로딩 및 기본 갱신 주기
     loadData();
@@ -236,95 +210,91 @@
           });
           polylines.push(polyline);
 
-        const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map: map,
-          title: `${user.phone} / ${user.updated}`,
-          icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-        markers.push(marker);
-      }
-    });
+          const last = pathCoords[pathCoords.length - 1];
+          const marker = new google.maps.Marker({
+            position: last,
+            map: map,
+            title: `${user.phone} / ${user.updated}`,
+            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          });
+          markers.push(marker);
+        }
+      });
+    }
+
+    if (document.getElementById("clusterOption")?.checked) {
+      markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
+    }
+    updateUserPanelContent(mode);
   }
 
-  // ✅ 클러스터링 옵션 체크 시 적용
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
-  }
+  // ---------------------- 사용자 패널 ----------------------
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnConnection = document.getElementById("btn-connection");
+    const btnSettings = document.getElementById("btn-settings");
+    const connectionPanel = document.getElementById("connection-panel");
+    const settingsPanel = document.getElementById("settings-panel");
+    const userPanel = document.getElementById("user-panel");
+    const select = document.getElementById("path-user-select");
 
-  // ✅ 사용자 패널 갱신
-  updateUserPanelContent(mode);
-}
+    // ✅ 드롭다운 선택 이벤트
+    if (select) {
+      select.addEventListener("change", e => {
+        const selectedPhone = e.target.value;
+        const title = document.getElementById("user-panel-title");
 
-// ---------------------- 사용자 패널 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  /* ---------------------- 패널 동작 ---------------------- */
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-  const select = document.getElementById("path-user-select");
+        if (selectedPhone === "all") {
+          updateUserPanelContent("all");
+          renderUserTable(allData, "all");
+        } else {
+          const user = allData.find(u => u.phone === selectedPhone);
+          if (user) {
+            const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
+            updateUserPanelContent(modeForTable);
+            renderUserTable([user], modeForTable);
 
-  // ✅ 드롭다운 선택 이벤트
-  if (select) {
-    select.addEventListener("change", e => {
-      const selectedPhone = e.target.value;
-      const title = document.getElementById("user-panel-title");
-
-      if (selectedPhone === "all") {
-        updateUserPanelContent("all");
-        renderUserTable(allData, "all");
-      } else {
-        const user = allData.find(u => u.phone === selectedPhone);
-        if (user) {
-          const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
-          updateUserPanelContent(modeForTable);
-          renderUserTable([user], modeForTable);
-
-          if (modeForTable === "paths") {
-            const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-            if (pathPoints.length > 0) {
-              let distanceKm = 0;
-              for (let i = 1; i < pathPoints.length; i++) {
-                distanceKm += calculateDistance(
-                  pathPoints[i-1].lat, pathPoints[i-1].lng,
-                  pathPoints[i].lat, pathPoints[i].lng
-                );
+            if (modeForTable === "paths") {
+              const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+              if (pathPoints.length > 0) {
+                let distanceKm = 0;
+                for (let i = 1; i < pathPoints.length; i++) {
+                  distanceKm += calculateDistance(
+                    pathPoints[i-1].lat, pathPoints[i-1].lng,
+                    pathPoints[i].lat, pathPoints[i].lng
+                  );
+                }
+                drawPath(pathPoints, distanceKm);
               }
-              drawPath(pathPoints, distanceKm);
+            } else {
+              moveToUser(user.lat, user.lng, user.phone);
             }
           } else {
-            moveToUser(user.lat, user.lng, user.phone);
+            renderUserTable([], "current");
           }
-        } else {
-          renderUserTable([], "current");
         }
-      }
-    });
-  }
+      });
+    }
 
-  // ✅ 버튼 이벤트
-  btnConnection.onclick = () => {
-    settingsPanel.classList.remove("open");
-    connectionPanel.classList.toggle("open");
-  };
-
-  btnSettings.onclick = () => {
-    connectionPanel.classList.remove("open");
-    settingsPanel.classList.toggle("open");
-  };
-
-  // ✅ 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("close-user-panel");
-  if (closeBtn) {
-    closeBtn.onclick = () => {
-      userPanel.classList.remove("open");
+    // ✅ 버튼 이벤트
+    btnConnection.onclick = () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
     };
-  }
-});
 
+    btnSettings.onclick = () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    };
+
+    // ✅ 닫기 버튼 이벤트
+    const closeBtn = document.getElementById("close-user-panel");
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        userPanel.classList.remove("open");
+      };
+    }
+  });
+    
 
 // ---------------------- 사용자 패널 열기 ----------------------
 window.openUserPanel = function(viewMode) {
