@@ -471,6 +471,7 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
+<script>
 function initMap() {
   // 지도 초기화
   map = new google.maps.Map(document.getElementById("map"), {
@@ -488,7 +489,7 @@ function initMap() {
   google.maps.event.addListener(map, "rightclick", () => {
     map.setCenter(originalCenter);
     map.setZoom(originalZoom);
-    map.setOptions({ styles: null }); // 일반지도 원래 모습으로
+    map.setOptions({ styles: null });
   });
 
   // 내 위치 표시
@@ -504,6 +505,33 @@ function initMap() {
     );
   }
 }
+
+// ✅ 버튼 이벤트 연결 (지도 초기화와 별개로 실행)
+window.onload = () => {
+  initMap();
+
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+
+  if (btnConnection) {
+    btnConnection.addEventListener("click", () => {
+      const panel = document.getElementById("connection-panel");
+      if (panel) {
+        panel.style.display = panel.style.display === "block" ? "none" : "block";
+      }
+    });
+  }
+
+  if (btnSettings) {
+    btnSettings.addEventListener("click", () => {
+      const panel = document.getElementById("settings-panel");
+      if (panel) {
+        panel.style.display = panel.style.display === "block" ? "none" : "block";
+      }
+    });
+  }
+};
+
 
   // ✅ 패널 닫기 처리
   const btnConnection = document.getElementById("btn-connection");
