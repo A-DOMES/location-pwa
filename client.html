@@ -967,15 +967,17 @@ document.addEventListener("DOMContentLoaded", () => {
   <!-- 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
     <div class="dropdown-item">
-      <strong>벡터 지도 (라이트/다크)</strong><br>
+      <strong>벡터지도 (라이트/다크)</strong><br>
       <label class="switch">
         <input type="checkbox" id="themeToggle">
         <span class="slider"></span>
       </label>
     </div>
     <div class="dropdown-item">
-      <strong>일반 지도</strong><br>
-      <button id="defaultMapBtn">일반 지도 보기</button>
+      <strong>일반지도</strong><br>
+      <button id="defaultMapBtn" style="font-size:20px; padding:10px 16px;">
+        일반지도
+      </button>
     </div>
 
     <!-- 갱신 주기 설정 -->  
@@ -1060,7 +1062,7 @@ document.addEventListener("DOMContentLoaded", () => {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 36.5, lng: 127.5 },
         zoom: 7,
-        mapTypeId: "roadmap",   // ✅ 기본은 일반 지도
+        mapTypeId: "roadmap",   // ✅ 기본은 일반지도
         styles: null,           // ✅ 스타일 적용하지 않음
         mapTypeControl: true,
         mapTypeControlOptions: {
@@ -1070,7 +1072,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // 벡터 지도 라이트/다크 모드 토글
+      // 벡터지도 라이트/다크 모드 토글
       const themeToggle = document.getElementById("themeToggle");
       if (themeToggle) {
         themeToggle.addEventListener("change", () => {
@@ -1080,12 +1082,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // 일반 지도 버튼
+      // 일반지도 버튼
       const defaultBtn = document.getElementById("defaultMapBtn");
       if (defaultBtn) {
         defaultBtn.addEventListener("click", () => {
           map.setMapTypeId("roadmap");
-          map.setOptions({ styles: null }); // ✅ 일반 지도 원래 모습
+          map.setOptions({ styles: null }); // ✅ 일반지도 원래 모습
         });
       }
 
