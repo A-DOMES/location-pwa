@@ -1,4 +1,5 @@
-성공적인 코드 1-1, 전역변수가 아직 남아있음(필요없는 전역변수 하나가 있음), 모달창말고 창 아래 중앙에 표시, 
+ 1-3, 전역변수가 아직 남아있음(필요없는 전역변수 하나가 있음), 모달창말고 창 아래 중앙에 표시, 
+환경설정추가본
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -6,229 +7,238 @@
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
 
-<!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
-<script src="config.js"></script>
+  <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
+  <script src="config.js"></script>
 
-<!-- 2. 사용자 코드 -->
-<script>
-// ---------------------- 전역 변수 ----------------------
-let map, mode = "current", markers = [], markerCluster, intervalId, allData = [], pathLines = [];
+  <!-- 2. 사용자 코드 -->
+  <script>
+  // ---------------------- 전역 변수 ----------------------
+  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+  let polylines = []; // 경로 Polyline 저장 배열
 
-// ---------------------- 마커 제거 함수 ----------------------
-function clearMarkers() {
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-}
-
-// ---------------------- 거리 계산 함수 ----------------------
-function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-            Math.sin(dLng/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-// ---------------------- 문자열 기반 색상 함수 ----------------------
-function stringToColor(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
-}
-
-// ---------------------- 데이터 로딩 ----------------------
-async function loadData(token = null) {
-  try {
-    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-    if (token) url += "&token=" + encodeURIComponent(token);
-
-    const response = await fetch(url);
-    allData = await response.json();
-
-    populatePathSelect();
-    showMap();
-  } catch (err) {
-    console.error("데이터 로드 실패:", err);
-    showMessage("⚠️ 데이터를 불러오지 못했습니다.");
-  }
-}
-
-// ---------------------- 갱신 주기 설정 ----------------------
-function setCustomInterval() {
-  const value = parseInt(document.getElementById("intervalValue").value);
-  const unit = document.getElementById("intervalUnit").value;
-
-  if (isNaN(value) || value <= 0) {
-    alert("1 이상의 값을 입력하세요.");
-    return;
+  // ---------------------- 마커 제거 함수 ----------------------
+  function clearMarkers() {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
   }
 
-  let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-  clearInterval(intervalId);
-  intervalId = setInterval(loadData, newInterval);
+  // ---------------------- 거리 계산 함수 ----------------------
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+              Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
 
-  const msgBox = document.getElementById("message-box");
-  msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-  msgBox.style.display = "block";
-  setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-}
-
-// ---------------------- 라이트/다크 모드 전환 ----------------------
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    document.body.classList.toggle("dark-mode", themeToggle.checked);
-    if (themeToggle.checked) {
-      map.setOptions({ styles: darkStyle });
-    } else {
-      map.setOptions({ styles: lightStyle });
+  // ---------------------- 문자열 기반 색상 함수 ----------------------
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-  });
-}
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  }
 
-// ---------------------- 초기 실행 ----------------------
-// ✅ 기존 코드에서 지도 초기화는 유지
-window.onload = () => {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 36.5, lng: 127.5 },
-    zoom: 7,
-    styles: lightStyle
-  });
+  // ---------------------- 데이터 로딩 ----------------------
+  async function loadData(token = null) {
+    try {
+      let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+      if (token) url += "&token=" + encodeURIComponent(token);
 
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
+      const response = await fetch(url);
+      allData = await response.json();
 
-  btnConnection.addEventListener("click", () => {
-    connectionPanel.classList.toggle("open");
-    settingsPanel.classList.remove("open");
-  });
-  btnSettings.addEventListener("click", () => {
-    settingsPanel.classList.toggle("open");
-    connectionPanel.classList.remove("open");
-  });
+      // 드롭다운 갱신
+      populatePathSelect();
 
-  document.addEventListener("click", e => {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-      connectionPanel.classList.remove("open");
+      // ✅ 데이터 정상 수신 후 지도 표시
+      showMap();
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+      showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
     }
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+  }
+
+  // ---------------------- 갱신 주기 설정 ----------------------
+  function setCustomInterval() {
+    const value = parseInt(document.getElementById("intervalValue").value);
+    const unit = document.getElementById("intervalUnit").value;
+
+    if (isNaN(value) || value <= 0) {
+      alert("1 이상의 값을 입력하세요.");
+      return;
+    }
+
+    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
+
+    clearInterval(intervalId);
+    intervalId = setInterval(loadData, newInterval);
+
+    const msgBox = document.getElementById("message-box");
+    msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
+    msgBox.style.display = "block";
+    setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+  }
+
+  // ---------------------- 초기 실행 ----------------------
+  window.onload = () => {
+    // ✅ 지도 초기화
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 36.5, lng: 127.5 },
+      zoom: 7,
+      styles: lightStyle // 기본 라이트 모드
+    });
+
+    // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("change", () => {
+        document.body.classList.toggle("dark-mode", themeToggle.checked);
+        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+      });
+    }
+
+    // ✅ 버튼 열기/닫기 처리
+    const btnConnection = document.getElementById("btn-connection");
+    const btnSettings = document.getElementById("btn-settings");
+    const connectionPanel = document.getElementById("connection-panel");
+    const settingsPanel = document.getElementById("settings-panel");
+
+    btnConnection.addEventListener("click", () => {
+      connectionPanel.classList.toggle("open");
       settingsPanel.classList.remove("open");
-    }
-  });
-
-  loadData();
-  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
-};
-
-// ---------------------- 드롭다운 갱신 ----------------------
-function populatePathSelect(viewMode = "all") {
-  const select = document.getElementById("path-user-select");
-  if (!select) return;
-  select.innerHTML = "";
-
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = "전체";
-  select.appendChild(allOption);
-
-  let users = [];
-  if (viewMode === "current") {
-    const now = new Date();
-    users = allData.filter(u => {
-      const updated = new Date(u.updated);
-      return (now - updated <= 5 * 60 * 1000);
     });
-  } else {
-    users = allData;
-  }
 
-  users.forEach(user => {
-    const option = document.createElement("option");
-    option.value = user.phone;
-    option.textContent = user.phone;
-    select.appendChild(option);
-  });
-}
+    btnSettings.addEventListener("click", () => {
+      settingsPanel.classList.toggle("open");
+      connectionPanel.classList.remove("open");
+    });
 
-// ---------------------- 지도 초기화 보조 ----------------------
-function clearMap() {
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-    markerCluster = null;
-  }
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-  pathLines.forEach(p => p.setMap(null));
-  pathLines = [];
-}
-
-// ---------------------- 지도 표시 ----------------------
-function showMap() {
-  clearMap();
-  if (!map) return;
-
-  if (mode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
+    document.addEventListener("click", function(e) {
+      if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
+        connectionPanel.classList.remove("open");
+      }
+      if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
+        settingsPanel.classList.remove("open");
       }
     });
-    Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-        title: `${user.phone} (${user.status}, ${user.updated})`
-      });
-      markers.push(marker);
-    });
-  } else if (mode === "all") {
-    allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        title: `${user.phone} (${user.status}, ${user.time})`
-      });
-      markers.push(marker);
-    });
-  } else if (mode === "paths") {
+
+    // ✅ 데이터 로딩 및 기본 갱신 주기
+    loadData();
+    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+  };
+
+  // ---------------------- 드롭다운 갱신 ----------------------
+  function populatePathSelect(viewMode = "all") {
     const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    let users = allData;
-    if (selectedPhone !== "all") {
-      users = allData.filter(u => u.phone === selectedPhone);
+    if (!select) return;
+    select.innerHTML = "";
+
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "전체";
+    select.appendChild(allOption);
+
+    let users = [];
+    if (viewMode === "current") {
+      const now = new Date();
+      users = allData.filter(u => {
+        const updated = new Date(u.updated);
+        return (now - updated <= 5 * 60 * 1000);
+      });
+    } else {
+      users = allData;
     }
+
     users.forEach(user => {
-      const pathCoords = [];
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) pathCoords.push({ lat, lng });
-      }
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
+      const option = document.createElement("option");
+      option.value = user.phone;
+      option.textContent = user.phone;
+      select.appendChild(option);
+    });
+  }
+
+  // ---------------------- 지도 초기화 보조 ----------------------
+  function clearMap() {
+    if (markerCluster) {
+      markerCluster.clearMarkers();
+      markerCluster = null;
+    }
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    polylines.forEach(p => p.setMap(null));
+    polylines = [];
+  }
+
+  // ---------------------- 지도 표시 ----------------------
+  function showMap() {
+    clearMap();
+    if (!map) return;
+
+    if (mode === "current") {
+      const now = new Date();
+      const latestByUser = {};
+      allData.forEach(user => {
+        const updated = new Date(user.updated);
+        if (now - updated <= 5 * 60 * 1000) {
+          const key = user.phone;
+          if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+            latestByUser[key] = user;
+          }
+        }
+      });
+      Object.values(latestByUser).forEach(user => {
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: `${user.phone} (${user.status}, ${user.updated})`
         });
-        pathLines.push(polyline);
+        markers.push(marker);
+      });
+
+    } else if (mode === "all") {
+      allData.forEach(user => {
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          title: `${user.phone} (${user.status}, ${user.time})`
+        });
+        markers.push(marker);
+      });
+
+    } else if (mode === "paths") {
+      const select = document.getElementById("path-user-select");
+      const selectedPhone = select ? select.value : "all";
+
+      let users = allData;
+      if (selectedPhone !== "all") {
+        users = allData.filter(u => u.phone === selectedPhone);
+      }
+
+      users.forEach(user => {
+        const pathCoords = [];
+        for (let j = 0; j < user.path.length; j += 2) {
+          const lat = user.path[j];
+          const lng = user.path[j + 1];
+          if (lat && lng) pathCoords.push({ lat, lng });
+        }
+        if (pathCoords.length > 0) {
+          const polyline = new google.maps.Polyline({
+            path: pathCoords,
+            geodesic: true,
+            strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: map
+          });
+          polylines.push(polyline);
+
         const last = pathCoords[pathCoords.length - 1];
         const marker = new google.maps.Marker({
           position: last,
@@ -241,14 +251,18 @@ function showMap() {
     });
   }
 
+  // ✅ 클러스터링 옵션 체크 시 적용
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
+
+  // ✅ 사용자 패널 갱신
   updateUserPanelContent(mode);
 }
 
 // ---------------------- 사용자 패널 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
+  /* ---------------------- 패널 동작 ---------------------- */
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
@@ -313,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
+
 
 // ---------------------- 사용자 패널 열기 ----------------------
 window.openUserPanel = function(viewMode) {
