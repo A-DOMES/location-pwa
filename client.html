@@ -93,6 +93,7 @@ if (themeToggle) {
 }
 
 // ---------------------- 초기 실행 ----------------------
+// ✅ 기존 코드에서 지도 초기화는 유지
 window.onload = () => {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 36.5, lng: 127.5 },
