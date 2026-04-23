@@ -1,7 +1,7 @@
 {
   "name": "A-DOMES 위치정보시스템",
   "short_name": "A-DOMES",
-  "start_url": "/Client.html",
+  "start_url": "https://a-domes.github.io/location-pwa/Client.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2196F3",
@@ -18,4 +18,3 @@
     }
   ]
 }
-
