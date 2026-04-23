@@ -834,9 +834,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   #user-panel.open { display:block; }
   .panel-header { display:flex; justify-content:space-between; align-items:center; }
-  #close-user-panel { background:#e53935; color:white; border:none; padding:4px 8px; cursor:pointer;
-                      border-radius:4px; font-size:14px; }
-  #close-user-panel:hover { background:#c62828; }
+#close-user-panel {
+  background-color: #555;      /* 짙은 회색 → 차분하고 깔끔 */
+  color: #fff;                 /* 글자는 흰색 */
+  border: none;
+  border-radius: 4px;          /* 모서리 둥글게 */
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#close-user-panel:hover {
+  background-color: #333;      /* 마우스 올리면 더 진한 회색 */
+}
+
   #user-panel h3 { margin:0; }
 
   .location-search {
