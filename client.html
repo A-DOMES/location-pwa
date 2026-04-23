@@ -382,7 +382,7 @@ function updateUserPanelContent(viewMode = "current") {
   let users = [];
 
   if (viewMode === "current") {
-    clearMarkers();
+    // ✅ 최근 5분 이내 접속자만 추출
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -396,37 +396,13 @@ function updateUserPanelContent(viewMode = "current") {
     });
     users = Object.values(latestByUser);
 
-    // ✅ 드롭다운에서 전체 선택 시 모든 현재 접속자 출력
-    const select = document.getElementById("path-user-select");
-    if (select && select.value === "all") {
-      users = Object.values(latestByUser);
-    }
-
-    polylines.forEach(line => line.setMap(null));
-    polylines = [];
-
   } else if (viewMode === "all") {
-    clearMarkers();
+    // ✅ 전체 사용자
     users = allData;
 
-    // ✅ 드롭다운에서 전체 선택 시 모든 사용자 출력
-    const select = document.getElementById("path-user-select");
-    if (select && select.value === "all") {
-      users = allData;
-    }
-
-    polylines.forEach(line => line.setMap(null));
-    polylines = [];
-
   } else if (viewMode === "paths") {
-    clearMarkers();
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
-
-    polylines.forEach(line => line.setMap(null));
-    polylines = [];
-
+    // ✅ 전체 사용자 경로
+    users = allData;
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       user.distance = 0;
@@ -445,7 +421,7 @@ function updateUserPanelContent(viewMode = "current") {
   }
 
   updateTableHeader(viewMode);
-  renderUserTable(users, viewMode);
+  renderUserTable(users, viewMode); // ✅ 항상 전체 목록 출력
 }
 
 
