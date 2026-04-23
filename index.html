@@ -1,5 +1,5 @@
   <!DOCTYPE html>
-  <html>
+  <html> 
   <head>
     <meta charset="UTF-8">
     <title>관리자 로그인</title>
@@ -121,7 +121,20 @@
         color: #555;
       }
     </style>
+
+      <!-- PWA 매니페스트 연결 -->
+  <link rel="manifest" href="/location-pwa/manifest.json">
+  <meta name="theme-color" content="#2196F3">  
   </head>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/location-pwa/sw.js')
+        .then(reg => console.log('Service Worker registered:', reg))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>
+    
   <body>
     <!-- 📌 로그인 박스 -->
     <div class="login-box">
@@ -149,6 +162,7 @@
       </div>
     </div>
 
+ 
 
 <!-- config.js 먼저 불러오기 -->
 <script src="config.js"></script>
@@ -212,5 +226,14 @@
 
   window.login = login;
 </script>
+
+   <!-- ✅ 서비스 워커 등록 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/location-pwa/sw.js')
+        .then(reg => console.log('Service Worker registered:', reg))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>   
 </body>
 </html>
