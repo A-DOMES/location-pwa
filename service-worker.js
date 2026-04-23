@@ -1,23 +1,15 @@
-const CACHE_NAME = "adomes-cache-v2"; // 버전 업데이트
+const CACHE_NAME = "adomes-cache-v1";
 const urlsToCache = [
   "index.html",
   "manifest.json",
   "icon-192.png",
   "icon-512.png",
-  "config.js"
+  "config.js"   // ✅ 새로 추가된 파일
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(
-        urlsToCache.map((url) =>
-          cache.add(url).catch((err) => {
-            console.error("❌ Failed to cache:", url, err);
-          })
-        )
-      );
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
