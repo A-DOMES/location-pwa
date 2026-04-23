@@ -154,14 +154,32 @@ function showMap() {
   clearMap();
   if (!map) return;
 
-  // ✅ 공통 커스텀 마커 아이콘 정의
-  const customIcon = {
+  // ✅ 모드별 커스텀 마커 아이콘 정의
+  const iconCurrent = {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#FF0000",   // 빨강 (눈에 잘 띄는 색상)
+    fillColor: "#0000FF",   // 파랑
     fillOpacity: 1,
-    strokeColor: "#FFFFFF", // 흰색 테두리
+    strokeColor: "#FFFFFF",
     strokeWeight: 2,
-    scale: 12               // 크기 (휴대폰에서도 크게 보이도록)
+    scale: 12
+  };
+
+  const iconAll = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#FF0000",   // 빨강
+    fillOpacity: 1,
+    strokeColor: "#FFFFFF",
+    strokeWeight: 2,
+    scale: 12
+  };
+
+  const iconPaths = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#00CC00",   // 초록
+    fillOpacity: 1,
+    strokeColor: "#FFFFFF",
+    strokeWeight: 2,
+    scale: 12
   };
 
   if (mode === "current") {
@@ -180,8 +198,9 @@ function showMap() {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: customIcon,   // ✅ 커스텀 마커 적용
-        title: `${user.phone} (${user.status}, ${user.updated})`
+        icon: iconCurrent,
+        title: `${user.phone} (${user.status}, ${user.updated})`,
+        animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
       });
       markers.push(marker);
     });
@@ -191,8 +210,9 @@ function showMap() {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: customIcon,   // ✅ 커스텀 마커 적용
-        title: `${user.phone} (${user.status}, ${user.time})`
+        icon: iconAll,
+        title: `${user.phone} (${user.status}, ${user.time})`,
+        animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
       });
       markers.push(marker);
     });
@@ -228,8 +248,9 @@ function showMap() {
         const marker = new google.maps.Marker({
           position: last,
           map: map,
-          icon: customIcon,   // ✅ 커스텀 마커 적용
-          title: `${user.phone} / ${user.updated}`
+          icon: iconPaths,
+          title: `${user.phone} / ${user.updated}`,
+          animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
         });
         markers.push(marker);
       }
