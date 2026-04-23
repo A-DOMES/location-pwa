@@ -395,25 +395,36 @@ function updateUserPanelContent(viewMode = "current") {
       }
     });
     users = Object.values(latestByUser);
-    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+
+    // ✅ 드롭다운에서 전체 선택 시 모든 현재 접속자 출력
+    const select = document.getElementById("path-user-select");
+    if (select && select.value === "all") {
+      users = Object.values(latestByUser);
+    }
+
+    polylines.forEach(line => line.setMap(null));
     polylines = [];
 
   } else if (viewMode === "all") {
     clearMarkers();
     users = allData;
-    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+
+    // ✅ 드롭다운에서 전체 선택 시 모든 사용자 출력
+    const select = document.getElementById("path-user-select");
+    if (select && select.value === "all") {
+      users = allData;
+    }
+
+    polylines.forEach(line => line.setMap(null));
     polylines = [];
 
-    renderUserTable(users, "all");   // 기존 단일 사용자 테이블
-    renderAllUsersPanel();           // ✅ 전체 내역 추가 출력
-      
   } else if (viewMode === "paths") {
     clearMarkers();
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
     users = selectedPhone === "all" ? allData : allData.filter(u => u.phone === selectedPhone);
 
-    polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+    polylines.forEach(line => line.setMap(null));
     polylines = [];
 
     users.forEach(user => {
