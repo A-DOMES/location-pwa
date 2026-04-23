@@ -630,6 +630,79 @@ window.setCustomInterval = function() {
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
 
+
+// ---------------------- 관리자 모드 위치 추적 ----------------------
+// 이 코드는 initMap() 이후, 관리자 모드에서만 실행되도록 넣어주세요.
+// 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
+
+let myMarker = null;
+let radarPolygon = null;
+
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
+
+      // ✅ 내 위치 마커 (빨간 원형)
+      if (!myMarker) {
+        myMarker = new google.maps.Marker({
+          position: myPos,
+          map: map,
+          title: "내 위치",
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: "#FF0000",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2,
+            scale: 10
+          }
+        });
+      } else {
+        myMarker.setPosition(myPos); // 마커 위치 갱신
+      }
+
+      // ✅ 방향 레이더 (부채꼴)
+      const radius = 0.2; // 반경 (약 200m 정도, 필요시 조정)
+      const angle = 90;   // 부채꼴 각도 (넓게 90도)
+      const points = [];
+
+      // 부채꼴 좌표 계산
+      for (let a = -angle/2; a <= angle/2; a += 5) {
+        const rad = (heading + a) * Math.PI / 180;
+        const latOffset = radius * Math.cos(rad);
+        const lngOffset = radius * Math.sin(rad);
+        points.push({
+          lat: myPos.lat + latOffset,
+          lng: myPos.lng + lngOffset
+        });
+      }
+      points.unshift(myPos); // 시작점은 내 위치
+
+      if (radarPolygon) {
+        radarPolygon.setPath(points); // 기존 레이더 갱신
+      } else {
+        radarPolygon = new google.maps.Polygon({
+          paths: points,
+          strokeColor: "#00BFFF",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#00BFFF",
+          fillOpacity: 0.25,
+          map: map
+        });
+      }
+
+      // ❌ 지도 중심은 고정 (관리자 모드이므로 setCenter 호출 없음)
+    },
+    (err) => console.error("위치 추적 실패:", err),
+    { enableHighAccuracy: true }
+  );
+}
+
+
+    
 /* ---------------------- 한국표준시 변환 ---------------------- */  
 function formatToKST(isoString) {
   if (!isoString) return "-";
