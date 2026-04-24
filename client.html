@@ -297,34 +297,10 @@ function showMap() {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 위치 정보 박스 갱신 추가
+  // ✅ 위치 정보 박스 갱신 (중복 제거 → 함수 호출만)
   if (allData.length > 0) {
-    const user = allData[0]; // 첫 번째 사용자 기준
-    const locationBox = document.getElementById("locationBox");
-    locationBox.innerHTML = `
-      현재 위치: <br>
-      위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-      경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-      주소: ${user.address || "-"} <br>
-      <button id="shareBtn">현재 위치 공유</button>
-    `;
-
-    const shareBtn = document.getElementById("shareBtn");
-    if (shareBtn) {
-      shareBtn.onclick = async () => {
-        const shareUrl =
-          `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-        await navigator.clipboard.writeText(shareUrl);
-
-        const popup = document.getElementById("popupMessage");
-        popup.style.display = "block";
-        popup.style.opacity = "1";
-        setTimeout(() => {
-          popup.style.opacity = "0";
-          setTimeout(() => { popup.style.display = "none"; }, 2000);
-        }, 3000);
-      };
-    }
+    const user = allData[0];
+    updateLocationBox(user);
   } else {
     document.getElementById("locationBox").innerHTML =
       "❌ 위치 데이터를 불러올 수 없습니다.";
@@ -333,105 +309,45 @@ function showMap() {
   updateUserPanelContent(mode);
 }
 
-  // ---------------------- 사용자 패널 ----------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    const btnConnection = document.getElementById("btn-connection");
-    const btnSettings = document.getElementById("btn-settings");
-    const connectionPanel = document.getElementById("connection-panel");
-    const settingsPanel = document.getElementById("settings-panel");
-    const userPanel = document.getElementById("user-panel");
-    const select = document.getElementById("path-user-select");
+// ---------------------- 위치 박스 갱신 ----------------------
+function updateLocationBox(user) {
+  const locationBox = document.getElementById("locationBox");
+  locationBox.innerHTML = `
+    <div class="coord">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+      위도: ${user.lat ? user.lat.toFixed(6) : "-"}
+    </div>
+    <div class="coord">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+      경도: ${user.lng ? user.lng.toFixed(6) : "-"}
+    </div>
+    <div class="coord">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7h20L12 2zm0 3.19L18.47 9H5.53L12 5.19zM4 10h16v10H4V10z"/></svg>
+      주소: ${user.address || "-"}
+    </div>
+    <button id="shareBtn">현재 위치 공유</button>
+  `;
 
-    // ✅ 드롭다운 선택 이벤트
-    if (select) {
-      select.addEventListener("change", e => {
-        const selectedPhone = e.target.value;
-        const title = document.getElementById("user-panel-title");
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const shareUrl =
+        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+      await navigator.clipboard.writeText(shareUrl);
 
-        if (selectedPhone === "all") {
-          updateUserPanelContent("all");
-          renderUserTable(allData, "all");
-        } else {
-          const user = allData.find(u => u.phone === selectedPhone);
-          if (user) {
-            const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
-            updateUserPanelContent(modeForTable);
-            renderUserTable([user], modeForTable);
-
-            if (modeForTable === "paths") {
-              const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-              if (pathPoints.length > 0) {
-                let distanceKm = 0;
-                for (let i = 1; i < pathPoints.length; i++) {
-                  distanceKm += calculateDistance(
-                    pathPoints[i-1].lat, pathPoints[i-1].lng,
-                    pathPoints[i].lat, pathPoints[i].lng
-                  );
-                }
-                drawPath(pathPoints, distanceKm);
-              }
-            } else {
-              moveToUser(user.lat, user.lng, user.phone);
-            }
-          } else {
-            renderUserTable([], "current");
-          }
-        }
-      });
-    }
-
-    // ✅ 버튼 이벤트
-    btnConnection.onclick = () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
+      const popup = document.getElementById("popupMessage");
+      popup.style.display = "block";
+      popup.style.opacity = "1";
+      setTimeout(() => {
+        popup.style.opacity = "0";
+        setTimeout(() => { popup.style.display = "none"; }, 2000);
+      }, 3000);
     };
-
-    btnSettings.onclick = () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    };
-
-    // ✅ 닫기 버튼 이벤트
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.onclick = () => {
-        userPanel.classList.remove("open");
-      };
-    }
-  });
-    
-
-// ---------------------- 사용자 패널 열기 ----------------------
-window.openUserPanel = function(viewMode) {
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-
-  // 다른 패널 닫기
-  connectionPanel?.classList.remove("open");
-  settingsPanel?.classList.remove("open");
-  userPanel?.classList.add("open");
-
-  // 모드 갱신
-  mode = viewMode;
-
-  // ✅ 기존 마커/경로 제거
-  clearMarkers();
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
-  polylines = [];
-
-  // 패널 제목 갱신
-  const title = document.getElementById("user-panel-title");
-  if (title) {
-    if (viewMode === "current") title.textContent = "현재 접속자";
-    else if (viewMode === "all") title.textContent = "전체 사용자";
-    else if (viewMode === "paths") title.textContent = "위치/경로 보기";
   }
+}
 
-  // 패널 내용 갱신
-  updateUserPanelContent(viewMode);
-};
 
+   
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
@@ -1211,43 +1127,43 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   font-size: 18px;
   color: #333;
-  text-align: right;
-  min-width: 220px;
+  text-align: left;   /* ✅ 좌측정렬 */
+  min-width: 240px;
   z-index: 9999;
   cursor: move;
   width: fit-content;
 }
 
-#locationBox span {
-  display: block;
-  font-size: 22px;
-  font-weight: bold;
-  color: #d32f2f;
-  margin-top: 5px;
+#locationBox .coord {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 18px;
 }
 
-#locationBox small {
-  display: block;
-  margin-top: 8px;
-  font-size: 14px;
-  color: #555;
+#locationBox .coord svg {
+  margin-right: 8px;
+  width: 20px;
+  height: 20px;
+  fill: #1976d2;
 }
 
 #shareBtn {
-  margin-top: 10px;
+  display: block;
+  margin: 14px auto 0 auto;   /* ✅ 아래쪽 가운데 */
   padding: 8px 14px;
   background: #1976d2;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;   /* ✅ 동일 크기 */
   transition: background 0.3s;
 }
-
 #shareBtn:hover {
   background: #1565c0;
 }
+
 
 
 /* ✅ 지도 영역 */
