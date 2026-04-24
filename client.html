@@ -319,6 +319,7 @@ function showMap() {
   if (allData.length > 0) {
     const user = allData[0]; // 첫 번째 사용자 기준
     updateLocationBox(user); // ← 기존 중복된 HTML 작성 부분 제거, 함수 호출로 교체
+    document.getElementById("locationBox").style.display = "block"; // 팝업 표시
   } else {
     document.getElementById("locationBox").innerHTML =
       "❌ 위치 데이터를 불러올 수 없습니다.";
