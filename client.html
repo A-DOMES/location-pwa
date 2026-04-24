@@ -499,7 +499,7 @@ function getMapIdByDevice() {
 function initMap() {
   const mapId = getMapIdByDevice();
 
-  // ✅ 기본 중심 좌표를 직접 지정
+  // ✅ 기본 중심 좌표 직접 지정
   const defaultCenter = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
@@ -508,12 +508,9 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 원래 위치 저장 (defaultCenter로 고정)
-  const originalCenter = defaultCenter;
-
   // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
-    map.setCenter(originalCenter);
+    map.setCenter(defaultCenter);
     map.setZoom(7);
   });
 
@@ -537,7 +534,7 @@ function initMap() {
       },
       () => {
         new google.maps.Marker({
-          position: defaultCenter,
+          position: defaultCenter, // ✅ CONFIG 대신 defaultCenter 사용
           map: map,
           title: "기본 위치",
           icon: {
@@ -553,7 +550,7 @@ function initMap() {
     );
   }
 
-  // ✅ 패널 닫기 처리 (기존 코드 그대로)
+  // ✅ 패널 닫기 처리
   const btnConnection = document.getElementById("btn-connection");
   const btnSettings = document.getElementById("btn-settings");
   const connectionPanel = document.getElementById("connection-panel");
