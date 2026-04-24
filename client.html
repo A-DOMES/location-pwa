@@ -494,7 +494,8 @@ function getMapIdByDevice() {
 }
 
     
-// ---------------------- 실시간 위치 공유 기능 ----------------------
+   
+// ---------------------- 공유 팝업 기능 ----------------------
 async function showPopup() {
   if (!currentLat || !currentLng) {
     alert("위치 정보를 먼저 가져와야 합니다.");
@@ -528,6 +529,7 @@ function initMap() {
   // ✅ 초기 중심 좌표 지정
   originalCenter = { lat: 36.5, lng: 127.5 };
 
+  // ✅ 지도 객체는 한 번만 생성
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
@@ -612,6 +614,7 @@ function initMap() {
 }
 
 window.initMap = initMap;
+
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
