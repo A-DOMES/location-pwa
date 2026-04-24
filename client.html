@@ -524,22 +524,22 @@ function initMap() {
           title: "내 위치",
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",   // 빨강
+            fillColor: "#FF0000",
             fillOpacity: 1,
-            strokeColor: "#FFFFFF", // 흰색 테두리
+            strokeColor: "#FFFFFF",
             strokeWeight: 2,
-            scale: 12               // 크게 표시
+            scale: 12
           }
         });
       },
       () => {
         new google.maps.Marker({
-          position: defaultCenter, // ✅ CONFIG 대신 defaultCenter 사용
+          position: defaultCenter,
           map: map,
           title: "기본 위치",
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FFA500",   // 주황
+            fillColor: "#FFA500",
             fillOpacity: 1,
             strokeColor: "#FFFFFF",
             strokeWeight: 2,
@@ -550,25 +550,9 @@ function initMap() {
     );
   }
 
-  // ✅ 패널 닫기 처리
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-
-  document.addEventListener("click", function(e) {
-    if (!btnConnection.contains(e.target) && !connectionPanel.contains(e.target)) {
-      connectionPanel.classList.remove("open");
-    }
-    if (!btnSettings.contains(e.target) && !settingsPanel.contains(e.target)) {
-      settingsPanel.classList.remove("open");
-    }
-  });
-
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
-
 window.initMap = initMap;
 
 
