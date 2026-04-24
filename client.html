@@ -495,80 +495,57 @@ function getMapIdByDevice() {
 
     
    
-// ---------------------- 공유 팝업 기능 ----------------------
-async function showPopup() {
-  if (!currentLat || !currentLng) {
-    alert("위치 정보를 먼저 가져와야 합니다.");
-    return;
-  }
-  const shareUrl =
-    `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
-  await navigator.clipboard.writeText(shareUrl);
+let currentLat, currentLng; // 내 위치 저장용 변수
 
-  document.getElementById("notifySound").play();
-
-  const popup = document.getElementById("popupMessage");
-  popup.style.display = "block";
-  popup.style.opacity = "1";
-
-  setTimeout(() => {
-    popup.style.opacity = "0";
-    setTimeout(() => { popup.style.display = "none"; }, 2000);
-  }, 3000);
-}
-
-// ---------------------- 관리자용 지도 초기화 ----------------------
 function initMap() {
   const mapId = getMapIdByDevice();
+
+  // ✅ 초기 중심 좌표 지정
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 지도는 여기서만 초기화
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
     mapId: mapId
   });
 
-  // ✅ 우클릭 시 원래 위치로 복귀
+  // ✅ 우클릭 시 원래 위치로 즉시 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
+    console.log("우클릭 이벤트 발생!");
+
     if (geoWatchId) {
       navigator.geolocation.clearWatch(geoWatchId);
       geoWatchId = null;
     }
-    map.setOptions({ center: originalCenter, zoom: 7 });
+
+    map.setOptions({
+      center: originalCenter,
+      zoom: 7
+    });
   });
 
-  // ✅ 내 위치 추적 (기존 map에 마커만 갱신)
+  // ✅ 내 위치 추적 (지도 중심은 그대로, 좌표만 저장)
   if (navigator.geolocation) {
     geoWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         currentLat = pos.coords.latitude;
         currentLng = pos.coords.longitude;
-        const myPos = { lat: currentLat, lng: currentLng };
 
-        if (!marker) {
-          marker = new google.maps.Marker({
-            position: myPos,
-            map: map,
-            title: "내 위치",
-            animation: google.maps.Animation.BOUNCE,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: "#FF0000",
-              fillOpacity: 1,
-              strokeColor: "#FFFFFF",
-              strokeWeight: 2,
-              scale: 12
-            }
-          });
-        } else {
-          marker.setPosition(myPos);
-        }
-
-        map.setCenter(myPos);
-
-        const shareBtn = document.getElementById("shareBtn");
-        if (shareBtn) shareBtn.onclick = showPopup;
+        // 마커는 찍되, 지도 중심은 바꾸지 않음
+        new google.maps.Marker({
+          position: { lat: currentLat, lng: currentLng },
+          map: map,
+          title: "내 위치",
+          animation: google.maps.Animation.BOUNCE,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: "#FF0000",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2,
+            scale: 12
+          }
+        });
       },
       () => {
         new google.maps.Marker({
@@ -590,12 +567,38 @@ function initMap() {
     );
   }
 
-  // ✅ 기존 데이터 로딩
+  // ✅ 공유 버튼 이벤트 연결
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      if (!currentLat || !currentLng) {
+        alert("위치 정보를 먼저 가져와야 합니다.");
+        return;
+      }
+
+      const shareUrl =
+        `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
+      await navigator.clipboard.writeText(shareUrl);
+
+      document.getElementById("notifySound").play();
+
+      const popup = document.getElementById("popupMessage");
+      popup.style.display = "block";
+      popup.style.opacity = "1";
+
+      setTimeout(() => {
+        popup.style.opacity = "0";
+        setTimeout(() => { popup.style.display = "none"; }, 2000);
+      }, 3000);
+    };
+  }
+
   loadData();
-  intervalId = setInterval(loadData, 300000);
+  intervalId = setInterval(loadData, 300000); // 기본 5분
 }
 
 window.initMap = initMap;
+
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
@@ -1389,9 +1392,6 @@ header {
     <button id="shareBtn">현재 위치 공유</button>
   </div>
 
-  <!-- ✅ 지도 (한 번만 선언) -->
-  <div id="map"></div>
-
   <!-- ✅ 공유 팝업 -->
   <div id="popupMessage">
     📍 현재 위치 링크가 복사되었습니다.<br>원하는 앱에 붙여넣어 공유하세요.
@@ -1399,6 +1399,7 @@ header {
 
   <!-- ✅ 효과음 -->
   <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
+
 
 
   
