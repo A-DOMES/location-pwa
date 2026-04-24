@@ -315,18 +315,22 @@ function showMap() {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 위치 정보 박스 갱신 추가 (중복 제거 → updateLocationBox 호출)
-  if (allData.length > 0) {
-    const user = allData[0]; // 첫 번째 사용자 기준
-    updateLocationBox(user); // ← 기존 중복된 HTML 작성 부분 제거, 함수 호출로 교체
-    document.getElementById("locationBox").style.display = "block"; // 팝업 표시
-  } else {
-    document.getElementById("locationBox").innerHTML =
-      "❌ 위치 데이터를 불러올 수 없습니다.";
-  }
-
-  updateUserPanelContent(mode);
+// ✅ 첫 화면 내 위치 박스 갱신
+if (myLocation) {
+  updateLocationBox(myLocation); // 내 위치 데이터 기준으로 호출
+  document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+} else if (allData.length > 0) {
+  const user = allData[0]; // 첫 번째 사용자 기준
+  updateLocationBox(user);
+  document.getElementById("locationBox").style.display = "block";
+} else {
+  document.getElementById("locationBox").innerHTML =
+    "❌ 위치 데이터를 불러올 수 없습니다.";
 }
+
+updateUserPanelContent(mode);
+}
+
 
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
