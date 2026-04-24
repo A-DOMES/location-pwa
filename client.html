@@ -554,6 +554,7 @@ function initMap() {
         });
       },
       (err) => {
+        // ✅ 실패 콜백: 여기 부분을 수정하면 됨
         console.error("위치 정보를 가져올 수 없습니다:", err.message);
         const locationBox = document.getElementById("locationBox");
         locationBox.innerHTML = `
