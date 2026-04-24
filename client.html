@@ -12,6 +12,7 @@
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
   let polylines = []; // 경로 Polyline 저장 배열
+  let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
     
@@ -493,6 +494,34 @@ function getMapIdByDevice() {
 }
 
     
+// ---------------------- 실시간 위치 공유 기능 ----------------------
+async function showPopup() {
+  if (!currentLat || !currentLng) {
+    alert("위치 정보를 먼저 가져와야 합니다.");
+    return;
+  }
+
+  const shareUrl =
+    `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
+  await navigator.clipboard.writeText(shareUrl);
+
+  // 효과음 재생
+  document.getElementById("notifySound").play();
+
+  // 팝업 표시
+  const popup = document.getElementById("popupMessage");
+  popup.style.display = "block";
+  popup.style.opacity = "1";
+
+  setTimeout(() => {
+    popup.style.opacity = "0";
+    setTimeout(() => {
+      popup.style.display = "none";
+    }, 2000);
+  }, 3000);
+}
+
+// ---------------------- 관리자용 지도 초기화 ----------------------
 function initMap() {
   const mapId = getMapIdByDevice();
 
@@ -509,7 +538,7 @@ function initMap() {
   google.maps.event.addListener(map, 'contextmenu', function() {
     console.log("우클릭 이벤트 발생!");
 
-    // 위치 추적 중단 (다른 코드가 중심을 바꾸는 걸 막음)
+    // 위치 추적 중단
     if (geoWatchId) {
       navigator.geolocation.clearWatch(geoWatchId);
       geoWatchId = null;
@@ -522,32 +551,47 @@ function initMap() {
     });
   });
 
-  // ✅ 내 위치 추적 (마커 애니메이션 유지)
+  // ✅ 내 위치 추적 (마커 + 공유 버튼)
   if (navigator.geolocation) {
     geoWatchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        new google.maps.Marker({
-          position: myPos,
-          map: map,
-          title: "내 위치",
-          animation: google.maps.Animation.BOUNCE, // 애니메이션 유지
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2,
-            scale: 12
-          }
-        });
+        currentLat = pos.coords.latitude;
+        currentLng = pos.coords.longitude;
+        const myPos = { lat: currentLat, lng: currentLng };
+
+        if (!marker) {
+          marker = new google.maps.Marker({
+            position: myPos,
+            map: map,
+            title: "내 위치",
+            animation: google.maps.Animation.BOUNCE,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: "#FF0000",
+              fillOpacity: 1,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 2,
+              scale: 12
+            }
+          });
+        } else {
+          marker.setPosition(myPos);
+        }
+
+        map.setCenter(myPos);
+
+        // 공유 버튼 이벤트 연결
+        const shareBtn = document.getElementById("shareBtn");
+        if (shareBtn) {
+          shareBtn.onclick = showPopup;
+        }
       },
       () => {
         new google.maps.Marker({
           position: originalCenter,
           map: map,
           title: "기본 위치",
-          animation: google.maps.Animation.DROP, // 애니메이션 유지
+          animation: google.maps.Animation.DROP,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: "#FFA500",
@@ -557,16 +601,17 @@ function initMap() {
             scale: 12
           }
         });
-      }
+      },
+      { enableHighAccuracy: true }
     );
   }
 
+  // ✅ 기존 데이터 로딩
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
 
 window.initMap = initMap;
-
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
@@ -873,67 +918,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-
-
-// ---------------------- 실시간 위치 공유 기능 ----------------------
-  function updateLocation() {
-    if (!navigator.geolocation) {
-      alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
-      return;
-    }
-
-    navigator.geolocation.watchPosition(
-      function(pos) {
-        currentLat = pos.coords.latitude;
-        currentLng = pos.coords.longitude;
-
-        const latlng = { lat: currentLat, lng: currentLng };
-
-        if (!map) {
-          map = new google.maps.Map(document.getElementById("map"), {
-            center: latlng,
-            zoom: 18
-          });
-        }
-
-        if (!marker) {
-          marker = new google.maps.Marker({
-            position: latlng,
-            map: map,
-            title: "관리자 위치"
-          });
-        } else {
-          marker.setPosition(latlng);
-        }
-
-        map.setCenter(latlng);
-
-        document.getElementById("shareBtn").onclick = showPopup;
-      },
-      function(err) {
-        alert("위치 정보를 가져올 수 없습니다: " + err.message);
-      },
-      { enableHighAccuracy: true }
-    );
-  }
-
-  async function showPopup() {
-    if (!currentLat || !currentLng) {
-      alert("위치 정보를 먼저 가져와야 합니다.");
-      return;
-    }
-
-    const shareUrl =
-      `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
-    await navigator.clipboard.writeText(shareUrl);
-
-    alert("📍 현재 위치 링크가 복사되었습니다.\n원하는 앱에 붙여넣어 공유하세요.");
-  }
-
-  window.onload = () => {
-    updateLocation();
-  };
     
 </script>
 
