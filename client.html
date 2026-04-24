@@ -1,3 +1,5 @@
+조금변형한 코드
+
 성공적인 코드, 조그만 더 손보면 잘 될 코드, 현재 완성형 코드 최신코드임
 260424 13:41
 
@@ -200,7 +202,7 @@ function showMap() {
       }
     });
     Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: iconCurrent,
@@ -212,7 +214,7 @@ function showMap() {
 
   } else if (mode === "all") {
     allData.forEach(user => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: iconAll,
@@ -250,7 +252,7 @@ function showMap() {
         polylines.push(polyline);
 
         const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           position: last,
           map: map,
           icon: iconPaths,
@@ -761,7 +763,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         clearMarkers(); // 이전 마커 제거
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map,
           title: `사용자: ${user.phone}`,
