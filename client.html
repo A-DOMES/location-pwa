@@ -17,7 +17,9 @@
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
   let polylines = []; // 경로 Polyline 저장 배열
+  let originalCenter;  // 초기 중심 좌표
 
+    
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
     markers.forEach(m => m.setMap(null));
@@ -500,17 +502,17 @@ function initMap() {
   const mapId = getMapIdByDevice();
 
   // ✅ 기본 중심 좌표 직접 지정
-  const defaultCenter = { lat: 36.5, lng: 127.5 };
+  originalCenter = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
-    center: defaultCenter,
+    center: originalCenter,
     zoom: 7,
     mapId: mapId
   });
 
   // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
-    map.setCenter(defaultCenter);
+    map.setCenter(originalCenter);
     map.setZoom(7);
   });
 
