@@ -633,54 +633,33 @@ window.setCustomInterval = function() {
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
-// + 환경설정 패널에 토글 스위치와 슬라이더를 추가하여 반경을 조절할 수 있음
-// + 기본 반경은 50m, 첫 위치 갱신 시 자동 표시됨
+// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 변경 가능)
 
 let myMarker = null;
 let radarPolygon = null;
-let radarRadius = 50; // ✅ 기본 반경: 50m
 
-// ✅ 환경설정 UI 요소 가져오기
-const radarToggle = document.getElementById("radarToggle");
-const radiusSlider = document.getElementById("radiusSlider");
-const radiusValue = document.getElementById("radiusValue");
+// ✅ 기본값: 50m, 단위는 m
+let radarRadius = 50; 
+let radarUnit = "m"; // 기본 단위: m → 필요시 "km"로 변경
 
-// ✅ 토글 이벤트: ON/OFF에 따라 레이더 표시/숨김
-if (radarToggle) {
-  radarToggle.addEventListener("change", function() {
-    if (radarToggle.checked) {
-      radiusSlider.disabled = false; // 슬라이더 활성화
-      if (myMarker) {
-        const myPos = myMarker.getPosition().toJSON();
-        updateRadarRadius(radarRadius, myPos, 0);
-      }
-    } else {
-      radiusSlider.disabled = true; // 슬라이더 비활성화 (회색 처리)
-      if (radarPolygon) radarPolygon.setMap(null); // 레이더 숨기기
-    }
-  });
+// ✅ 단위 변환 함수 (m 또는 km → 도 단위)
+function convertToDegrees(value, unit) {
+  // 1도 ≈ 111,000m
+  if (unit === "m") {
+    return value / 111000;
+  } else if (unit === "km") {
+    return (value * 1000) / 111000;
+  }
+  return value / 111000; // 기본 m 처리
 }
 
-// ✅ 슬라이더 이벤트: 반경 값 변경 시 레이더 즉시 갱신
-if (radiusSlider) {
-  radiusSlider.addEventListener("input", function(e) {
-    radarRadius = parseInt(e.target.value, 10);
-    radiusValue.textContent = radarRadius + "m";
-    if (radarToggle.checked && myMarker) {
-      const myPos = myMarker.getPosition().toJSON();
-      updateRadarRadius(radarRadius, myPos, 0);
-    }
-  });
-}
-
-// ✅ 위치 추적 (첫 위치 잡히면 자동으로 50m 레이더 표시)
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
 
-      // 내 위치 마커
+      // ✅ 내 위치 마커 (빨간 원형)
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
@@ -696,12 +675,39 @@ if (navigator.geolocation) {
           }
         });
       } else {
-        myMarker.setPosition(myPos);
+        myMarker.setPosition(myPos); // 마커 위치 갱신
       }
 
-      // ✅ 첫 위치 갱신 시 기본 50m 레이더 표시
-      if (radarToggle.checked) {
-        updateRadarRadius(radarRadius, myPos, heading);
+      // ✅ 방향 레이더 (부채꼴)
+      const angle = 90;   // 부채꼴 각도
+      const points = [];
+
+      // ✅ 반경을 도 단위로 변환 (기본값 50m)
+      const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
+
+      for (let a = -angle/2; a <= angle/2; a += 5) {
+        const rad = (heading + a) * Math.PI / 180;
+        const latOffset = radiusInDegrees * Math.cos(rad);
+        const lngOffset = radiusInDegrees * Math.sin(rad);
+        points.push({
+          lat: myPos.lat + latOffset,
+          lng: myPos.lng + lngOffset
+        });
+      }
+      points.unshift(myPos);
+
+      if (radarPolygon) {
+        radarPolygon.setPath(points); // 기존 레이더 갱신
+      } else {
+        radarPolygon = new google.maps.Polygon({
+          paths: points,
+          strokeColor: "#00BFFF",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#00BFFF",
+          fillOpacity: 0.25,
+          map: map
+        });
       }
     },
     (err) => console.error("위치 추적 실패:", err),
@@ -709,41 +715,6 @@ if (navigator.geolocation) {
   );
 }
 
-// ---------------------- 레이더 반경 업데이트 함수 ----------------------
-function updateRadarRadius(newRadius, myPos = null, heading = 0) {
-  if (!myMarker) return;
-  if (!myPos) myPos = myMarker.getPosition().toJSON();
-
-  const angle = 90; // 부채꼴 각도
-  const points = [];
-
-  // ✅ m 단위를 위도/경도 오프셋으로 변환 (1도 ≈ 111,000m)
-  for (let a = -angle/2; a <= angle/2; a += 5) {
-    const rad = (heading + a) * Math.PI / 180;
-    const latOffset = (newRadius / 111000) * Math.cos(rad);
-    const lngOffset = (newRadius / 111000) * Math.sin(rad);
-    points.push({
-      lat: myPos.lat + latOffset,
-      lng: myPos.lng + lngOffset
-    });
-  }
-  points.unshift(myPos);
-
-  if (radarPolygon) {
-    radarPolygon.setPath(points);
-    radarPolygon.setMap(map);
-  } else {
-    radarPolygon = new google.maps.Polygon({
-      paths: points,
-      strokeColor: "#00BFFF",
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: "#00BFFF",
-      fillOpacity: 0.25,
-      map: map
-    });
-  }
-}
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
@@ -1252,7 +1223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="dropdown-item" id="radar-settings">
       <strong>레이더 반경 설정</strong><br>
       
-      <!-- ✅ 토글 스위치 (라이트/다크 모드와 동일한 구조) -->
+      <!-- ✅ 토글 스위치 -->
       <label class="switch">
         <input type="checkbox" id="radarToggle" checked>
         <span class="slider"></span>
@@ -1260,11 +1231,16 @@ document.addEventListener("DOMContentLoaded", () => {
       
       <br>
       
-      <!-- ✅ 슬라이더 (기본값 50m) -->
-      <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50">
-      <span id="radiusValue">50m</span>
+      <!-- ✅ 슬라이더 + 단위 선택 -->
+      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
+        <span id="radiusValue">50m</span>
+        <select id="radiusUnit">
+          <option value="m" selected>m</option>
+          <option value="km">km</option>
+        </select>
+      </div>
     </div>
-
 
 
     <!-- 마커 클러스터링 옵션 -->
