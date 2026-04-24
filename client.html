@@ -510,68 +510,71 @@ function initMap() {
   // ✅ 우클릭 시 원래 위치로 즉시 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
     console.log("우클릭 이벤트 발생!");
-    if (geoWatchId) {
-      navigator.geolocation.clearWatch(geoWatchId);
-      geoWatchId = null;
-    }
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 내 위치 추적 (좌표 표시 + 마커)
-  if (navigator.geolocation) {
-    geoWatchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        currentLat = pos.coords.latitude;
-        currentLng = pos.coords.longitude;
+  // ✅ 서버에서 내 위치 가져오기
+  fetch("/api/location")
+    .then(res => res.json())
+    .then(data => {
+      const currentLat = data.lat;
+      const currentLng = data.lng;
+      const address = data.address;
 
-        // 화면에 좌표 표시
-        const locationBox = document.getElementById("locationBox");
-        locationBox.innerHTML = `
-          현재 위치: <br>
-          위도: ${currentLat.toFixed(6)} <br>
-          경도: ${currentLng.toFixed(6)} <br>
-          <button id="shareBtn">현재 위치 공유</button>
-        `;
+      // 화면에 좌표 + 주소 표시
+      const locationBox = document.getElementById("locationBox");
+      locationBox.innerHTML = `
+        현재 위치: <br>
+        위도: ${currentLat.toFixed(6)} <br>
+        경도: ${currentLng.toFixed(6)} <br>
+        주소: ${address} <br>
+        <button id="shareBtn" style="float:left;">현재 위치 공유</button>
+      `;
 
-        // 공유 버튼 이벤트 연결
-        const shareBtn = document.getElementById("shareBtn");
-        if (shareBtn) shareBtn.onclick = showPopup;
+      // ✅ 공유 버튼 이벤트 (마커 포함 링크)
+      const shareBtn = document.getElementById("shareBtn");
+      if (shareBtn) {
+        shareBtn.onclick = async () => {
+          const shareUrl =
+            `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
+          await navigator.clipboard.writeText(shareUrl);
+          alert("📍 현재 위치(마커 포함) 링크가 복사되었습니다!");
+        };
+      }
 
-        // 마커 찍기 (지도 중심은 그대로)
-        new google.maps.Marker({
-          position: { lat: currentLat, lng: currentLng },
-          map: map,
-          title: "내 위치",
-          animation: google.maps.Animation.BOUNCE,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2,
-            scale: 12
-          }
-        });
-      },
-      (err) => {
-        // ✅ 실패 콜백: 여기 부분을 수정하면 됨
-        console.error("위치 정보를 가져올 수 없습니다:", err.message);
-        const locationBox = document.getElementById("locationBox");
-        locationBox.innerHTML = `
-          위치 정보를 가져올 수 없습니다.<br>
-          기본 좌표 사용: 위도 ${originalCenter.lat}, 경도 ${originalCenter.lng}
-        `;
-      },
-      { enableHighAccuracy: true }
-    );
-  }
+      // ✅ 최신 방식: AdvancedMarkerElement 사용
+      const markerDiv = document.createElement("div");
+      markerDiv.style.width = "24px";
+      markerDiv.style.height = "24px";
+      markerDiv.style.borderRadius = "50%";
+      markerDiv.style.backgroundColor = "#FF0000";
+      markerDiv.style.border = "2px solid #FFFFFF";
+
+      new google.maps.marker.AdvancedMarkerElement({
+        position: { lat: currentLat, lng: currentLng },
+        map: map,
+        title: "내 위치",
+        content: markerDiv
+      });
+
+      // 지도 중심을 내 위치로 이동
+      map.setCenter({ lat: currentLat, lng: currentLng });
+      map.setZoom(16);
+    })
+    .catch(err => {
+      console.error("서버 위치 요청 실패:", err);
+      const locationBox = document.getElementById("locationBox");
+      locationBox.innerHTML = `
+        ❌ 서버에서 위치 정보를 가져올 수 없습니다.<br>
+        기본 좌표 사용: 위도 ${originalCenter.lat}, 경도 ${originalCenter.lng}
+      `;
+    });
 
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
 
 window.initMap = initMap;
-
 
 
 
@@ -1187,15 +1190,15 @@ header {
 /* ✅ 위치 정보 박스 */
 #locationBox {
   position: absolute;
-  top: 80px;
-  right: 20px;
+  top: 80px;              /* 지도/위성 버튼 아래쪽 */
+  left: 20px;             /* 좌측으로 이동 */
   background: rgba(255,255,255,0.95);
   padding: 15px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   font-size: 18px;
   color: #333;
-  text-align: right;
+  text-align: left;       /* 텍스트도 좌측 정렬 */
   min-width: 220px;
   z-index: 9999;
   cursor: move;
@@ -1227,11 +1230,13 @@ header {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.3s;
+  float: left;            /* 버튼을 좌측에 붙임 */
 }
 
 #shareBtn:hover {
   background: #1565c0;
 }
+
 
 /* ✅ 지도 영역 */
 #map {
@@ -1357,19 +1362,23 @@ header {
 
 
 /* ✅ 실시간 위치공유관련 기본 스타일 */
-  <!-- ✅ 헤더 -->
-  <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
+<!-- ✅ 헤더 -->
+<header>
+  📍 A-DOMES | 관리자 위치 공유 시스템
+</header>
 
-  <!-- ✅ 위치 정보 박스 -->
-  <div id="locationBox">
-    위치 정보를 가져오는 중...
-    <button id="shareBtn">현재 위치 공유</button>
-  </div>
+<!-- ✅ 위치 정보 박스 -->
+<div id="locationBox">
+  위치 정보를 가져오는 중...
+  <button id="shareBtn">현재 위치 공유</button>
+</div>
 
-  <!-- ✅ 공유 팝업 -->
-  <div id="popupMessage">
-    📍 현재 위치 링크가 복사되었습니다.<br>원하는 앱에 붙여넣어 공유하세요.
-  </div>
+<!-- ✅ 공유 팝업 -->
+<div id="popupMessage">
+  📍 현재 위치 링크가 복사되었습니다.<br>
+  원하는 앱에 붙여넣어 공유하세요.
+</div>
+
 
 
   
