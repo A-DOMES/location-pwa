@@ -500,14 +500,19 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 원래 위치 저장
-  const originalCenter = map.getCenter();
-  
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
+  // ✅ 첫 화면 중심을 CONFIG.DEFAULT_CENTER로 고정 저장
+  const originalCenter = CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 };
+
+  // ✅ 마우스 우측 클릭 시 첫 화면으로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
+
+  loadData();
+  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+}
+    
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
