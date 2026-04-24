@@ -513,8 +513,8 @@ function initMap() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 서버에서 이미 받아온 배열 (예시)
-  // 실제로는 loadData() 등에서 가져온 배열을 사용
+  // ✅ 서버에서 받아온 배열 (예시)
+  // 실제로는 loadData() 등에서 가져온 allData 배열을 사용
   const locations = [
     { lat: 37.5665, lng: 126.9780, address: "서울특별시" },
     { lat: 35.1595, lng: 126.8526, address: "광주광역시" }
@@ -523,7 +523,7 @@ function initMap() {
   // 원하는 인덱스의 데이터만 꺼내서 표시 (예: 첫 번째 위치)
   const current = locations[0];
 
-  // 화면에 좌표 + 주소 표시
+  // ✅ locationBox 갱신
   const locationBox = document.getElementById("locationBox");
   locationBox.innerHTML = `
     현재 위치: <br>
@@ -533,7 +533,7 @@ function initMap() {
     <button id="shareBtn" style="float:left;">현재 위치 공유</button>
   `;
 
-  // 공유 버튼 이벤트 (마커 포함 링크)
+  // ✅ 공유 버튼 이벤트 (마커 포함 링크)
   const shareBtn = document.getElementById("shareBtn");
   if (shareBtn) {
     shareBtn.onclick = async () => {
@@ -559,15 +559,17 @@ function initMap() {
     content: markerDiv
   });
 
-  // 지도 중심을 내 위치로 이동
+  // ✅ 지도 중심을 선택한 위치로 이동
   map.setCenter({ lat: current.lat, lng: current.lng });
   map.setZoom(16);
 
+  // ✅ 주기적 데이터 갱신
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
 
 window.initMap = initMap;
+
 
 
 
@@ -1183,15 +1185,15 @@ header {
 /* ✅ 위치 정보 박스 */
 #locationBox {
   position: absolute;
-  top: 80px;              /* 지도/위성 버튼 아래쪽 */
-  left: 20px;             /* 좌측으로 이동 */
+  top: 80px;
+  right: 20px;
   background: rgba(255,255,255,0.95);
   padding: 15px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   font-size: 18px;
   color: #333;
-  text-align: left;       /* 텍스트도 좌측 정렬 */
+  text-align: right;
   min-width: 220px;
   z-index: 9999;
   cursor: move;
@@ -1223,7 +1225,6 @@ header {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.3s;
-  float: left;            /* 버튼을 좌측에 붙임 */
 }
 
 #shareBtn:hover {
