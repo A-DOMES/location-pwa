@@ -200,7 +200,7 @@ function showMap() {
       }
     });
     Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
+      const marker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: iconCurrent,
@@ -212,7 +212,7 @@ function showMap() {
 
   } else if (mode === "all") {
     allData.forEach(user => {
-      const marker = new google.maps.Marker({
+      const marker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: iconAll,
@@ -250,7 +250,7 @@ function showMap() {
         polylines.push(polyline);
 
         const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
+        const marker = new google.maps.marker.AdvancedMarkerElement({
           position: last,
           map: map,
           icon: iconPaths,
@@ -512,7 +512,6 @@ function initMap() {
 
   // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
   google.maps.event.addListener(map, 'contextmenu', function() {
-    console.log("우클릭 이벤트 발생!");
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
@@ -762,7 +761,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
         clearMarkers(); // 이전 마커 제거
-        const marker = new google.maps.Marker({
+        const marker = new google.maps.marker.AdvancedMarkerElement({
           position: { lat: user.lat, lng: user.lng },
           map,
           title: `사용자: ${user.phone}`,
