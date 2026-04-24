@@ -514,7 +514,6 @@ function getMapIdByDevice() {
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 }
    
-    
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -730,6 +729,7 @@ if (navigator.geolocation) {
   );
 }
 
+    
 // ✅ initMap 안에서 첫 화면 복귀 로직 유지
 function initMap() {
   const mapId = getMapIdByDevice();
