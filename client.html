@@ -44,25 +44,60 @@
     return "#" + "00000".substring(0, 6 - c.length) + c;
   }
 
-  // ---------------------- 데이터 로딩 ----------------------
-  async function loadData(token = null) {
-    try {
-      let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-      if (token) url += "&token=" + encodeURIComponent(token);
+// ---------------------- 데이터 로딩 ----------------------
+async function loadData(token = null) {
+  try {
+    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+    if (token) url += "&token=" + encodeURIComponent(token);
 
-      const response = await fetch(url);
-      allData = await response.json();
+    const response = await fetch(url);
+    allData = await response.json();
 
-      // 드롭다운 갱신
-      populatePathSelect();
+    // 드롭다운 갱신
+    populatePathSelect();
 
-      // ✅ 데이터 정상 수신 후 지도 표시
-      showMap();
-    } catch (err) {
-      console.error("데이터 로드 실패:", err);
-      showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+    // ✅ 데이터 정상 수신 후 지도 표시
+    showMap();
+
+    // ✅ 위치 정보 박스 갱신
+    if (allData.length > 0) {
+      const user = allData[0]; // 첫 번째 사용자 기준
+      const locationBox = document.getElementById("locationBox");
+      locationBox.innerHTML = `
+        현재 위치: <br>
+        위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+        경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+        주소: ${user.address || "-"} <br>
+        <button id="shareBtn">현재 위치 공유</button>
+      `;
+
+      const shareBtn = document.getElementById("shareBtn");
+      if (shareBtn) {
+        shareBtn.onclick = async () => {
+          const shareUrl =
+            `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+          await navigator.clipboard.writeText(shareUrl);
+
+          // ✅ 공유 팝업 표시
+          const popup = document.getElementById("popupMessage");
+          popup.style.display = "block";
+          popup.style.opacity = "1";
+          setTimeout(() => {
+            popup.style.opacity = "0";
+            setTimeout(() => { popup.style.display = "none"; }, 2000);
+          }, 3000);
+        };
+      }
+    } else {
+      document.getElementById("locationBox").innerHTML =
+        "❌ 위치 데이터를 불러올 수 없습니다.";
     }
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+    showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
+}
+
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -201,7 +236,7 @@ function showMap() {
         map: map,
         icon: iconCurrent,
         title: `${user.phone} (${user.status}, ${user.updated})`,
-        animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
+        animation: google.maps.Animation.BOUNCE
       });
       markers.push(marker);
     });
@@ -213,7 +248,7 @@ function showMap() {
         map: map,
         icon: iconAll,
         title: `${user.phone} (${user.status}, ${user.time})`,
-        animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
+        animation: google.maps.Animation.BOUNCE
       });
       markers.push(marker);
     });
@@ -251,7 +286,7 @@ function showMap() {
           map: map,
           icon: iconPaths,
           title: `${user.phone} / ${user.updated}`,
-          animation: google.maps.Animation.BOUNCE   // ✅ 통통 튀는 효과
+          animation: google.maps.Animation.BOUNCE
         });
         markers.push(marker);
       }
@@ -261,6 +296,40 @@ function showMap() {
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
+
+  // ✅ 위치 정보 박스 갱신 추가
+  if (allData.length > 0) {
+    const user = allData[0]; // 첫 번째 사용자 기준
+    const locationBox = document.getElementById("locationBox");
+    locationBox.innerHTML = `
+      현재 위치: <br>
+      위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+      경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+      주소: ${user.address || "-"} <br>
+      <button id="shareBtn">현재 위치 공유</button>
+    `;
+
+    const shareBtn = document.getElementById("shareBtn");
+    if (shareBtn) {
+      shareBtn.onclick = async () => {
+        const shareUrl =
+          `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+        await navigator.clipboard.writeText(shareUrl);
+
+        const popup = document.getElementById("popupMessage");
+        popup.style.display = "block";
+        popup.style.opacity = "1";
+        setTimeout(() => {
+          popup.style.opacity = "0";
+          setTimeout(() => { popup.style.display = "none"; }, 2000);
+        }, 3000);
+      };
+    }
+  } else {
+    document.getElementById("locationBox").innerHTML =
+      "❌ 위치 데이터를 불러올 수 없습니다.";
+  }
+
   updateUserPanelContent(mode);
 }
 
@@ -513,41 +582,12 @@ function initMap() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 내 좌표 정보 (예시 → 실제 서버 응답으로 교체 가능)
-  const myInfo = {
-    lat: 34.954638,
-    lng: 127.512608,
-    address: "전라남도 순천시"
-  };
-
-  // ✅ locationBox에 내 좌표만 표시 (지도는 건드리지 않음)
-  const locationBox = document.getElementById("locationBox");
-  locationBox.innerHTML = `
-    나의 좌표 정보: <br>
-    위도: ${myInfo.lat.toFixed(6)} <br>
-    경도: ${myInfo.lng.toFixed(6)} <br>
-    주소: ${myInfo.address} <br>
-    <button id="shareBtn" style="float:left;">현재 위치 공유</button>
-  `;
-
-  // ✅ 공유 버튼 이벤트 → 구글 지도 링크 복사
-  const shareBtn = document.getElementById("shareBtn");
-  if (shareBtn) {
-    shareBtn.onclick = async () => {
-      const shareUrl =
-        `https://www.google.com/maps/search/?api=1&query=${myInfo.lat},${myInfo.lng}`;
-      await navigator.clipboard.writeText(shareUrl);
-      alert("📍 내 좌표 링크가 복사되었습니다!");
-    };
-  }
-
-  // ✅ 데이터 갱신 주기 유지
+  // ✅ 데이터 로딩 시작
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
 
 window.initMap = initMap;
-
 
 
 
@@ -1341,12 +1381,12 @@ header {
 
 <!-- ✅ 위치 정보 박스 -->
 <div id="locationBox">
+  <!-- 처음엔 안내 문구만 표시 -->
   위치 정보를 가져오는 중...
-  <button id="shareBtn">현재 위치 공유</button>
 </div>
 
 <!-- ✅ 공유 팝업 -->
-<div id="popupMessage">
+<div id="popupMessage" style="display:none; opacity:0;">
   📍 현재 위치 링크가 복사되었습니다.<br>
   원하는 앱에 붙여넣어 공유하세요.
 </div>
