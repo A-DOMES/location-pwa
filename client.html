@@ -633,11 +633,12 @@ window.setCustomInterval = function() {
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
-// + 환경설정 패널에 토글과 슬라이더를 추가하여 반경을 조절할 수 있음
+// + 환경설정 패널에 토글 스위치와 슬라이더를 추가하여 반경을 조절할 수 있음
+// + 기본 반경은 50m, 첫 위치 갱신 시 자동 표시됨
 
 let myMarker = null;
 let radarPolygon = null;
-let radarRadius = 50; // ✅ 초기 반경: 50m
+let radarRadius = 50; // ✅ 기본 반경: 50m
 
 // ✅ 환경설정 UI 요소 가져오기
 const radarToggle = document.getElementById("radarToggle");
@@ -648,10 +649,13 @@ const radiusValue = document.getElementById("radiusValue");
 if (radarToggle) {
   radarToggle.addEventListener("change", function() {
     if (radarToggle.checked) {
-      radiusSlider.disabled = false;
-      updateRadarRadius(radarRadius);
+      radiusSlider.disabled = false; // 슬라이더 활성화
+      if (myMarker) {
+        const myPos = myMarker.getPosition().toJSON();
+        updateRadarRadius(radarRadius, myPos, 0);
+      }
     } else {
-      radiusSlider.disabled = true;
+      radiusSlider.disabled = true; // 슬라이더 비활성화 (회색 처리)
       if (radarPolygon) radarPolygon.setMap(null); // 레이더 숨기기
     }
   });
@@ -662,19 +666,21 @@ if (radiusSlider) {
   radiusSlider.addEventListener("input", function(e) {
     radarRadius = parseInt(e.target.value, 10);
     radiusValue.textContent = radarRadius + "m";
-    if (radarToggle.checked) {
-      updateRadarRadius(radarRadius);
+    if (radarToggle.checked && myMarker) {
+      const myPos = myMarker.getPosition().toJSON();
+      updateRadarRadius(radarRadius, myPos, 0);
     }
   });
 }
 
+// ✅ 위치 추적 (첫 위치 잡히면 자동으로 50m 레이더 표시)
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
 
-      // ✅ 내 위치 마커 (빨간 원형)
+      // 내 위치 마커
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
@@ -690,11 +696,11 @@ if (navigator.geolocation) {
           }
         });
       } else {
-        myMarker.setPosition(myPos); // 마커 위치 갱신
+        myMarker.setPosition(myPos);
       }
 
-      // ✅ 레이더 반경 갱신 (슬라이더 값 반영)
-      if (radarToggle && radarToggle.checked) {
+      // ✅ 첫 위치 갱신 시 기본 50m 레이더 표시
+      if (radarToggle.checked) {
         updateRadarRadius(radarRadius, myPos, heading);
       }
     },
@@ -1125,22 +1131,13 @@ document.addEventListener("DOMContentLoaded", () => {
     background: #f5f5f5;
   }
 
-/* ✅ 레이더 설정 영역 */
+/* ✅ 레이더 설정 스타일 */
 #radar-settings {
   margin-top: 10px;
   padding: 8px;
   border-top: 1px solid #ddd;
 }
-#radar-settings strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 16px;
-  color: #333;
-}
-#radarToggle {
-  margin-right: 6px;
-  transform: scale(1.2);
-}
+
 #radiusSlider {
   width: 100%;
   margin-top: 8px;
@@ -1151,6 +1148,8 @@ document.addEventListener("DOMContentLoaded", () => {
   outline: none;
   transition: background 0.3s;
 }
+
+/* 슬라이더 핸들 */
 #radiusSlider::-webkit-slider-thumb {
   appearance: none;
   width: 18px;
@@ -1160,6 +1159,16 @@ document.addEventListener("DOMContentLoaded", () => {
   border: 2px solid #00BFFF;
   cursor: pointer;
 }
+#radiusSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #00BFFF;
+  cursor: pointer;
+}
+
+/* ✅ 슬라이더 비활성화 상태 */
 #radiusSlider:disabled {
   background: #ccc;
 }
@@ -1167,8 +1176,12 @@ document.addEventListener("DOMContentLoaded", () => {
   border-color: #999;
   cursor: not-allowed;
 }
+#radiusSlider:disabled::-moz-range-thumb {
+  border-color: #999;
+  cursor: not-allowed;
+}
+
 #radiusValue {
-  display: inline-block;
   margin-left: 8px;
   font-size: 14px;
   color: #555;
@@ -1236,16 +1249,23 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
 
     <!-- ✅ 레이더 반경 설정 -->
-    <div class="dropdown-item">
+    <div class="dropdown-item" id="radar-settings">
       <strong>레이더 반경 설정</strong><br>
-      <label>
+      
+      <!-- ✅ 토글 스위치 (라이트/다크 모드와 동일한 구조) -->
+      <label class="switch">
         <input type="checkbox" id="radarToggle" checked>
-        레이더 표시
+        <span class="slider"></span>
       </label>
+      
       <br>
+      
+      <!-- ✅ 슬라이더 (기본값 50m) -->
       <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50">
       <span id="radiusValue">50m</span>
     </div>
+
+
 
     <!-- 마커 클러스터링 옵션 -->
     <div class="dropdown-item">
