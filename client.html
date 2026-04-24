@@ -498,6 +498,8 @@ function getMapIdByDevice() {
 }
 
     
+let originalCenter; // 전역 변수로 선언
+
 function initMap() {
   const mapId = getMapIdByDevice();
 
@@ -510,8 +512,8 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
-  google.maps.event.addListener(map, 'rightclick', function() {
+  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
+  google.maps.event.addListener(map, 'contextmenu', function() {
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
@@ -536,7 +538,7 @@ function initMap() {
       },
       () => {
         new google.maps.Marker({
-          position: defaultCenter,
+          position: originalCenter,
           map: map,
           title: "기본 위치",
           icon: {
@@ -555,6 +557,7 @@ function initMap() {
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
 }
+
 window.initMap = initMap;
 
 
