@@ -314,40 +314,19 @@ function showMap() {
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
-
-
   
-// 내 위치 가져오기
-navigator.geolocation.getCurrentPosition(
-  (pos) => {
-    const myLocation = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      phone: "나의 위치", // 닉네임 대신 표시할 텍스트 (실제 phone 값이 닉네임이라면 그대로 넣어도 됨)
-      address: "" // 필요하다면 역지오코딩으로 주소 추가 가능
-    };
-
-    // ✅ 첫 화면 내 위치 박스 갱신
-    updateLocationBox(myLocation);
-    document.getElementById("locationBox").style.display = "block";
-  },
-  (err) => {
-    // 위치 가져오기 실패 시
-    if (allData.length > 0) {
-      const user = allData[0];
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
-    } else {
-      document.getElementById("locationBox").innerHTML =
-        "❌ 위치 데이터를 불러올 수 없습니다.";
-    }
+  // ✅ 위치 정보 박스 갱신 추가 (첫 화면에도 적용)
+  if (allData.length > 0) {
+    const user = allData[0]; // 첫 번째 사용자 기준
+    updateLocationBox(user); // 최신 버전 호출 (핀셋+닉네임 포함)
+    document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+  } else {
+    document.getElementById("locationBox").innerHTML =
+      "❌ 위치 데이터를 불러올 수 없습니다.";
   }
-);
-
-// 이후 패널 갱신
-updateUserPanelContent(mode);
-
-
+  
+  updateUserPanelContent(mode);
+  }
 
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
