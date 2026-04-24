@@ -811,7 +811,30 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-    
+ // ✅ 드래그 기능 추가
+function makeDraggable(element) {
+  let offsetX = 0, offsetY = 0, isDown = false;
+
+  element.addEventListener('mousedown', (e) => {
+    isDown = true;
+    offsetX = e.clientX - element.offsetLeft;
+    offsetY = e.clientY - element.offsetTop;
+    element.style.right = ""; // 오른쪽 고정 해제
+  });
+
+  document.addEventListener('mouseup', () => isDown = false);
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDown) {
+      element.style.left = (e.clientX - offsetX) + 'px';
+      element.style.top = (e.clientY - offsetY) + 'px';
+    }
+  });
+}
+
+// ✅ 실행
+makeDraggable(document.getElementById("locationBox"));
+   
 </script>
 
 
