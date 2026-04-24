@@ -1,4 +1,5 @@
-관리자용 client.html 최신코드 260424 레이더 반경까지 구현( 환경설정에 토글과슬라이더가 적용이 안된상태)
+성공적인 코드, 조그만 더 손보면 잘 될 코드, 현재 완성형 코드 최신코드임
+260424 13:41
 
 오직 벡테지도로 돼 있는 코드임..
 
@@ -505,11 +506,7 @@ function initMap() {
   // ✅ 원래 위치 저장
   const originalCenter = map.getCenter();
   
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
-  google.maps.event.addListener(map, 'rightclick', function() {
-    map.setCenter(originalCenter);
-    map.setZoom(7);
-  });
+
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -565,6 +562,12 @@ function initMap() {
   loadData();
   intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
 }
+
+  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
+  google.maps.event.addListener(map, 'rightclick', function() {
+    map.setCenter(originalCenter);
+    map.setZoom(7);
+  });    
 window.initMap = initMap;
 
 
@@ -634,11 +637,26 @@ window.setCustomInterval = function() {
 
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-// 이 코드는 initMap() 이후, 관리자 모드에서만 실행되도록 넣어주세요.
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
+// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 변경 가능)
 
 let myMarker = null;
 let radarPolygon = null;
+
+// ✅ 기본값: 50m, 단위는 m
+let radarRadius = 50; 
+let radarUnit = "m"; // 기본 단위: m → 필요시 "km"로 변경
+
+// ✅ 단위 변환 함수 (m 또는 km → 도 단위)
+function convertToDegrees(value, unit) {
+  // 1도 ≈ 111,000m
+  if (unit === "m") {
+    return value / 111000;
+  } else if (unit === "km") {
+    return (value * 1000) / 111000;
+  }
+  return value / 111000; // 기본 m 처리
+}
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
@@ -666,21 +684,22 @@ if (navigator.geolocation) {
       }
 
       // ✅ 방향 레이더 (부채꼴)
-      const radius = 0.005; // 반경 (약 200m 정도, 필요시 조정)
-      const angle = 90;   // 부채꼴 각도 (넓게 90도)
+      const angle = 90;   // 부채꼴 각도
       const points = [];
 
-      // 부채꼴 좌표 계산
+      // ✅ 반경을 도 단위로 변환 (기본값 50m)
+      const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
+
       for (let a = -angle/2; a <= angle/2; a += 5) {
         const rad = (heading + a) * Math.PI / 180;
-        const latOffset = radius * Math.cos(rad);
-        const lngOffset = radius * Math.sin(rad);
+        const latOffset = radiusInDegrees * Math.cos(rad);
+        const lngOffset = radiusInDegrees * Math.sin(rad);
         points.push({
           lat: myPos.lat + latOffset,
           lng: myPos.lng + lngOffset
         });
       }
-      points.unshift(myPos); // 시작점은 내 위치
+      points.unshift(myPos);
 
       if (radarPolygon) {
         radarPolygon.setPath(points); // 기존 레이더 갱신
@@ -695,13 +714,13 @@ if (navigator.geolocation) {
           map: map
         });
       }
-
-      // ❌ 지도 중심은 고정 (관리자 모드이므로 setCenter 호출 없음)
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
   );
 }
+
+
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
 function formatToKST(isoString) {
@@ -1087,6 +1106,63 @@ document.addEventListener("DOMContentLoaded", () => {
   #user-table th {
     background: #f5f5f5;
   }
+
+/* ✅ 레이더 설정 스타일 */
+#radar-settings {
+  margin-top: 10px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+}
+
+#radiusSlider {
+  width: 100%;
+  margin-top: 8px;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #00BFFF, #1E90FF);
+  outline: none;
+  transition: background 0.3s;
+}
+
+/* 슬라이더 핸들 */
+#radiusSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #00BFFF;
+  cursor: pointer;
+}
+#radiusSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #00BFFF;
+  cursor: pointer;
+}
+
+/* ✅ 슬라이더 비활성화 상태 */
+#radiusSlider:disabled {
+  background: #ccc;
+}
+#radiusSlider:disabled::-webkit-slider-thumb {
+  border-color: #999;
+  cursor: not-allowed;
+}
+#radiusSlider:disabled::-moz-range-thumb {
+  border-color: #999;
+  cursor: not-allowed;
+}
+
+#radiusValue {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
 </style>
 </head>
 
@@ -1147,6 +1223,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 style="font-size:18px; padding:6px 12px;">적용</button>
       </div>
     </div>
+
+    <!-- ✅ 레이더 반경 설정 -->
+    <div class="dropdown-item" id="radar-settings">
+      <strong>레이더 반경 설정</strong><br>
+      
+      <!-- ✅ 토글 스위치 -->
+      <label class="switch">
+        <input type="checkbox" id="radarToggle" checked>
+        <span class="slider"></span>
+      </label>
+      
+      <br>
+      
+      <!-- ✅ 슬라이더 + 단위 선택 -->
+      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
+        <span id="radiusValue">50m</span>
+        <select id="radiusUnit">
+          <option value="m" selected>m</option>
+          <option value="km">km</option>
+        </select>
+      </div>
+    </div>
+
 
     <!-- 마커 클러스터링 옵션 -->
     <div class="dropdown-item">
