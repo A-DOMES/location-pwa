@@ -512,11 +512,21 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
+  // ✅ 마우스 우측 클릭 시 원래 위치로 한방에 복귀 (contextmenu 이벤트 사용)  
   google.maps.event.addListener(map, 'contextmenu', function() {
-    map.setCenter(originalCenter);
-    map.setZoom(7);
+    console.log("우클릭 이벤트 발생!");
+    map.setOptions({
+      center: originalCenter,
+      zoom: 7
+    });
   });
+
+  /* ---------------------- 마우스 우측 클릭 시 원래 점차적으로 원래 위치로 복귀 ---------------------- */
+  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
+  //  google.maps.event.addListener(map, 'contextmenu', function() {
+  //    map.setCenter(originalCenter);
+  //    map.setZoom(7);
+  //  });
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
