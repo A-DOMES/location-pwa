@@ -633,7 +633,8 @@ window.setCustomInterval = function() {
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
-// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 자동 변환 표시)
+// ✅ 기본 반경은 50m, 단위는 m
+// ✅ 슬라이더로 반경 조절 가능, 패널에 데이터 표시
 
 let myMarker = null;
 let radarPolygon = null;
@@ -662,7 +663,6 @@ radiusSlider.addEventListener("input", function(e) {
   }
 });
 
-// ✅ 위치 추적
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -724,10 +724,11 @@ if (navigator.geolocation) {
         });
       }
 
-      // ✅ 여기서 패널 값 업데이트 로직도 함께 실행 가능
-      // 예: document.getElementById("panel-lat").textContent = myPos.lat;
-      //     document.getElementById("panel-lng").textContent = myPos.lng;
-      //     document.getElementById("panel-radius").textContent = radiusValue.textContent;
+      // ✅ 패널 값 갱신
+      document.getElementById("panel-lat").textContent = myPos.lat.toFixed(6);
+      document.getElementById("panel-lng").textContent = myPos.lng.toFixed(6);
+      document.getElementById("panel-heading").textContent = heading;
+      document.getElementById("panel-radius").textContent = radiusValue.textContent;
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
