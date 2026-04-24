@@ -503,14 +503,14 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 원래 위치 저장
-  const originalCenter = map.getCenter();
+  // ✅ 원래 위치 저장 (CONFIG.DEFAULT_CENTER로 고정)
+  const originalCenter = CONFIG.DEFAULT_CENTER || { lat: 36.5, lng: 127.5 };
   
   // ✅ 마우스 우측 클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'rightclick', function() {
     map.setCenter(originalCenter);
     map.setZoom(7);
-  });    
+  });
 
 
   if (navigator.geolocation) {
