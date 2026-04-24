@@ -513,62 +513,55 @@ function initMap() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 서버에서 내 위치 가져오기
-  fetch("/api/location")
-    .then(res => res.json())
-    .then(data => {
-      const currentLat = data.lat;
-      const currentLng = data.lng;
-      const address = data.address;
+  // ✅ 서버에서 이미 받아온 배열 (예시)
+  // 실제로는 loadData() 등에서 가져온 배열을 사용
+  const locations = [
+    { lat: 37.5665, lng: 126.9780, address: "서울특별시" },
+    { lat: 35.1595, lng: 126.8526, address: "광주광역시" }
+  ];
 
-      // 화면에 좌표 + 주소 표시
-      const locationBox = document.getElementById("locationBox");
-      locationBox.innerHTML = `
-        현재 위치: <br>
-        위도: ${currentLat.toFixed(6)} <br>
-        경도: ${currentLng.toFixed(6)} <br>
-        주소: ${address} <br>
-        <button id="shareBtn" style="float:left;">현재 위치 공유</button>
-      `;
+  // 원하는 인덱스의 데이터만 꺼내서 표시 (예: 첫 번째 위치)
+  const current = locations[0];
 
-      // ✅ 공유 버튼 이벤트 (마커 포함 링크)
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl =
-            `https://www.google.com/maps/search/?api=1&query=${currentLat},${currentLng}`;
-          await navigator.clipboard.writeText(shareUrl);
-          alert("📍 현재 위치(마커 포함) 링크가 복사되었습니다!");
-        };
-      }
+  // 화면에 좌표 + 주소 표시
+  const locationBox = document.getElementById("locationBox");
+  locationBox.innerHTML = `
+    현재 위치: <br>
+    위도: ${current.lat.toFixed(6)} <br>
+    경도: ${current.lng.toFixed(6)} <br>
+    주소: ${current.address} <br>
+    <button id="shareBtn" style="float:left;">현재 위치 공유</button>
+  `;
 
-      // ✅ 최신 방식: AdvancedMarkerElement 사용
-      const markerDiv = document.createElement("div");
-      markerDiv.style.width = "24px";
-      markerDiv.style.height = "24px";
-      markerDiv.style.borderRadius = "50%";
-      markerDiv.style.backgroundColor = "#FF0000";
-      markerDiv.style.border = "2px solid #FFFFFF";
+  // 공유 버튼 이벤트 (마커 포함 링크)
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const shareUrl =
+        `https://www.google.com/maps/search/?api=1&query=${current.lat},${current.lng}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert("📍 현재 위치(마커 포함) 링크가 복사되었습니다!");
+    };
+  }
 
-      new google.maps.marker.AdvancedMarkerElement({
-        position: { lat: currentLat, lng: currentLng },
-        map: map,
-        title: "내 위치",
-        content: markerDiv
-      });
+  // ✅ 최신 방식: AdvancedMarkerElement 사용
+  const markerDiv = document.createElement("div");
+  markerDiv.style.width = "24px";
+  markerDiv.style.height = "24px";
+  markerDiv.style.borderRadius = "50%";
+  markerDiv.style.backgroundColor = "#FF0000";
+  markerDiv.style.border = "2px solid #FFFFFF";
 
-      // 지도 중심을 내 위치로 이동
-      map.setCenter({ lat: currentLat, lng: currentLng });
-      map.setZoom(16);
-    })
-    .catch(err => {
-      console.error("서버 위치 요청 실패:", err);
-      const locationBox = document.getElementById("locationBox");
-      locationBox.innerHTML = `
-        ❌ 서버에서 위치 정보를 가져올 수 없습니다.<br>
-        기본 좌표 사용: 위도 ${originalCenter.lat}, 경도 ${originalCenter.lng}
-      `;
-    });
+  new google.maps.marker.AdvancedMarkerElement({
+    position: { lat: current.lat, lng: current.lng },
+    map: map,
+    title: "내 위치",
+    content: markerDiv
+  });
+
+  // 지도 중심을 내 위치로 이동
+  map.setCenter({ lat: current.lat, lng: current.lng });
+  map.setZoom(16);
 
   loadData();
   intervalId = setInterval(loadData, 300000); // 기본 5분
