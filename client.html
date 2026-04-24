@@ -297,34 +297,10 @@ function showMap() {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 위치 정보 박스 갱신 추가
+  // ✅ 위치 정보 박스 갱신 추가 (중복 제거 → updateLocationBox 호출)
   if (allData.length > 0) {
     const user = allData[0]; // 첫 번째 사용자 기준
-    const locationBox = document.getElementById("locationBox");
-    locationBox.innerHTML = `
-      현재 위치: <br>
-      위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-      경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-      주소: ${user.address || "-"} <br>
-      <button id="shareBtn">현재 위치 공유</button>
-    `;
-
-    const shareBtn = document.getElementById("shareBtn");
-    if (shareBtn) {
-      shareBtn.onclick = async () => {
-        const shareUrl =
-          `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-        await navigator.clipboard.writeText(shareUrl);
-
-        const popup = document.getElementById("popupMessage");
-        popup.style.display = "block";
-        popup.style.opacity = "1";
-        setTimeout(() => {
-          popup.style.opacity = "0";
-          setTimeout(() => { popup.style.display = "none"; }, 2000);
-        }, 3000);
-      };
-    }
+    updateLocationBox(user); // ← 기존 중복된 HTML 작성 부분 제거, 함수 호출로 교체
   } else {
     document.getElementById("locationBox").innerHTML =
       "❌ 위치 데이터를 불러올 수 없습니다.";
