@@ -632,11 +632,41 @@ window.setCustomInterval = function() {
 
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-// 이 코드는 initMap() 이후, 관리자 모드에서만 실행되도록 넣어주세요.
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
+// + 환경설정 패널에 토글과 슬라이더를 추가하여 반경을 조절할 수 있음
 
 let myMarker = null;
 let radarPolygon = null;
+let radarRadius = 50; // ✅ 초기 반경: 50m
+
+// ✅ 환경설정 UI 요소 가져오기
+const radarToggle = document.getElementById("radarToggle");
+const radiusSlider = document.getElementById("radiusSlider");
+const radiusValue = document.getElementById("radiusValue");
+
+// ✅ 토글 이벤트: ON/OFF에 따라 레이더 표시/숨김
+if (radarToggle) {
+  radarToggle.addEventListener("change", function() {
+    if (radarToggle.checked) {
+      radiusSlider.disabled = false;
+      updateRadarRadius(radarRadius);
+    } else {
+      radiusSlider.disabled = true;
+      if (radarPolygon) radarPolygon.setMap(null); // 레이더 숨기기
+    }
+  });
+}
+
+// ✅ 슬라이더 이벤트: 반경 값 변경 시 레이더 즉시 갱신
+if (radiusSlider) {
+  radiusSlider.addEventListener("input", function(e) {
+    radarRadius = parseInt(e.target.value, 10);
+    radiusValue.textContent = radarRadius + "m";
+    if (radarToggle.checked) {
+      updateRadarRadius(radarRadius);
+    }
+  });
+}
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
@@ -663,44 +693,51 @@ if (navigator.geolocation) {
         myMarker.setPosition(myPos); // 마커 위치 갱신
       }
 
-      // ✅ 방향 레이더 (부채꼴)
-      const radius = 0.1; // 반경 (약 200m 정도, 필요시 조정)
-      const angle = 90;   // 부채꼴 각도 (넓게 90도)
-      const points = [];
-
-      // 부채꼴 좌표 계산
-      for (let a = -angle/2; a <= angle/2; a += 5) {
-        const rad = (heading + a) * Math.PI / 180;
-        const latOffset = radius * Math.cos(rad);
-        const lngOffset = radius * Math.sin(rad);
-        points.push({
-          lat: myPos.lat + latOffset,
-          lng: myPos.lng + lngOffset
-        });
+      // ✅ 레이더 반경 갱신 (슬라이더 값 반영)
+      if (radarToggle && radarToggle.checked) {
+        updateRadarRadius(radarRadius, myPos, heading);
       }
-      points.unshift(myPos); // 시작점은 내 위치
-
-      if (radarPolygon) {
-        radarPolygon.setPath(points); // 기존 레이더 갱신
-      } else {
-        radarPolygon = new google.maps.Polygon({
-          paths: points,
-          strokeColor: "#00BFFF",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#00BFFF",
-          fillOpacity: 0.25,
-          map: map
-        });
-      }
-
-      // ❌ 지도 중심은 고정 (관리자 모드이므로 setCenter 호출 없음)
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
   );
 }
 
+// ---------------------- 레이더 반경 업데이트 함수 ----------------------
+function updateRadarRadius(newRadius, myPos = null, heading = 0) {
+  if (!myMarker) return;
+  if (!myPos) myPos = myMarker.getPosition().toJSON();
+
+  const angle = 90; // 부채꼴 각도
+  const points = [];
+
+  // ✅ m 단위를 위도/경도 오프셋으로 변환 (1도 ≈ 111,000m)
+  for (let a = -angle/2; a <= angle/2; a += 5) {
+    const rad = (heading + a) * Math.PI / 180;
+    const latOffset = (newRadius / 111000) * Math.cos(rad);
+    const lngOffset = (newRadius / 111000) * Math.sin(rad);
+    points.push({
+      lat: myPos.lat + latOffset,
+      lng: myPos.lng + lngOffset
+    });
+  }
+  points.unshift(myPos);
+
+  if (radarPolygon) {
+    radarPolygon.setPath(points);
+    radarPolygon.setMap(map);
+  } else {
+    radarPolygon = new google.maps.Polygon({
+      paths: points,
+      strokeColor: "#00BFFF",
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: "#00BFFF",
+      fillOpacity: 0.25,
+      map: map
+    });
+  }
+}
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
@@ -1087,6 +1124,56 @@ document.addEventListener("DOMContentLoaded", () => {
   #user-table th {
     background: #f5f5f5;
   }
+
+/* ✅ 레이더 설정 영역 */
+#radar-settings {
+  margin-top: 10px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+}
+#radar-settings strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  color: #333;
+}
+#radarToggle {
+  margin-right: 6px;
+  transform: scale(1.2);
+}
+#radiusSlider {
+  width: 100%;
+  margin-top: 8px;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #00BFFF, #1E90FF);
+  outline: none;
+  transition: background 0.3s;
+}
+#radiusSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #00BFFF;
+  cursor: pointer;
+}
+#radiusSlider:disabled {
+  background: #ccc;
+}
+#radiusSlider:disabled::-webkit-slider-thumb {
+  border-color: #999;
+  cursor: not-allowed;
+}
+#radiusValue {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
 </style>
 </head>
 
@@ -1146,6 +1233,18 @@ document.addEventListener("DOMContentLoaded", () => {
         <button onclick="setCustomInterval()" 
                 style="font-size:18px; padding:6px 12px;">적용</button>
       </div>
+    </div>
+
+    <!-- ✅ 레이더 반경 설정 -->
+    <div class="dropdown-item">
+      <strong>레이더 반경 설정</strong><br>
+      <label>
+        <input type="checkbox" id="radarToggle" checked>
+        레이더 표시
+      </label>
+      <br>
+      <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50">
+      <span id="radiusValue">50m</span>
     </div>
 
     <!-- 마커 클러스터링 옵션 -->
