@@ -503,7 +503,7 @@ function getMapIdByDevice() {
 function initMap() {
   const mapId = getMapIdByDevice();
 
-  // ✅ 기본 중심 좌표 직접 지정
+  // ✅ 초기 중심 좌표 지정
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
@@ -512,30 +512,33 @@ function initMap() {
     mapId: mapId
   });
 
-  // ✅ 마우스 우측 클릭 시 원래 위치로 한방에 복귀 (contextmenu 이벤트 사용)  
+  // ✅ 우클릭 시 원래 위치로 즉시 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
     console.log("우클릭 이벤트 발생!");
+
+    // 위치 추적 중단 (다른 코드가 중심을 바꾸는 걸 막음)
+    if (geoWatchId) {
+      navigator.geolocation.clearWatch(geoWatchId);
+      geoWatchId = null;
+    }
+
+    // 즉시 복귀
     map.setOptions({
       center: originalCenter,
       zoom: 7
     });
+  });
 
-
-  /* ---------------------- 마우스 우측 클릭 시 원래 점차적으로 원래 위치로 복귀 ---------------------- */
-  // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
-  //  google.maps.event.addListener(map, 'contextmenu', function() {
-  //    map.setCenter(originalCenter);
-  //    map.setZoom(7);
-  //  });
-
+  // ✅ 내 위치 추적 (마커 애니메이션 유지)
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
+    geoWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         new google.maps.Marker({
           position: myPos,
           map: map,
           title: "내 위치",
+          animation: google.maps.Animation.BOUNCE, // 애니메이션 유지
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: "#FF0000",
@@ -551,6 +554,7 @@ function initMap() {
           position: originalCenter,
           map: map,
           title: "기본 위치",
+          animation: google.maps.Animation.DROP, // 애니메이션 유지
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: "#FFA500",
