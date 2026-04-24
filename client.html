@@ -431,6 +431,10 @@ window.openUserPanel = function(viewMode) {
 function updateLocationBox(user) {
   const locationBox = document.getElementById("locationBox");
   locationBox.innerHTML = `
+    <div class="location-header">
+      <span>현재 위치 정보</span>
+      <button id="closeLocationBox">✖</button>
+    </div>
     <div class="coord">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
       위도: ${user.lat ? user.lat.toFixed(6) : "-"}
@@ -446,6 +450,15 @@ function updateLocationBox(user) {
     <button id="shareBtn">현재 위치 공유</button>
   `;
 
+  // ✅ 닫기 버튼 이벤트
+  const closeBtn = document.getElementById("closeLocationBox");
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      locationBox.style.display = "none";
+    };
+  }
+
+  // ✅ 공유 버튼 이벤트
   const shareBtn = document.getElementById("shareBtn");
   if (shareBtn) {
     shareBtn.onclick = async () => {
@@ -462,7 +475,11 @@ function updateLocationBox(user) {
       }, 3000);
     };
   }
+
+  // ✅ 드래그 기능 적용
+  makeDraggable(locationBox);
 }
+
 
    
 // ---------------------- path 배열 변환 ----------------------
@@ -1338,6 +1355,27 @@ header {
   opacity: 0;
   transition: opacity 0.5s ease, top 2s ease;
 }
+
+/* ✅ svg 아이콘 크기 설정 */
+.coord svg {
+  width: 16px;
+  height: 16px;
+  fill: #333;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.location-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
   
 </style>
 </head>
