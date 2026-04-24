@@ -512,6 +512,7 @@ function initMap() {
 
   // ✅ 마우스 우측 클릭 시 원래 위치로 복귀 (contextmenu 이벤트 사용)
   google.maps.event.addListener(map, 'contextmenu', function() {
+    console.log("우클릭 이벤트 발생!");
     map.setCenter(originalCenter);
     map.setZoom(7);
   });
