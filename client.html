@@ -1014,10 +1014,17 @@ function makePanelDraggable(panelId, dockId) {
     if (isDragging) {
       isDragging = false;
       const rect = panel.getBoundingClientRect();
+  
       if (rect.left < 50) {
+        // 좌측에 붙이기
+        panel.style.left = "0px";
+        panel.style.right = "auto";
         panel.classList.add("snap-left");
         panel.classList.remove("snap-right");
       } else if (window.innerWidth - rect.right < 50) {
+        // 우측에 붙이기
+        panel.style.right = "0px";
+        panel.style.left = "auto";
         panel.classList.add("snap-right");
         panel.classList.remove("snap-left");
       } else {
