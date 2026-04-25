@@ -971,9 +971,7 @@ function makeDraggable(element) {
     element.style.right = ""; // 오른쪽 고정 해제
   });
 
-  document.addEventListener('mouseup', () => {
-    isDown = false;
-  });
+  document.addEventListener('mouseup', () => { isDown = false; });
 
   document.addEventListener('mousemove', (e) => {
     if (isDown) {
@@ -985,18 +983,15 @@ function makeDraggable(element) {
 
 // ✅ locationBox에 드래그 기능 적용
 const locationBox = document.getElementById("locationBox");
-if (locationBox) {
-  makeDraggable(locationBox);
-}
+if (locationBox) makeDraggable(locationBox);
 
-// ---------------------- 패널 드래그 + Snap + Dock ----------------------
+// ---------------------- 패널 드래그 + Snap ----------------------
 function makePanelDraggable(panelId, dockId) {
   const panel = document.getElementById(panelId);
-  const dockIcon = document.getElementById(dockId);
   let isDragging = false, offsetX = 0, offsetY = 0;
 
   panel.addEventListener("mousedown", (e) => {
-    if (e.target.id === dockId) return; // Dock 아이콘 클릭은 제외
+    if (e.target.id === dockId) return; // Dock 아이콘 클릭 제외
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
@@ -1052,16 +1047,25 @@ function makeResizable(panelId) {
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
+
     if (currentHandle === "right") {
-      panel.style.width = (e.clientX - rect.left) + "px";
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 150) panel.style.width = newWidth + "px";
     } else if (currentHandle === "left") {
-      panel.style.width = (rect.right - e.clientX) + "px";
-      panel.style.left = e.clientX + "px";
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 150) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px";
+      }
     } else if (currentHandle === "bottom") {
-      panel.style.height = (e.clientY - rect.top) + "px";
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
     } else if (currentHandle === "top") {
-      panel.style.height = (rect.bottom - e.clientY) + "px";
-      panel.style.top = e.clientY + "px";
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px";
+      }
     }
   });
 
@@ -1093,10 +1097,11 @@ document.addEventListener("DOMContentLoaded", () => {
   maximizeBtn.addEventListener("click", () => {
     panel.classList.remove("minimized");
     panel.classList.remove("collapsed");
-    panel.style.width = "100%";
-    panel.style.height = "100%";
+    panel.style.position = "fixed";
     panel.style.top = "0";
     panel.style.left = "0";
+    panel.style.width = "100%";
+    panel.style.height = "100%";
   });
 
   // 닫기
@@ -1110,6 +1115,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // 네 면 리사이즈
   makeResizable("user-panel");
 });
+
+// ✅ 닫은 패널 다시 열기 함수
+function openUserPanel() {
+  const panel = document.getElementById("user-panel");
+  panel.style.display = "block";
+}
 
     
 </script>
