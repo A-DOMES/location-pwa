@@ -1103,7 +1103,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 닫기
   closeBtn.addEventListener("click", () => {
-    panel.style.display = "none";
+    panel.classList.remove("open");  // ← display:none 대신 클래스 제거
   });
 
   // 드래그 + Snap
