@@ -989,6 +989,54 @@ if (locationBox) {
   makeDraggable(locationBox);
 }
 
+// ---------------------- 드래그 이동 + 좌/우 Snap + Dock 접기/펼치기 기능 ----------------------
+// ✅ 공통 패널 드래그 + Snap + Dock 함수
+function makePanelDraggable(panelId, dockId) {
+  const panel = document.getElementById(panelId);
+  const dockIcon = document.getElementById(dockId);
+  let isDragging = false, offsetX = 0, offsetY = 0;
+
+  panel.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      panel.style.left = (e.clientX - offsetX) + "px";
+      panel.style.top = (e.clientY - offsetY) + "px";
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      const rect = panel.getBoundingClientRect();
+      if (rect.left < 50) {
+        panel.classList.add("snap-left");
+        panel.classList.remove("snap-right");
+      } else if (window.innerWidth - rect.right < 50) {
+        panel.classList.add("snap-right");
+        panel.classList.remove("snap-left");
+      } else {
+        panel.classList.remove("snap-left", "snap-right");
+      }
+    }
+  });
+
+  dockIcon.addEventListener("click", () => {
+    if (panel.classList.contains("snap-left") || panel.classList.contains("snap-right")) {
+      panel.classList.toggle("collapsed");
+    }
+  });
+}
+
+// ✅ 각 패널에 적용
+makePanelDraggable("connection-panel", "dock-icon-connection");
+makePanelDraggable("settings-panel", "dock-icon-settings");
+makePanelDraggable("user-panel", "dock-icon-user");
+
     
 </script>
 
@@ -1370,6 +1418,8 @@ header {
   transition: opacity 0.5s ease, top 2s ease;
 }
 
+
+  
 /* ✅ svg 아이콘 크기 설정 */
 .coord svg {
   width: 16px;
@@ -1390,11 +1440,26 @@ header {
   cursor: pointer;
 }
 
+/* ✅ 패널 Snap/접기 확장 */
+.dropdown-panel.snap-left { left: 0; }
+.dropdown-panel.snap-right { right: 0; left: auto; }
+.dropdown-panel.collapsed { width: 40px; height: 40px; overflow: hidden; }
+
+#dock-icon-connection,
+#dock-icon-settings,
+#dock-icon-user {
+  cursor: pointer;
+  padding: 6px;
+  background: #ddd;
+  text-align: center;
+  font-weight: bold;
+}
   
 </style>
 </head>
 
 <body>
+
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
@@ -1406,6 +1471,8 @@ header {
 
   <!-- 접속현황 패널 -->
   <div id="connection-panel" class="dropdown-panel">
+      <!-- ✅ Dock 아이콘 추가 -->
+    <div id="dock-icon-connection">≡</div>
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">위치 / 경로 보기</div>
@@ -1423,6 +1490,7 @@ header {
 
   <!-- 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
+    <div id="dock-icon-settings">≡</div>
     <div class="dropdown-item">
       <strong>벡터지도 (라이트/다크)</strong><br>
       <label class="switch">
@@ -1511,6 +1579,7 @@ header {
   
   <!-- 사용자 정보 패널 -->
   <div id="user-panel">
+    <div id="dock-icon-user">≡</div>
     <div class="panel-header">
       <h3 id="user-panel-title">사용자 정보</h3>
       <button id="close-user-panel">✖ 닫기</button>
