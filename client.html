@@ -1,4 +1,4 @@
-패널이 움직이고 우측좌 좌측에 찰싹다라붙는 코드
+관리자 client.html 원본, 이 코드가 중심, 260425
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -991,62 +991,6 @@ if (locationBox) {
   makeDraggable(locationBox);
 }
 
-// ---------------------- 드래그 이동 + 좌/우 Snap + Dock 접기/펼치기 기능 ----------------------
-// ✅ 공통 패널 드래그 + Snap + Dock 함수
-function makePanelDraggable(panelId, dockId) {
-  const panel = document.getElementById(panelId);
-  const dockIcon = document.getElementById(dockId);
-  let isDragging = false, offsetX = 0, offsetY = 0;
-
-  panel.addEventListener("mousedown", (e) => {
-    if (e.target.id === dockId) return; // Dock 아이콘 클릭은 제외
-    isDragging = true;
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (isDragging) {
-      panel.style.left = (e.clientX - offsetX) + "px";
-      panel.style.top = (e.clientY - offsetY) + "px";
-    }
-  });
-
-  document.addEventListener("mouseup", () => {
-    if (isDragging) {
-      isDragging = false;
-      const rect = panel.getBoundingClientRect();
-  
-      if (rect.left < 50) {
-        // 좌측에 붙이기
-        panel.style.left = "0px";
-        panel.style.right = "auto";
-        panel.classList.add("snap-left");
-        panel.classList.remove("snap-right");
-      } else if (window.innerWidth - rect.right < 50) {
-        // 우측에 붙이기
-        panel.style.right = "0px";
-        panel.style.left = "auto";
-        panel.classList.add("snap-right");
-        panel.classList.remove("snap-left");
-      } else {
-        panel.classList.remove("snap-left", "snap-right");
-      }
-    }
-  });
-
-  dockIcon.addEventListener("click", () => {
-    if (panel.classList.contains("snap-left") || panel.classList.contains("snap-right")) {
-      panel.classList.toggle("collapsed");
-    }
-  });
-}
-
-// ✅ 사용자 패널에만 적용
-document.addEventListener("DOMContentLoaded", () => {
-  makePanelDraggable("user-panel", "dock-icon-user");
-});
-
     
 </script>
 
@@ -1428,8 +1372,6 @@ header {
   transition: opacity 0.5s ease, top 2s ease;
 }
 
-
-  
 /* ✅ svg 아이콘 크기 설정 */
 .coord svg {
   width: 16px;
@@ -1450,41 +1392,11 @@ header {
   cursor: pointer;
 }
 
-/* ✅ 패널 Snap/접기 확장 */
-.dropdown-panel.snap-left { left: 0; }
-.dropdown-panel.snap-right { right: 0; left: auto; }
-.dropdown-panel.collapsed { width: 40px; height: 40px; overflow: hidden; }
-
-#dock-icon-connection,
-#dock-icon-settings,
-#dock-icon-user {
-  cursor: pointer;
-  padding: 6px;
-  background: #ddd;
-  text-align: center;
-  font-weight: bold;
-}
-
-/* ✅ 패널 Snap/접기 확장 */
-.dropdown-panel.snap-left { left: 0; }
-.dropdown-panel.snap-right { right: 0; left: auto; }
-.dropdown-panel.collapsed { width: 40px; height: 40px; overflow: hidden; }
-
-#dock-icon-connection,
-#dock-icon-settings,
-#dock-icon-user {
-  cursor: pointer;
-  padding: 6px;
-  background: #ddd;
-  text-align: center;
-  font-weight: bold;
-}
   
 </style>
 </head>
 
 <body>
-
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
@@ -1601,7 +1513,6 @@ header {
   
   <!-- 사용자 정보 패널 -->
   <div id="user-panel">
-    <div id="dock-icon-user">≡</div>
     <div class="panel-header">
       <h3 id="user-panel-title">사용자 정보</h3>
       <button id="close-user-panel">✖ 닫기</button>
