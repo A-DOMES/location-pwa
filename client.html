@@ -1,4 +1,4 @@
-관리자 client.html 원본, 이 코드가 중심, 260425
+대부분안됨, 닫기후 다시열면 안되는 현상도 있음, 현재 이코드로 수정중
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -962,7 +962,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// ---------------------- 드래그 기능 (현재위치추적공유)) ----------------------
+    
+// ---------------------- 드래그 기능 (locationBox) ----------------------
 function makeDraggable(element) {
   let offsetX = 0, offsetY = 0, isDown = false;
 
@@ -970,12 +971,10 @@ function makeDraggable(element) {
     isDown = true;
     offsetX = e.clientX - element.offsetLeft;
     offsetY = e.clientY - element.offsetTop;
-    element.style.right = ""; // 오른쪽 고정 해제
+    element.style.right = ""; // 오른쪽 고정 해제 (자유롭게 이동 가능)
   });
 
-  document.addEventListener('mouseup', () => {
-    isDown = false;
-  });
+  document.addEventListener('mouseup', () => { isDown = false; });
 
   document.addEventListener('mousemove', (e) => {
     if (isDown) {
@@ -987,13 +986,164 @@ function makeDraggable(element) {
 
 // ✅ locationBox에 드래그 기능 적용
 const locationBox = document.getElementById("locationBox");
-if (locationBox) {
-  makeDraggable(locationBox);
+if (locationBox) makeDraggable(locationBox);
+
+// ---------------------- 패널 드래그 + Snap ----------------------
+function makePanelDraggable(panelId, dockId) {
+  const panel = document.getElementById(panelId);
+  let isDragging = false, offsetX = 0, offsetY = 0;
+
+  panel.addEventListener("mousedown", (e) => {
+    if (e.target.id === dockId) return; // Dock 아이콘 클릭은 제외
+    isDragging = true;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+
+    // 드래그 시작 시 Snap 해제
+    panel.classList.remove("snap-left", "snap-right");
+    panel.style.position = "absolute";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      panel.style.left = (e.clientX - offsetX) + "px";
+      panel.style.top = (e.clientY - offsetY) + "px";
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      const rect = panel.getBoundingClientRect();
+
+      if (rect.left < 50) {
+        // 좌측 Snap
+        panel.style.left = "0px";
+        panel.style.right = "auto";
+        panel.classList.add("snap-left");
+        panel.classList.remove("snap-right");
+      } else if (window.innerWidth - rect.right < 50) {
+        // 우측 Snap
+        panel.style.right = "0px";
+        panel.style.left = "auto";
+        panel.classList.add("snap-right");
+        panel.classList.remove("snap-left");
+      } else {
+        // Snap 해제 상태 유지
+        panel.classList.remove("snap-left", "snap-right");
+      }
+    }
+  });
 }
 
-    
+// ---------------------- 네 면 리사이즈 ----------------------
+function makeResizable(panelId) {
+  const panel = document.getElementById(panelId);
+  const handles = panel.querySelectorAll(".resize-handle");
+  let isResizing = false, currentHandle = null;
+
+  handles.forEach(handle => {
+    handle.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      currentHandle = handle.classList.contains("left") ? "left" :
+                      handle.classList.contains("right") ? "right" :
+                      handle.classList.contains("top") ? "top" : "bottom";
+      document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
+    });
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
+
+    if (currentHandle === "right") {
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 150) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "left") {
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 150) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px";
+      }
+    } else if (currentHandle === "bottom") {
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+    } else if (currentHandle === "top") {
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px";
+      }
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isResizing = false;
+    document.body.style.userSelect = "auto"; // 드래그 끝나면 텍스트 선택 가능
+  });
+}
+
+// ---------------------- 사용자 패널 초기화 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("user-panel");
+  const dockIcon = document.getElementById("dock-icon-user");
+  const minimizeBtn = document.getElementById("minimize-btn");
+  const maximizeBtn = document.getElementById("maximize-btn");
+  const closeBtn = document.getElementById("close-user-panel");
+
+  // 접기/펼치기
+  dockIcon.addEventListener("click", () => {
+    panel.classList.toggle("collapsed");
+  });
+
+  // 최소화
+  minimizeBtn.addEventListener("click", () => {
+    panel.classList.add("minimized");
+    panel.style.position = "fixed";
+    panel.style.bottom = "0";
+    panel.style.right = "0";
+    panel.style.top = "auto";
+    panel.style.left = "auto";
+  });
+
+  // 최대화
+  maximizeBtn.addEventListener("click", () => {
+    panel.classList.remove("minimized");
+    panel.classList.remove("collapsed");
+    panel.style.position = "fixed";
+    panel.style.top = "0";
+    panel.style.left = "0";
+    panel.style.width = "100%";
+    panel.style.height = "100%";
+  });
+
+  // 닫기
+  closeBtn.addEventListener("click", () => {
+    panel.style.display = "none";
+  });
+
+  // 네 면 리사이즈 활성화
+  makeResizable("user-panel");
+  // 드래그 + Snap 활성화
+  makePanelDraggable("user-panel", "dock-icon-user");
+});
+
+// ---------------------- 다시 열기 ----------------------
+function openUserPanel() {
+  const panel = document.getElementById("user-panel");
+  panel.style.display = "block";
+  panel.classList.remove("minimized");
+  panel.classList.remove("collapsed");
+  panel.style.position = "absolute"; // 다시 자유롭게
+  panel.style.top = "50px";          // 기본 위치
+  panel.style.right = "0";           // 기본적으로 우측에 붙여 시작
+  panel.style.width = "400px";       // 기본 너비
+  panel.style.height = "300px";      // 기본 높이
+}
+
 </script>
 
+  
 
 <!-- 스타일 -->
 <style>
@@ -1372,6 +1522,8 @@ header {
   transition: opacity 0.5s ease, top 2s ease;
 }
 
+
+  
 /* ✅ svg 아이콘 크기 설정 */
 .coord svg {
   width: 16px;
@@ -1392,11 +1544,123 @@ header {
   cursor: pointer;
 }
 
+/* ✅ 패널 Snap/접기 확장 */
+.dropdown-panel.snap-left { 
+  left: 0;              /* 좌측에 붙은 상태 */
+}
+.dropdown-panel.snap-right { 
+  right: 0; 
+  left: auto;           /* 우측에 붙은 상태 */
+}
+.dropdown-panel.collapsed { /* 접기 상태 */
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+}
+
+/* Dock 아이콘 스타일 */
+#dock-icon-connection,
+#dock-icon-settings,
+#dock-icon-user {
+  cursor: pointer;
+  padding: 6px;
+  background: #ddd;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* ✅ 사용자 패널 접기 상태 */
+#user-panel.collapsed {
+  width: 40px;   /* 접기 시 작은 크기 */
+  height: 40px;
+  overflow: hidden;
+}
+/* 접기 상태에서는 내부 요소 숨김 */
+#user-panel.collapsed .panel-header,
+#user-panel.collapsed #path-select-container,
+#user-panel.collapsed #user-content {
+  display: none;
+}
+
+/* ✅ 최소화 상태 */
+#user-panel.minimized {
+  position: fixed;   /* 화면 하단에 고정 */
+  bottom: 0;
+  right: 0;          /* 우측에 붙은 상태에서 최소화 */
+  width: 200px;      /* 최소화 시 남길 바 크기 */
+  height: 40px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+  overflow: hidden;
+}
+/* 최소화 상태에서는 내부 요소 숨김 */
+#user-panel.minimized .panel-header,
+#user-panel.minimized #path-select-container,
+#user-panel.minimized #user-content {
+  display: none;
+}
+
+/* ✅ 내부 콘텐츠 반응형 */
+#user-content {
+  width: 100%;
+  height: calc(100% - 40px); /* 헤더 제외한 영역 */
+  overflow: auto;            /* 패널 줄어들면 스크롤 처리 */
+}
+#user-panel table {
+  width: 100%;               /* 패널 크기에 맞춰 반응 */
+  table-layout: auto;
+  border-collapse: collapse;
+}
+#user-panel th, 
+#user-panel td {
+  word-wrap: break-word;
+}
+
+/* ✅ 버튼 영역 고정 */
+.panel-controls {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+/* ✅ 네 면 리사이즈 핸들 */
+.resize-handle {
+  position: absolute;
+  background: transparent;
+}
+/* 좌측 리사이즈 핸들 */
+.resize-handle.left {
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+/* 우측 리사이즈 핸들 */
+.resize-handle.right {
+  right: 0; top: 0; bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+/* 상단 리사이즈 핸들 */
+.resize-handle.top {
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+/* 하단 리사이즈 핸들 */
+.resize-handle.bottom {
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+
+
   
 </style>
 </head>
 
 <body>
+
   <!-- 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
@@ -1511,27 +1775,52 @@ header {
 
 
   
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
-    </div>
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
-    <div id="user-content">
-      <table id="user-table">
-        <thead>
-          <tr id="user-table-header"></tr>
-        </thead>
-        <tbody id="user-table-body"></tbody>
-      </table>
+<!-- 사용자 정보 패널 전체 컨테이너 -->
+<div id="user-panel" class="dropdown-panel snap-right">
+
+  <!-- Dock 아이콘 (≡ 버튼을 눌러 패널 접기/펼치기) -->
+  <div id="dock-icon-user">≡</div>
+
+  <!-- 패널 헤더 영역 -->
+  <div class="panel-header">
+    <!-- 패널 제목 -->
+    <h3 id="user-panel-title">사용자 정보</h3>
+
+    <!-- 패널 제어 버튼들 (최소화, 최대화, 닫기) -->
+    <div class="panel-controls">
+      <button id="minimize-btn">━</button> <!-- 최소화 버튼 -->
+      <button id="maximize-btn">⬜</button> <!-- 최대화 버튼 -->
+      <button id="close-user-panel">✖ 닫기</button> <!-- 닫기 버튼 -->
     </div>
   </div>
+
+  <!-- 경로 선택 영역 -->
+  <div id="path-select-container">
+    <label for="path-user-select">경로 보기 선택:</label>
+    <!-- 드롭다운 메뉴 (전체/특정 경로 선택) -->
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
+    </select>
+  </div>
+
+  <!-- 사용자 테이블 영역 -->
+  <div id="user-content">
+    <table id="user-table">
+      <thead>
+        <!-- 테이블 헤더 (동적으로 채워짐) -->
+        <tr id="user-table-header"></tr>
+      </thead>
+      <tbody id="user-table-body"></tbody> <!-- 테이블 본문 (사용자 데이터 표시) -->
+    </table>
+  </div>
+
+  <!-- 네 면 리사이즈 핸들 (마우스로 크기 조절 가능) -->
+  <div class="resize-handle left"></div>   <!-- 좌측 리사이즈 핸들 -->
+  <div class="resize-handle right"></div>  <!-- 우측 리사이즈 핸들 -->
+  <div class="resize-handle top"></div>    <!-- 상단 리사이즈 핸들 -->
+  <div class="resize-handle bottom"></div> <!-- 하단 리사이즈 핸들 -->
+</div>
+
 
   <!-- 지도 영역 -->
   <div id="map"></div>
