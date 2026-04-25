@@ -1078,6 +1078,16 @@ function makeResizable(panelId) {
 
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
+  // ✅ 첫 화면에서 지도 전체화면 요청
+  const mapElement = document.getElementById("map");
+  if (mapElement.requestFullscreen) {
+    mapElement.requestFullscreen();
+  } else if (mapElement.webkitRequestFullscreen) { // Safari
+    mapElement.webkitRequestFullscreen();
+  } else if (mapElement.msRequestFullscreen) { // IE/Edge
+    mapElement.msRequestFullscreen();
+  }
+
   const panel = document.getElementById("user-panel");
   const dockIcon = document.getElementById("dock-icon-user");
   const minimizeBtn = document.getElementById("minimize-btn");
