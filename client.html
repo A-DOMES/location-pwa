@@ -1044,32 +1044,54 @@ function makeResizable(panelId) {
   const handles = panel.querySelectorAll(".resize-handle");
   let isResizing = false, currentHandle = null;
 
+  // 각 핸들에 mousedown 이벤트 연결
   handles.forEach(handle => {
     handle.addEventListener("mousedown", (e) => {
       isResizing = true;
       currentHandle = handle.classList.contains("left") ? "left" :
                       handle.classList.contains("right") ? "right" :
                       handle.classList.contains("top") ? "top" : "bottom";
-      document.body.style.userSelect = "none";
+      document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
     });
   });
 
+  // 마우스 이동 시 리사이즈 처리
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
+
     if (currentHandle === "right") {
-      panel.style.width = (e.clientX - rect.left) + "px";
+      // ✅ 우측 리사이즈: width만 변경
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+      }
     } else if (currentHandle === "left") {
-      panel.style.width = (rect.right - e.clientX) + "px";
-      panel.style.left = e.clientX + "px";
+      // ✅ 좌측 리사이즈: width + left 동시에 변경
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px";
+        panel.style.right = "auto"; // 반드시 추가해야 정상 동작
+      }
     } else if (currentHandle === "bottom") {
-      panel.style.height = (e.clientY - rect.top) + "px";
+      // ✅ 하단 리사이즈: height만 변경
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+      }
     } else if (currentHandle === "top") {
-      panel.style.height = (rect.bottom - e.clientY) + "px";
-      panel.style.top = e.clientY + "px";
+      // ✅ 상단 리사이즈: height + top 동시에 변경
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px";
+        panel.style.bottom = "auto"; // 반드시 추가해야 정상 동작
+      }
     }
   });
 
+  // 마우스 놓으면 리사이즈 종료
   document.addEventListener("mouseup", () => {
     isResizing = false;
     document.body.style.userSelect = "auto";
@@ -1083,7 +1105,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const maximizeBtn = document.getElementById("maximize-btn");
   const closeBtn = document.getElementById("close-user-panel");
 
-  // 숨기기/펼치기
+  // 숨기기/펼치기 (Dock 아이콘 클릭 시 패널 접기/펼치기)
   dockIcon.addEventListener("click", () => {
     panel.classList.toggle("collapsed");
   });
@@ -1123,21 +1145,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 닫기
+  // 닫기 버튼 → 패널 숨기기
   closeBtn.addEventListener("click", () => {
     panel.classList.remove("open");  // ← display:none 대신 클래스 제거
   });
 
-  // 드래그 + Snap
+  // 드래그 + Snap 기능 적용
   makePanelDraggable("user-panel", "dock-icon-user");
 
-  // 네 면 리사이즈
+  // 네 면 리사이즈 기능 적용
   makeResizable("user-panel");
 });
-
-
-    
-</script>
 
 
 <!-- 스타일 -->
@@ -1612,6 +1630,66 @@ header {
 }
 
 
+/* 패널 기본 */
+#user-panel {
+  position: fixed;
+  right: 0;
+  top: 50px;
+  width: 600px;
+  height: calc(100% - 50px);
+  background: #fff;
+  border-left: 1px solid #ccc;
+  display: none;
+}
+
+#user-panel.open { display: block; }
+
+/* 헤더 */
+.panel-header {
+  height: 50px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+}
+
+/* 내용 스크롤 */
+.panel-content {
+  height: calc(100% - 50px); /* 헤더 제외 영역 */
+  overflow-y: scroll;
+  padding: 10px;
+}
+
+/* 리사이즈 핸들 */
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+.resize-handle.left {
+  left: 0; top: 0;
+  width: 6px; height: 100%;
+  cursor: ew-resize;
+}
+.resize-handle.right {
+  right: 0; top: 0;
+  width: 6px; height: 100%;
+  cursor: ew-resize;
+}
+.resize-handle.top {
+  top: 0; left: 0;
+  width: 100%; height: 6px;
+  cursor: ns-resize;
+}
+.resize-handle.bottom {
+  bottom: 0; left: 0;
+  width: 100%; height: 6px;
+  cursor: ns-resize;
+}
+.resize-handle:hover {
+  background: rgba(0,0,0,0.1);
+}
 
 
 </style>
@@ -1772,6 +1850,16 @@ header {
       <tbody id="user-table-body"></tbody>
     </table>
   </div>
+
+  <!-- 패널 내용 -->
+  <div id="user-content">
+    <table id="user-table">
+      <thead>
+        <tr id="user-table-header"></tr>
+      </thead>
+      <tbody id="user-table-body"></tbody>
+    </table>
+  </div>                
 
   <!-- ✅ 네 면 리사이즈 핸들 -->
   <div class="resize-handle left"></div>
