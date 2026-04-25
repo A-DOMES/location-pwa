@@ -402,19 +402,39 @@ function showMap() {
 window.openUserPanel = function(viewMode) {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
+  let userPanel = document.getElementById("user-panel");
 
   // 다른 패널 닫기
   connectionPanel?.classList.remove("open");
   settingsPanel?.classList.remove("open");
+
+  // 패널 열기
   userPanel?.classList.add("open");
+
+  // ✅ 성공한 코드 적용
+  // 1. 드래그 가능
+  makePanelDraggable("user-panel", "dock-icon-user");
+
+  // 2. Snap 좌/우 붙기 (makePanelDraggable 안에서 처리 가능)
+
+  // 3. Dock 아이콘으로 접기/펼치기
+  const dockIcon = document.getElementById("dock-icon-user");
+  if (dockIcon) {
+    dockIcon.onclick = () => {
+      userPanel.classList.toggle("collapsed");
+    };
+  }
+
+  // 4. 패널 내부 스크롤
+  const userContent = document.getElementById("user-content");
+  if (userContent) {
+    userContent.style.overflow = "auto";
+  }
 
   // 모드 갱신
   mode = viewMode;
-
-  // ✅ 기존 마커/경로 제거
   clearMarkers();
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines.forEach(line => line.setMap(null));
   polylines = [];
 
   // 패널 제목 갱신
@@ -428,6 +448,7 @@ window.openUserPanel = function(viewMode) {
   // 패널 내용 갱신
   updateUserPanelContent(viewMode);
 };
+
 
     
 // ---------------------- 위치 박스 갱신 ----------------------
