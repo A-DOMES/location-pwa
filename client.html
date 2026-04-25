@@ -995,9 +995,11 @@ if (locationBox) {
 function makePanelDraggable(panelId, dockId) {
   const panel = document.getElementById(panelId);
   const dockIcon = document.getElementById(dockId);
+  const header = panel.querySelector(".panel-header"); // ← 헤더만 드래그 핸들로 지정
   let isDragging = false, offsetX = 0, offsetY = 0;
 
-  panel.addEventListener("mousedown", (e) => {
+  // 헤더에서만 드래그 시작
+  header.addEventListener("mousedown", (e) => {
     if (e.target.id === dockId) return; // Dock 아이콘 클릭은 제외
     isDragging = true;
     offsetX = e.offsetX;
@@ -1034,6 +1036,7 @@ function makePanelDraggable(panelId, dockId) {
     }
   });
 }
+
 
 // ---------------------- 네 면 리사이즈 ----------------------
 function makeResizable(panelId) {
