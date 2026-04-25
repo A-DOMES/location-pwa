@@ -388,33 +388,71 @@ function showMap() {
       settingsPanel.classList.toggle("open");
     };
 
-    // ✅ 닫기 버튼 이벤트
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.onclick = () => {
-        userPanel.classList.remove("open");
-      };
-    }
-  });
-    
+// ✅ 닫기 버튼 이벤트
+const closeBtn = document.getElementById("close-user-panel");
+if (closeBtn) {
+  closeBtn.onclick = () => {
+    const panel = document.getElementById("user-panel");
+    if (panel) panel.remove();  // ✅ DOM에서 완전히 제거
+  };
+}
 
 // ---------------------- 사용자 패널 열기 ----------------------
 window.openUserPanel = function(viewMode) {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
+  let userPanel = document.getElementById("user-panel");
 
   // 다른 패널 닫기
   connectionPanel?.classList.remove("open");
   settingsPanel?.classList.remove("open");
-  userPanel?.classList.add("open");
+
+  // ✅ 패널이 없으면 새로 생성
+  if (!userPanel) {
+    userPanel = document.createElement("div");
+    userPanel.id = "user-panel";
+    userPanel.className = "dropdown-panel snap-right open";
+    userPanel.innerHTML = `
+      <div id="dock-icon-user">≡</div>
+      <div class="panel-header">
+        <h3 id="user-panel-title">사용자 정보</h3>
+        <div class="panel-controls">
+          <button id="minimize-btn">━</button>
+          <button id="maximize-btn">⬜</button>
+          <button id="close-user-panel">✖ 닫기</button>
+        </div>
+      </div>
+      <div id="path-select-container">
+        <label for="path-user-select">경로 보기 선택:</label>
+        <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+          <option value="all">전체</option>
+        </select>
+      </div>
+      <div id="user-content">
+        <table id="user-table">
+          <thead><tr id="user-table-header"></tr></thead>
+          <tbody id="user-table-body"></tbody>
+        </table>
+      </div>
+    `;
+    document.body.appendChild(userPanel);
+
+    // ✅ 닫기 버튼 이벤트 다시 연결
+    const newCloseBtn = userPanel.querySelector("#close-user-panel");
+    if (newCloseBtn) {
+      newCloseBtn.onclick = () => userPanel.remove();
+    }
+  } else {
+    // 이미 패널이 있으면 다시 열기
+    userPanel.classList.add("open");
+  }
 
   // 모드 갱신
   mode = viewMode;
 
   // ✅ 기존 마커/경로 제거
   clearMarkers();
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines.forEach(line => line.setMap(null));
   polylines = [];
 
   // 패널 제목 갱신
