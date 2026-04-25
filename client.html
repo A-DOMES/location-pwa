@@ -1040,10 +1040,37 @@ function makePanelDraggable(panelId, dockId) {
   });
 }
 
+function makeResizable(panelId) {
+  const panel = document.getElementById(panelId);
+  const handle = panel.querySelector(".resize-handle");
+  let isResizing = false;
+
+  handle.addEventListener("mousedown", (e) => {
+    isResizing = true;
+    document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isResizing) {
+      const newWidth = e.clientX - panel.offsetLeft;
+      const newHeight = e.clientY - panel.offsetTop;
+      panel.style.width = newWidth + "px";
+      panel.style.height = newHeight + "px";
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isResizing = false;
+    document.body.style.userSelect = "auto";
+  });
+}
+    
 // ✅ 사용자 패널에만 적용
 document.addEventListener("DOMContentLoaded", () => {
-  makePanelDraggable("user-panel", "dock-icon-user");
+  makePanelDraggable("user-panel", "dock-icon-user");  // 드래그 + Snap + Dock
+  makeResizable("user-panel");                         // ✅ 리사이즈 기능 추가
 });
+
 
     
 </script>
@@ -1477,6 +1504,17 @@ header {
   text-align: center;
   font-weight: bold;
 }
+
+/* 패널 리사이즈(사이즈조절) 핸들 */
+.resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #888;
+  cursor: se-resize;
+}
   
 </style>
 </head>
@@ -1597,28 +1635,38 @@ header {
 
 
   
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div id="dock-icon-user">≡</div>
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <button id="close-user-panel">✖ 닫기</button>
-    </div>
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
-    <div id="user-content">
-      <table id="user-table">
-        <thead>
-          <tr id="user-table-header"></tr>
-        </thead>
-        <tbody id="user-table-body"></tbody>
-      </table>
-    </div>
+<!-- 사용자 정보 패널 -->
+<div id="user-panel">
+  <!-- Dock 아이콘 -->
+  <div id="dock-icon-user">≡</div>
+
+  <!-- 패널 헤더 -->
+  <div class="panel-header">
+    <h3 id="user-panel-title">사용자 정보</h3>
+    <button id="close-user-panel">✖ 닫기</button>
   </div>
+
+  <!-- 경로 선택 -->
+  <div id="path-select-container">
+    <label for="path-user-select">경로 보기 선택:</label>
+    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+      <option value="all">전체</option>
+    </select>
+  </div>
+
+  <!-- 사용자 테이블 -->
+  <div id="user-content">
+    <table id="user-table">
+      <thead>
+        <tr id="user-table-header"></tr>
+      </thead>
+      <tbody id="user-table-body"></tbody>
+    </table>
+  </div>
+  <!-- ✅ 리사이즈 핸들 -->
+  <div class="resize-handle"></div>
+</div>
+
 
   <!-- 지도 영역 -->
   <div id="map"></div>
