@@ -1580,6 +1580,7 @@ header {
 
   
 /* ---------------------- 사용자 패널 ---------------------- */
+/* 패널 전체 틀 */
 #user-panel {
   position: fixed;
   right: 0;
@@ -1589,33 +1590,30 @@ header {
   background: #fff;
   border-left: 1px solid #ccc;
   display: none;
-  overflow-y: scroll;   /* ✅ 항상 스크롤바 표시 */
 }
 
-/* 패널이 열릴 때 */
-#user-panel.open {
-  display: block;
+#user-panel.open { display:block; }
+
+/* 헤더 고정 */
+.panel-header {
+  height: 50px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
 }
 
-/* 스크롤바 스타일 (선택 사항) */
-#user-panel::-webkit-scrollbar {
-  width: 10px;
+/* 내용만 스크롤 */
+.panel-content {
+  height: calc(100% - 50px); /* 헤더 제외한 영역 */
+  overflow-y: scroll;        /* 스크롤바 표시 */
+  padding: 10px;
 }
 
-#user-panel::-webkit-scrollbar-track {
-  background: #f0f0f0;
-}
 
-#user-panel::-webkit-scrollbar-thumb {
-  background-color: #888;
-  border-radius: 5px;
-}
 
-#user-panel::-webkit-scrollbar-thumb:hover {
-  background-color: #555;
-}
 
- 
 </style>
 </head>
 
@@ -1750,6 +1748,13 @@ header {
     </div>
   </div>
 
+  <!-- 내용 영역 (여기에 스크롤 적용) -->
+  <div class="panel-content">
+    <div id="path-select-container">…</div>
+    <div id="user-content">…</div>
+  </div>
+</div>
+  
   <!-- 경로 선택 -->
   <div id="path-select-container">
     <label for="path-user-select">경로 보기 선택:</label>
