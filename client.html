@@ -1165,8 +1165,22 @@ document.addEventListener("DOMContentLoaded", () => {
   width: 40px;   /* 원하는 폭으로 조정 */
 }
 
-  #user-panel.open { display:block; }
-  .panel-header { display:flex; justify-content:space-between; align-items:center; }
+#user-panel.open {
+  display: block;
+  position: fixed;   /* 화면 전체에 고정 */
+  top: 0;
+  left: 0;
+  width: 100%;       /* 가로 전체 */
+  height: 100%;      /* 세로 전체 */
+  z-index: 9999;     /* 다른 요소 위에 표시 */
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 #close-user-panel {
   background-color: #555;      /* 짙은 회색 → 차분하고 깔끔 */
   color: #fff;                 /* 글자는 흰색 */
@@ -1177,10 +1191,10 @@ document.addEventListener("DOMContentLoaded", () => {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-
 #close-user-panel:hover {
-  background-color: #333;      /* 마우스 올리면 더 진한 회색 */
+  background-color: #333;      /* 마우스 올리면 더 짙은 색 */
 }
+
 
   #user-panel h3 { margin:0; }
 
