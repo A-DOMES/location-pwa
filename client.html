@@ -1807,8 +1807,6 @@ header {
 </div>
 
 
-
-  
 <!-- 사용자 정보 패널 -->
 <div id="user-panel">
   <!-- Dock 아이콘 -->
@@ -1824,40 +1822,26 @@ header {
     </div>
   </div>
 
-  <!-- 내용 영역 (여기에 스크롤 적용) -->
+  <!-- 내용 영역 -->
   <div class="panel-content">
-    <div id="path-select-container">…</div>
-    <div id="user-content">…</div>
-  </div>
-</div>
-  
-  <!-- 경로 선택 -->
-  <div id="path-select-container">
-    <label for="path-user-select">경로 보기 선택:</label>
-    <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-      <option value="all">전체</option>
-    </select>
-  </div>
+    <!-- 경로 선택 -->
+    <div id="path-select-container">
+      <label for="path-user-select">경로 보기 선택:</label>
+      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+        <option value="all">전체</option>
+      </select>
+    </div>
 
-  <!-- 사용자 테이블 -->
-  <div id="user-content">
-    <table id="user-table">
-      <thead>
-        <tr id="user-table-header"></tr>
-      </thead>
-      <tbody id="user-table-body"></tbody>
-    </table>
+    <!-- 사용자 테이블 -->
+    <div id="user-content">
+      <table id="user-table">
+        <thead>
+          <tr id="user-table-header"></tr>
+        </thead>
+        <tbody id="user-table-body"></tbody>
+      </table>
+    </div>
   </div>
-
-  <!-- 패널 내용 -->
-  <div id="user-content">
-    <table id="user-table">
-      <thead>
-        <tr id="user-table-header"></tr>
-      </thead>
-      <tbody id="user-table-body"></tbody>
-    </table>
-  </div>                
 
   <!-- ✅ 네 면 리사이즈 핸들 -->
   <div class="resize-handle left"></div>
@@ -1866,12 +1850,12 @@ header {
   <div class="resize-handle bottom"></div>
 </div>
 
+<!-- 지도 영역 -->
+<div id="map"></div>
 
-  <!-- 지도 영역 -->
-  <div id="map"></div>
+<!-- 메시지 박스 -->
+<div id="message-box"></div>
 
-  <!-- 메시지 박스 -->
-  <div id="message-box"></div>
 
   <!-- ✅ 라이트/다크 스타일 JSON 정의 -->
   <script>
