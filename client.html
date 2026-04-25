@@ -1109,9 +1109,6 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.style.display = "none";
   });
 
-  // 드래그 + Snap
-  makePanelDraggable("user-panel", "dock-icon-user");
-
   // 네 면 리사이즈
   makeResizable("user-panel");
 });
@@ -1120,7 +1117,10 @@ document.addEventListener("DOMContentLoaded", () => {
 function openUserPanel() {
   const panel = document.getElementById("user-panel");
   panel.style.display = "block";
+  panel.classList.remove("minimized");
+  panel.classList.remove("collapsed");
 }
+
 
     
 </script>
@@ -1556,6 +1556,20 @@ header {
 #user-panel.minimized {
   height: 40px;
   overflow: hidden;
+  position: fixed; /* 화면 하단에 고정할 경우 */
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: 200px; /* 최소화 시 남길 바 크기 */
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+}
+
+/* 최소화 상태에서 내부 숨기기 */
+#user-panel.minimized .panel-header,
+#user-panel.minimized #path-select-container,
+#user-panel.minimized #user-content {
+  display: none;
 }
 
 /* ✅ 네 면 리사이즈 핸들 */
@@ -1567,6 +1581,7 @@ header {
 .resize-handle.right { right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
 .resize-handle.top { top: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
 .resize-handle.bottom { bottom: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+
 
   
 </style>
@@ -1721,12 +1736,13 @@ header {
     </table>
   </div>
 
-  <!-- ✅ 네 면 리사이즈 핸들 -->
+  <!-- 네 면 리사이즈 핸들 -->
   <div class="resize-handle left"></div>
   <div class="resize-handle right"></div>
   <div class="resize-handle top"></div>
   <div class="resize-handle bottom"></div>
 </div>
+
 
 
   <!-- 지도 영역 -->
