@@ -1,3 +1,5 @@
+패널 좌측과 상단부분의 계산오류, 입부분만 해결하면 ok
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1037,40 +1039,57 @@ function makePanelDraggable(panelId, dockId) {
 
 
 // ---------------------- 네 면 리사이즈 ----------------------
-document.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const rect = panel.getBoundingClientRect();
+function makeResizable(panelId) {
+  const panel = document.getElementById(panelId);
+  const handles = panel.querySelectorAll(".resize-handle");
+  let isResizing = false, currentHandle = null;
 
-  if (currentHandle === "right") {
-    // ✅ 우측 리사이즈
-    const newWidth = e.clientX - rect.left;
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
-    }
-  } else if (currentHandle === "left") {
-    // ✅ 좌측 리사이즈 (오른쪽 끝 기준으로 계산)
-    const newWidth = rect.right - e.clientX;
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
-      panel.style.left = e.clientX + "px";   // 왼쪽 기준점 갱신
-    }
-  } else if (currentHandle === "bottom") {
-    // ✅ 하단 리사이즈
-    const newHeight = e.clientY - rect.top;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-    }
-  } else if (currentHandle === "top") {
-    // ✅ 상단 리사이즈 (아래쪽 끝 기준으로 계산)
-    const newHeight = rect.bottom - e.clientY;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = e.clientY + "px";    // 위쪽 기준점 갱신
-    }
-  }
-});
+  // 각 핸들에 mousedown 이벤트 연결
+  handles.forEach(handle => {
+    handle.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      currentHandle = handle.classList.contains("left") ? "left" :
+                      handle.classList.contains("right") ? "right" :
+                      handle.classList.contains("top") ? "top" : "bottom";
+      document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
+    });
+  });
 
+  // 마우스 이동 시 리사이즈 처리
+  document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
 
+    if (currentHandle === "right") {
+      // ✅ 우측 리사이즈: width만 변경
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+      }
+    } else if (currentHandle === "left") {
+      // ✅ 좌측 리사이즈: width + left 동시에 변경
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px";
+        panel.style.right = "auto"; // 반드시 추가해야 정상 동작
+      }
+    } else if (currentHandle === "bottom") {
+      // ✅ 하단 리사이즈: height만 변경
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+      }
+    } else if (currentHandle === "top") {
+      // ✅ 상단 리사이즈: height + top 동시에 변경
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px";
+        panel.style.bottom = "auto"; // 반드시 추가해야 정상 동작
+      }
+    }
+  });
 
   // 마우스 놓으면 리사이즈 종료
   document.addEventListener("mouseup", () => {
