@@ -1078,19 +1078,8 @@ function makeResizable(panelId) {
 
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ 첫 화면에서 지도 전체화면 요청
-  const mapElement = document.getElementById("map");
-  if (mapElement.requestFullscreen) {
-    mapElement.requestFullscreen();
-  } else if (mapElement.webkitRequestFullscreen) { // Safari
-    mapElement.webkitRequestFullscreen();
-  } else if (mapElement.msRequestFullscreen) { // IE/Edge
-    mapElement.msRequestFullscreen();
-  }
-
   const panel = document.getElementById("user-panel");
   const dockIcon = document.getElementById("dock-icon-user");
-  const minimizeBtn = document.getElementById("minimize-btn");
   const maximizeBtn = document.getElementById("maximize-btn");
   const closeBtn = document.getElementById("close-user-panel");
 
@@ -1099,19 +1088,39 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.classList.toggle("collapsed");
   });
 
-  // 최소화
-  minimizeBtn.addEventListener("click", () => {
-    panel.classList.add("minimized");
-  });
-
-  // 최대화
+  // 최대화 ↔ 최소화 (토글)
   maximizeBtn.addEventListener("click", () => {
-    panel.classList.remove("minimized");
-    panel.classList.remove("collapsed");
-    panel.style.width = "100%";
-    panel.style.height = "100%";
-    panel.style.top = "0";
-    panel.style.left = "0";
+    if (panel.classList.contains("maximized")) {
+      // ✅ 최소화 → 원래 상태로 복귀
+      panel.classList.remove("maximized");
+
+      if (window.innerWidth <= 768) {
+        // 모바일: 하단 40% 차지
+        panel.style.width = "100%";
+        panel.style.height = "40%";
+        panel.style.top = "auto";
+        panel.style.bottom = "0";
+        panel.style.left = "0";
+        panel.style.right = "0";
+      } else {
+        // 데스크톱: 오른쪽 600px 폭
+        panel.style.width = "600px";
+        panel.style.height = "calc(100% - 50px)";
+        panel.style.top = "50px";
+        panel.style.right = "0";
+        panel.style.left = "auto";
+        panel.style.bottom = "auto";
+      }
+    } else {
+      // ✅ 최대화
+      panel.classList.add("maximized");
+      panel.style.width = "100%";
+      panel.style.height = "100%";
+      panel.style.top = "0";
+      panel.style.left = "0";
+      panel.style.right = "0";
+      panel.style.bottom = "0";
+    }
   });
 
   // 닫기
@@ -1125,6 +1134,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 네 면 리사이즈
   makeResizable("user-panel");
 });
+
 
     
 </script>
