@@ -1042,52 +1042,56 @@ function makeResizable(panelId) {
   const handles = panel.querySelectorAll(".resize-handle");
   let isResizing = false, currentHandle = null;
 
-  // 각 핸들에 mousedown 이벤트 연결
   handles.forEach(handle => {
     handle.addEventListener("mousedown", (e) => {
       isResizing = true;
       currentHandle = handle.classList.contains("left") ? "left" :
                       handle.classList.contains("right") ? "right" :
                       handle.classList.contains("top") ? "top" : "bottom";
-      document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
+      document.body.style.userSelect = "none";
     });
   });
 
-// 마우스 이동 시 리사이즈 처리
-document.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const rect = panel.getBoundingClientRect();
+  document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
 
-  if (currentHandle === "right") {
-    // ✅ 우측 리사이즈: width만 변경
-    const newWidth = e.clientX - rect.left;
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
+    if (currentHandle === "right") {
+      // ✅ 우측 리사이즈
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+      }
+    } else if (currentHandle === "left") {
+      // ✅ 좌측 리사이즈 (계산 반대로 수정)
+      const newWidth = rect.width + (rect.left - e.clientX);
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px";
+        panel.style.right = "auto";
+      }
+    } else if (currentHandle === "bottom") {
+      // ✅ 하단 리사이즈
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+      }
+    } else if (currentHandle === "top") {
+      // ✅ 상단 리사이즈 (계산 반대로 수정)
+      const newHeight = rect.height + (rect.top - e.clientY);
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px";
+        panel.style.bottom = "auto";
+      }
     }
-  } else if (currentHandle === "left") {
-    // ✅ 좌측 리사이즈: width + left 동시에 변경 (계산 반대로 수정)
-    const newWidth = rect.width + (rect.left - e.clientX);
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
-      panel.style.left = e.clientX + "px";
-      panel.style.right = "auto"; // 반드시 추가해야 정상 동작
-    }
-  } else if (currentHandle === "bottom") {
-    // ✅ 하단 리사이즈: height만 변경
-    const newHeight = e.clientY - rect.top;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-    }
-  } else if (currentHandle === "top") {
-    // ✅ 상단 리사이즈: height + top 동시에 변경 (계산 반대로 수정)
-    const newHeight = rect.height + (rect.top - e.clientY);
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = e.clientY + "px";
-      panel.style.bottom = "auto"; // 반드시 추가해야 정상 동작
-    }
-  }
-});
+  });
+
+  document.addEventListener("mouseup", () => {
+    isResizing = false;
+    document.body.style.userSelect = "auto";
+  });
+}
 
 
   // 마우스 놓으면 리사이즈 종료
