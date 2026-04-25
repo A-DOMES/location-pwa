@@ -1056,40 +1056,39 @@ function makeResizable(panelId) {
   });
 
   // 마우스 이동 시 리사이즈 처리
-  document.addEventListener("mousemove", (e) => {
-    if (!isResizing) return;
-    const rect = panel.getBoundingClientRect();
+document.addEventListener("mousemove", (e) => {
+  if (!isResizing) return;
+  const rect = panel.getBoundingClientRect();
 
-    if (currentHandle === "right") {
-      // ✅ 우측 리사이즈: width만 변경
-      const newWidth = e.clientX - rect.left;
-      if (newWidth > 200) {
-        panel.style.width = newWidth + "px";
-      }
-    } else if (currentHandle === "left") {
-      // ✅ 좌측 리사이즈: width + left 동시에 변경
-      const newWidth = rect.right - e.clientX;
-      if (newWidth > 200) {
-        panel.style.width = newWidth + "px";
-        panel.style.left = e.clientX + "px";
-        panel.style.right = "auto"; // 반드시 추가해야 정상 동작
-      }
-    } else if (currentHandle === "bottom") {
-      // ✅ 하단 리사이즈: height만 변경
-      const newHeight = e.clientY - rect.top;
-      if (newHeight > 100) {
-        panel.style.height = newHeight + "px";
-      }
-    } else if (currentHandle === "top") {
-      // ✅ 상단 리사이즈: height + top 동시에 변경
-      const newHeight = rect.bottom - e.clientY;
-      if (newHeight > 100) {
-        panel.style.height = newHeight + "px";
-        panel.style.top = e.clientY + "px";
-        panel.style.bottom = "auto"; // 반드시 추가해야 정상 동작
-      }
+  if (currentHandle === "right") {
+    const newWidth = e.clientX - rect.left;
+    if (newWidth > 200) {
+      panel.style.width = newWidth + "px";
     }
-  });
+  } else if (currentHandle === "left") {
+    // 좌측 핸들: 오른쪽 끝 기준으로 계산
+    const newWidth = rect.right - e.clientX;
+    if (newWidth > 200) {
+      panel.style.width = newWidth + "px";
+      panel.style.left = e.clientX + "px";
+      panel.style.right = "auto";
+    }
+  } else if (currentHandle === "bottom") {
+    const newHeight = e.clientY - rect.top;
+    if (newHeight > 100) {
+      panel.style.height = newHeight + "px";
+    }
+  } else if (currentHandle === "top") {
+    // 상단 핸들: 아래쪽 끝 기준으로 계산
+    const newHeight = rect.bottom - e.clientY;
+    if (newHeight > 100) {
+      panel.style.height = newHeight + "px";
+      panel.style.top = e.clientY + "px";
+      panel.style.bottom = "auto";
+    }
+  }
+});
+
 
   // 마우스 놓으면 리사이즈 종료
   document.addEventListener("mouseup", () => {
@@ -1183,16 +1182,21 @@ document.addEventListener("DOMContentLoaded", () => {
   position: absolute;
   top: 50px;
   right: 0;
-  width: 600px;   /* 기존 340px → 480px */
+  width: 600px;
   height: calc(100% - 50px);
   background: white;
   border-left: 1px solid #ccc;
   display: none;
   z-index: 3000;
-  padding: 20px;  /* 패딩 조금 늘림 */
+  padding: 20px;
   overflow-y: auto;
-  font-size: 15px; /* 글자 크기 살짝 키움 */
+  font-size: 15px;
+
+  /* 추가 */
+  max-width: 800px;
+  max-height: 90%;
 }
+
   
 /* 닉네임(전화번호) 열 폭 늘리기 */
 #user-table th:nth-child(1),
