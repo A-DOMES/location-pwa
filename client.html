@@ -960,7 +960,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// ---------------------- 드래그 기능 (현재위치추적공유)) ----------------------
+// ---------------------- 드래그 기능 (locationBox) ----------------------
 function makeDraggable(element) {
   let offsetX = 0, offsetY = 0, isDown = false;
 
@@ -989,8 +989,7 @@ if (locationBox) {
   makeDraggable(locationBox);
 }
 
-// ---------------------- 드래그 이동 + 좌/우 Snap + Dock 접기/펼치기 기능 ----------------------
-// ✅ 공통 패널 드래그 + Snap + Dock 함수
+// ---------------------- 패널 드래그 + Snap + Dock ----------------------
 function makePanelDraggable(panelId, dockId) {
   const panel = document.getElementById(panelId);
   const dockIcon = document.getElementById(dockId);
@@ -1014,15 +1013,15 @@ function makePanelDraggable(panelId, dockId) {
     if (isDragging) {
       isDragging = false;
       const rect = panel.getBoundingClientRect();
-  
+
       if (rect.left < 50) {
-        // 좌측에 붙이기
+        // 좌측 Snap
         panel.style.left = "0px";
         panel.style.right = "auto";
         panel.classList.add("snap-left");
         panel.classList.remove("snap-right");
       } else if (window.innerWidth - rect.right < 50) {
-        // 우측에 붙이기
+        // 우측 Snap
         panel.style.right = "0px";
         panel.style.left = "auto";
         panel.classList.add("snap-right");
@@ -1032,30 +1031,37 @@ function makePanelDraggable(panelId, dockId) {
       }
     }
   });
-
-  dockIcon.addEventListener("click", () => {
-    if (panel.classList.contains("snap-left") || panel.classList.contains("snap-right")) {
-      panel.classList.toggle("collapsed");
-    }
-  });
 }
 
+// ---------------------- 네 면 리사이즈 ----------------------
 function makeResizable(panelId) {
   const panel = document.getElementById(panelId);
-  const handle = panel.querySelector(".resize-handle");
-  let isResizing = false;
+  const handles = panel.querySelectorAll(".resize-handle");
+  let isResizing = false, currentHandle = null;
 
-  handle.addEventListener("mousedown", (e) => {
-    isResizing = true;
-    document.body.style.userSelect = "none"; // 드래그 중 텍스트 선택 방지
+  handles.forEach(handle => {
+    handle.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      currentHandle = handle.classList.contains("left") ? "left" :
+                      handle.classList.contains("right") ? "right" :
+                      handle.classList.contains("top") ? "top" : "bottom";
+      document.body.style.userSelect = "none";
+    });
   });
 
   document.addEventListener("mousemove", (e) => {
-    if (isResizing) {
-      const newWidth = e.clientX - panel.offsetLeft;
-      const newHeight = e.clientY - panel.offsetTop;
-      panel.style.width = newWidth + "px";
-      panel.style.height = newHeight + "px";
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
+    if (currentHandle === "right") {
+      panel.style.width = (e.clientX - rect.left) + "px";
+    } else if (currentHandle === "left") {
+      panel.style.width = (rect.right - e.clientX) + "px";
+      panel.style.left = e.clientX + "px";
+    } else if (currentHandle === "bottom") {
+      panel.style.height = (e.clientY - rect.top) + "px";
+    } else if (currentHandle === "top") {
+      panel.style.height = (rect.bottom - e.clientY) + "px";
+      panel.style.top = e.clientY + "px";
     }
   });
 
@@ -1064,13 +1070,46 @@ function makeResizable(panelId) {
     document.body.style.userSelect = "auto";
   });
 }
-    
-// ✅ 사용자 패널에만 적용
-document.addEventListener("DOMContentLoaded", () => {
-  makePanelDraggable("user-panel", "dock-icon-user");  // 드래그 + Snap + Dock
-  makeResizable("user-panel");                         // ✅ 리사이즈 기능 추가
-});
 
+// ---------------------- 사용자 패널 초기화 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("user-panel");
+  const dockIcon = document.getElementById("dock-icon-user");
+  const minimizeBtn = document.getElementById("minimize-btn");
+  const maximizeBtn = document.getElementById("maximize-btn");
+  const closeBtn = document.getElementById("close-user-panel");
+
+  // 숨기기/펼치기
+  dockIcon.addEventListener("click", () => {
+    panel.classList.toggle("collapsed");
+  });
+
+  // 최소화
+  minimizeBtn.addEventListener("click", () => {
+    panel.classList.add("minimized");
+  });
+
+  // 최대화
+  maximizeBtn.addEventListener("click", () => {
+    panel.classList.remove("minimized");
+    panel.classList.remove("collapsed");
+    panel.style.width = "100%";
+    panel.style.height = "100%";
+    panel.style.top = "0";
+    panel.style.left = "0";
+  });
+
+  // 닫기
+  closeBtn.addEventListener("click", () => {
+    panel.style.display = "none";
+  });
+
+  // 드래그 + Snap
+  makePanelDraggable("user-panel", "dock-icon-user");
+
+  // 네 면 리사이즈
+  makeResizable("user-panel");
+});
 
     
 </script>
@@ -1490,31 +1529,34 @@ header {
   font-weight: bold;
 }
 
-/* ✅ 패널 Snap/접기 확장 */
-.dropdown-panel.snap-left { left: 0; }
-.dropdown-panel.snap-right { right: 0; left: auto; }
-.dropdown-panel.collapsed { width: 40px; height: 40px; overflow: hidden; }
-
-#dock-icon-connection,
-#dock-icon-settings,
-#dock-icon-user {
-  cursor: pointer;
-  padding: 6px;
-  background: #ddd;
-  text-align: center;
-  font-weight: bold;
+/* ✅ 사용자 패널 접기 상태 */
+#user-panel.collapsed {
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+}
+#user-panel.collapsed .panel-header,
+#user-panel.collapsed #path-select-container,
+#user-panel.collapsed #user-content {
+  display: none;
 }
 
-/* 패널 리사이즈(사이즈조절) 핸들 */
+/* ✅ 최소화 상태 */
+#user-panel.minimized {
+  height: 40px;
+  overflow: hidden;
+}
+
+/* ✅ 네 면 리사이즈 핸들 */
 .resize-handle {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background: #888;
-  cursor: se-resize;
+  background: transparent;
 }
+.resize-handle.left { left: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+.resize-handle.right { right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+.resize-handle.top { top: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.resize-handle.bottom { bottom: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+
   
 </style>
 </head>
@@ -1643,7 +1685,11 @@ header {
   <!-- 패널 헤더 -->
   <div class="panel-header">
     <h3 id="user-panel-title">사용자 정보</h3>
-    <button id="close-user-panel">✖ 닫기</button>
+    <div class="panel-controls">
+      <button id="minimize-btn">━</button>
+      <button id="maximize-btn">⬜</button>
+      <button id="close-user-panel">✖ 닫기</button>
+    </div>
   </div>
 
   <!-- 경로 선택 -->
@@ -1663,8 +1709,12 @@ header {
       <tbody id="user-table-body"></tbody>
     </table>
   </div>
-  <!-- ✅ 리사이즈 핸들 -->
-  <div class="resize-handle"></div>
+
+  <!-- ✅ 네 면 리사이즈 핸들 -->
+  <div class="resize-handle left"></div>
+  <div class="resize-handle right"></div>
+  <div class="resize-handle top"></div>
+  <div class="resize-handle bottom"></div>
 </div>
 
 
