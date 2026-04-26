@@ -1181,7 +1181,8 @@ document.addEventListener("DOMContentLoaded", () => {
 #user-panel {
   position: absolute;
   top: 50px;
-  right: 0;
+   /* right: 0;  ← 제거 */
+  left: auto;       /* 기본값은 auto로 두기 */
   width: 600px;
   height: calc(100% - 50px);
   background: white;
