@@ -1394,6 +1394,41 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 .resize-handle.bottom { bottom: 0; left: 0; width: 100%; height: 6px; cursor: ns-resize; }
 .resize-handle:hover  { background: rgba(0,0,0,0.1); }
 
+
+
+/* ✅ 사용자 테이블 전체 스타일 */
+#user-table {
+  width: 100%;                 /* 테이블은 패널 너비 전체 사용 */
+  border-collapse: collapse;    /* 셀 경계선 겹치지 않도록 */
+  margin-top: 10px;             /* 위쪽 여백 */
+}
+
+/* ✅ 테이블 셀 기본 스타일 */
+#user-table th, 
+#user-table td {
+  border: 1px solid #ccc;       /* 칸 경계선 표시 */
+  padding: 8px;                 /* 셀 안쪽 여백 */
+  text-align: center;           /* 가운데 정렬 */
+}
+
+/* ✅ 테이블 헤더 스타일 */
+#user-table th {
+  background: #f5f5f5;          /* 헤더 배경색 */
+  font-weight: bold;            /* 헤더 글자 강조 */
+}
+
+/* ✅ 닉네임(전화번호) 열 폭 늘리기 */
+#user-table th:nth-child(1),
+#user-table td:nth-child(1) {
+  width: 100px;   /* 원하는 폭으로 조정 */
+}
+
+/* ✅ 상태 열 폭 늘리기 */
+#user-table th:nth-child(2),
+#user-table td:nth-child(2) {
+  width: 40px;    /* 원하는 폭으로 조정 */
+}
+  
 </style>
 </head>
 
