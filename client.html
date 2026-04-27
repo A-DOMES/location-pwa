@@ -1160,15 +1160,7 @@ function makeResizable(panelId) {
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
-  const minimizeBtn = document.getElementById("minimize-btn"); // ✅ 추가
   const closeBtn = document.getElementById("close-user-panel");
-
-  // ---------------------- 최소화 버튼 ----------------------
-  minimizeBtn.addEventListener("click", () => {
-    // ▶ 최소화 → 접기(collapsed) 상태로 전환
-    panel.classList.remove("maximized");
-    panel.classList.add("collapsed");
-  });
 
   // ---------------------- 최대화 ↔ 접기 ↔ 기본 (순환 토글) ----------------------
   maximizeBtn.addEventListener("click", () => {
@@ -1219,7 +1211,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
-
     
 </script>
 
