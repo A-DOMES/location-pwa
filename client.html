@@ -1489,76 +1489,43 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
+
 <!-- ✅ 드래그 + 리사이즈 + 모바일 대응 -->
 <script>
-  function makeDraggableAndResizable(elementId) {
-    const el = document.getElementById(elementId);
-    let offsetX, offsetY;
+function makeDraggable(el) {
+  let offsetX, offsetY;
 
-    // 드래그 이동 (PC)
-    el.addEventListener("mousedown", e => {
-      offsetX = e.clientX - el.offsetLeft;
-      offsetY = e.clientY - el.offsetTop;
-      document.onmousemove = ev => {
-        el.style.left = (ev.clientX - offsetX) + "px";
-        el.style.top = (ev.clientY - offsetY) + "px";
-      };
-      document.onmouseup = () => { document.onmousemove = null; };
-    });
+  // PC 드래그
+  el.addEventListener("mousedown", e => {
+    offsetX = e.clientX - el.offsetLeft;
+    offsetY = e.clientY - el.offsetTop;
+    document.onmousemove = ev => {
+      el.style.left = (ev.clientX - offsetX) + "px";
+      el.style.top = (ev.clientY - offsetY) + "px";
+    };
+    document.onmouseup = () => { document.onmousemove = null; };
+  });
 
-    // 드래그 이동 (모바일)
-    el.addEventListener("touchstart", e => {
-      const touch = e.touches[0];
-      offsetX = touch.clientX - el.offsetLeft;
-      offsetY = touch.clientY - el.offsetTop;
-      document.ontouchmove = ev => {
-        const t = ev.touches[0];
-        el.style.left = (t.clientX - offsetX) + "px";
-        el.style.top = (t.clientY - offsetY) + "px";
-      };
-      document.ontouchend = () => { document.ontouchmove = null; };
-    });
+  // 모바일 드래그
+  el.addEventListener("touchstart", e => {
+    const touch = e.touches[0];
+    offsetX = touch.clientX - el.offsetLeft;
+    offsetY = touch.clientY - el.offsetTop;
+    document.ontouchmove = ev => {
+      const t = ev.touches[0];
+      el.style.left = (t.clientX - offsetX) + "px";
+      el.style.top = (t.clientY - offsetY) + "px";
+    };
+    document.ontouchend = () => { document.ontouchmove = null; };
+  });
+}
 
-    // 리사이즈 핸들
-    el.querySelectorAll(".resize-handle").forEach(handle => {
-      handle.addEventListener("mousedown", e => {
-        e.preventDefault();
-        document.onmousemove = ev => {
-          if (handle.classList.contains("right")) {
-            el.style.width = (ev.clientX - el.offsetLeft) + "px";
-          } else if (handle.classList.contains("bottom")) {
-            el.style.height = (ev.clientY - el.offsetTop) + "px";
-          }
-        };
-        document.onmouseup = () => { document.onmousemove = null; };
-      });
+function makeResizable(el) {
+  const handles = el.querySelectorAll(".resize-handle");
 
-      handle.addEventListener("touchstart", e => {
-        e.preventDefault();
-        document.ontouchmove = ev => {
-          const t = ev.touches[0];
-          if (handle.classList.contains("right")) {
-            el.style.width = (t.clientX - el.offsetLeft) + "px";
-          } else if (handle.classList.contains("bottom")) {
-            el.style.height = (t.clientY - el.offsetTop) + "px";
-          }
-        };
-        document.ontouchend = () => { document.ontouchmove = null; };
-      });
-    });
-  }
-
-  // ✅ 적용
-  makeDraggableAndResizable("locationBox");
-  makeDraggableAndResizable("user-panel");
-
-  makeDraggableAndResizable("user-panel");
-
-  // ✅ 리사이즈 수정 코드 추가
-  document.querySelectorAll(".resize-handle").forEach(handle => {
+  handles.forEach(handle => {
     handle.addEventListener("mousedown", e => {
       e.preventDefault();
-      const el = handle.parentElement;
       const startX = e.clientX;
       const startY = e.clientY;
       const startWidth = el.offsetWidth;
@@ -1589,7 +1556,21 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
       document.onmouseup = () => { document.onmousemove = null; };
     });
   });
+}
+
+// ✅ 적용
+document.addEventListener("DOMContentLoaded", () => {
+  const locationBox = document.getElementById("locationBox");
+  const userPanel = document.getElementById("user-panel");
+
+  makeDraggable(locationBox);
+  makeResizable(locationBox);
+
+  makeDraggable(userPanel);
+  makeResizable(userPanel);
+});
 </script>
+
   
 </body>
 </html>
