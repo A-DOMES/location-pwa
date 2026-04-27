@@ -964,7 +964,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function makeDraggable(element) {
   let offsetX = 0, offsetY = 0, isDown = false;
 
-  // ▶ PC 드래그
+  // ▶ PC 드래그 시작
   element.addEventListener('mousedown', (e) => {
     isDown = true;
     offsetX = e.clientX - element.offsetLeft;
@@ -972,8 +972,10 @@ function makeDraggable(element) {
     element.style.right = ""; // 오른쪽 고정 해제
   });
 
+  // ▶ PC 드래그 종료
   document.addEventListener('mouseup', () => { isDown = false; });
 
+  // ▶ PC 드래그 이동
   document.addEventListener('mousemove', (e) => {
     if (isDown) {
       element.style.left = (e.clientX - offsetX) + 'px';
@@ -981,7 +983,7 @@ function makeDraggable(element) {
     }
   });
 
-  // ▶ 모바일 드래그
+  // ▶ 모바일 드래그 시작
   element.addEventListener('touchstart', (e) => {
     const touch = e.touches[0];
     offsetX = touch.clientX - element.offsetLeft;
@@ -990,8 +992,10 @@ function makeDraggable(element) {
     isDown = true;
   });
 
+  // ▶ 모바일 드래그 종료
   document.addEventListener('touchend', () => { isDown = false; });
 
+  // ▶ 모바일 드래그 이동
   document.addEventListener('touchmove', (e) => {
     if (isDown) {
       const t = e.touches[0];
@@ -1007,19 +1011,20 @@ if (locationBox) {
   makeDraggable(locationBox);
 }
 
-// ---------------------- 패널 드래그 + Snap + Dock ----------------------
+// ---------------------- 패널 드래그 + Snap ----------------------
 function makePanelDraggable(panelId) {
   const panel = document.getElementById(panelId);
   const header = panel.querySelector(".panel-header"); // 헤더만 드래그 핸들로 지정
   let isDragging = false, offsetX = 0, offsetY = 0;
 
-  // ▶ PC 드래그
+  // ▶ PC 드래그 시작
   header.addEventListener("mousedown", (e) => {
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
   });
 
+  // ▶ PC 드래그 이동
   document.addEventListener("mousemove", (e) => {
     if (isDragging) {
       panel.style.left = (e.clientX - offsetX) + "px";
@@ -1027,6 +1032,7 @@ function makePanelDraggable(panelId) {
     }
   });
 
+  // ▶ PC 드래그 종료 + Snap 처리
   document.addEventListener("mouseup", () => {
     if (isDragging) {
       isDragging = false;
@@ -1036,24 +1042,25 @@ function makePanelDraggable(panelId) {
         panel.style.left = "0px"; panel.style.right = "auto";
         panel.classList.add("snap-left"); panel.classList.remove("snap-right");
       } else if (window.innerWidth - rect.right < 50) {
-        // 우측 Snap
+        // 우측 Snap → collapsed 상태로 숨김
         panel.style.right = "0px"; panel.style.left = "auto";
-        panel.classList.add("snap-right"); panel.classList.remove("snap-left");
+        panel.classList.add("collapsed", "snap-right");
+        panel.classList.remove("snap-left");
       } else {
         panel.classList.remove("snap-left", "snap-right");
       }
     }
   });
 
-  // ▶ 모바일 드래그
+  // ▶ 모바일 드래그 시작
   header.addEventListener("touchstart", (e) => {
-    if (e.target.id === dockId) return;
     const touch = e.touches[0];
     offsetX = touch.clientX - panel.offsetLeft;
     offsetY = touch.clientY - panel.offsetTop;
     isDragging = true;
   });
 
+  // ▶ 모바일 드래그 이동
   document.addEventListener("touchmove", (e) => {
     if (isDragging) {
       const t = e.touches[0];
@@ -1062,6 +1069,7 @@ function makePanelDraggable(panelId) {
     }
   });
 
+  // ▶ 모바일 드래그 종료 + Snap 처리
   document.addEventListener("touchend", () => {
     if (isDragging) {
       isDragging = false;
@@ -1071,7 +1079,8 @@ function makePanelDraggable(panelId) {
         panel.classList.add("snap-left"); panel.classList.remove("snap-right");
       } else if (window.innerWidth - rect.right < 50) {
         panel.style.right = "0px"; panel.style.left = "auto";
-        panel.classList.add("snap-right"); panel.classList.remove("snap-left");
+        panel.classList.add("collapsed", "snap-right");
+        panel.classList.remove("snap-left");
       } else {
         panel.classList.remove("snap-left", "snap-right");
       }
@@ -1092,7 +1101,7 @@ function makeResizable(panelId) {
     return "bottom";
   }
 
-  // ▶ PC 이벤트
+  // ▶ PC 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("mousedown", () => {
       isResizing = true; currentHandle = getHandleType(handle);
@@ -1100,6 +1109,7 @@ function makeResizable(panelId) {
     });
   });
 
+  // ▶ PC 리사이즈 이동
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
@@ -1118,11 +1128,12 @@ function makeResizable(panelId) {
     }
   });
 
+  // ▶ PC 리사이즈 종료
   document.addEventListener("mouseup", () => {
     isResizing = false; document.body.style.userSelect = "auto";
   });
 
-  // ▶ 모바일 이벤트
+  // ▶ 모바일 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("touchstart", () => {
       isResizing = true; currentHandle = getHandleType(handle);
@@ -1130,10 +1141,12 @@ function makeResizable(panelId) {
     });
   });
 
+  // ▶ 모바일 리사이즈 이동
   document.addEventListener("touchmove", (e) => {
     if (!isResizing) return;
     const t = e.touches[0];
     const rect = panel.getBoundingClientRect();
+
     if (currentHandle === "right") {
       const newWidth = t.clientX - rect.left;
       if (newWidth > 200) panel.style.width = newWidth + "px";
@@ -1149,8 +1162,10 @@ function makeResizable(panelId) {
     }
   });
 
+  // ▶ 모바일 리사이즈 종료
   document.addEventListener("touchend", () => {
-    isResizing = false; document.body.style.userSelect = "auto";
+    isResizing = false;
+    document.body.style.userSelect = "auto";
   });
 }
 
@@ -1208,17 +1223,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
-    panel.classList.remove("open");
+    // ▶ 패널 닫기 → 상태 초기화
+    panel.classList.remove("open", "collapsed", "maximized", "snap-left", "snap-right");
+    panel.style = ""; // 인라인 스타일 초기화
   });
 
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
- makePanelDraggable("user-panel");
+  makePanelDraggable("user-panel");
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
-
-    
+   
 </script>
 
 
