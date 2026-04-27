@@ -1453,7 +1453,7 @@ input:checked + .slider:before { transform:translateX(26px); }
   top: 50px;
   height: calc(100% - 50px);
   width: 15px;  /* 이벤트 감지 영역도 동일하게 5px */
-  z-index: 100; /* 다른 요소보다 확실히 위 */
+  z-index: 3000; /* 다른 요소보다 확실히 위 */
   background: transparent; /* 이벤트 감지용 투명 영역 */
   pointer-events: auto;     /* 이벤트가 반드시 잡히도록 */
 }
@@ -1680,6 +1680,7 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <!-- 끝부분 이벤트 감지용 요소 -->
     <div id="left-edge"></div>
     <div id="right-edge"></div>
+    <div id="user-panel"></div>
 
  <!-- 사용자 정보 패널 -->
 <div id="user-panel">
