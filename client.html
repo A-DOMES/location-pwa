@@ -1160,23 +1160,20 @@ function makeResizable(panelId) {
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
-  const dockIcon = document.getElementById("dock-icon-user");
   const maximizeBtn = document.getElementById("maximize-btn");
   const closeBtn = document.getElementById("close-user-panel");
 
-  // 숨기기/펼치기 (Dock 아이콘 클릭 시 패널 접기/펼치기)
-  dockIcon.addEventListener("click", () => {
-    panel.classList.toggle("collapsed");
-  });
-
-  // ---------------------- 최대화 ↔ 최소화 (토글) ----------------------
+  // ---------------------- 최대화 ↔ 접기 ↔ 기본 (순환 토글) ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
-      // ✅ 최소화 → 원래 상태로 복귀
+      // ▶ 최대화 → 접기(collapsed)
       panel.classList.remove("maximized");
-
+      panel.classList.add("collapsed");
+    } else if (panel.classList.contains("collapsed")) {
+      // ▶ 접기 → 기본 상태 복귀
+      panel.classList.remove("collapsed");
       if (window.innerWidth <= 768) {
-        // ▶ 모바일: 하단 40% 차지
+        // 모바일 기본: 하단 40%
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1184,7 +1181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
-        // ▶ 데스크톱: 오른쪽 600px 폭
+        // 데스크톱 기본: 오른쪽 600px
         panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
@@ -1193,7 +1190,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.bottom = "auto";
       }
     } else {
-      // ✅ 최대화
+      // ▶ 기본 → 최대화
       panel.classList.add("maximized");
       panel.style.width = "100%";
       panel.style.height = "100%";
@@ -1206,18 +1203,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
-    // 패널 숨기기 (display:none 대신 클래스 제거 방식)
     panel.classList.remove("open");
   });
 
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
-  // PC + 모바일 모두 대응하도록 makePanelDraggable 함수 호출
   makePanelDraggable("user-panel", "dock-icon-user");
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
-  // PC + 모바일 모두 대응하도록 makeResizable 함수 호출
   makeResizable("user-panel");
 });
+
 </script>
 
 
@@ -1241,7 +1236,7 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Aria
 .dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
 .dropdown-item:hover { background:#e3f2fd; }
 
-/* =========================== ✅ 위치찾기 입력창/버튼 (세로 3행 최신형) =========================== */
+/* =========================== ✅ 위치찾기 입력창/버튼 =========================== */
 .location-search { display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; }
 #latInput, #lngInput, #location-check { width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:16px; box-sizing:border-box; }
 #location-check { background:#1976d2; color:white; border:none; cursor:pointer; }
@@ -1261,42 +1256,13 @@ input:checked + .slider:before { transform:translateX(26px); }
 #radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
 
 /* =========================== ✅ 위치 정보 박스 =========================== */
-#locationBox {
-  position:absolute;
-  top:6%;
-  left:20%;
-  transform:translateX(-50%);
-  background:#fff;
-  padding:14px 18px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  font-size:16px;
-  color:#333;
-  z-index:999;
-  display:none;
-  cursor:move;          /* 드래그 가능 */
-  resize:both;          /* 기본 리사이즈 허용 */
-  overflow:auto;        /* 리사이즈 시 스크롤 */
-}
+#locationBox { position:absolute; top:6%; left:20%; transform:translateX(-50%); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
 #locationBox.open { display:block; }
-
 .location-header { display:flex; justify-content:space-between; align-items:center; }
 .location-header button { background:none; border:none; font-size:18px; cursor:pointer; }
-
 .coord { display:flex; align-items:center; margin-top:8px; font-size:16px; }
 .coord svg { width:18px; height:18px; fill:#1976d2; margin-right:6px; vertical-align:middle; }
-
-#shareBtn {
-  margin-top:12px;
-  padding:8px 14px;
-  background:#1976d2;
-  color:white;
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
-  font-size:16px;
-  transition:background 0.3s;
-}
+#shareBtn { margin-top:12px; padding:8px 14px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; font-size:16px; transition:background 0.3s; }
 #shareBtn:hover { background:#1565c0; }
 
 /* =========================== ✅ 공유 팝업 메시지 =========================== */
@@ -1313,29 +1279,73 @@ input:checked + .slider:before { transform:translateX(26px); }
   background:#fff;
   border-left:1px solid #ccc;
   display:none;
-  z-index:3000;
+  z-index:5000;          /* ✅ 최상위로 올림 */
   padding:20px;
-  overflow-y:auto;
+  overflow-y:auto;        /* ✅ 중복 제거 */
   font-size:15px;
-  cursor:move;          /* 드래그 가능 */
-  resize:both;          /* 기본 리사이즈 허용 */
-  overflow:auto;
+  cursor:move;            /* ✅ resize:both 삭제 */
 }
 #user-panel.open { display:block; }
-#user-panel.collapsed { width:40px; height:40px; overflow:hidden; }
-#user-panel.maximized { width:100% !important; height:100% !important; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; }
+
+/* ✅ 접기(collapsed) 상태: 화면 우측에 얇게 접힘 */
+#user-panel.collapsed {
+  width:40px;             /* 얇게 접힘 */
+  height:100%;            /* 세로 전체 차지 */
+  right:0;
+  top:50px;
+  overflow:hidden;
+  transition:width 0.3s ease;
+}
+/* ✅ 마우스/손가락 올리면 자동 펼침 */
+#user-panel.collapsed:hover {
+  width:600px;            /* 기본 폭으로 자동 펼침 */
+}
+
+/* ✅ 최대화 상태 */
+#user-panel.maximized {
+  width:100% !important;
+  height:100% !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+}
+
+/* ✅ Snap 상태 */
 #user-panel.snap-left { left:0; right:auto; }
 #user-panel.snap-right { right:0; left:auto; }
-.panel-header { height:50px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; padding:0 10px; cursor:move; }
-.panel-content { height:calc(100% - 50px); overflow-y:scroll; padding:10px; }
-#close-user-panel { background-color:#555; color:#fff; border:none; border-radius:4px; padding:6px 12px; font-size:14px; cursor:pointer; }
 
-/* =========================== ✅ 리사이즈 핸들 */
+/* ✅ 헤더와 컨텐츠 */
+.panel-header {
+  height:50px;
+  border-bottom:1px solid #ddd;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 10px;
+  cursor:move;
+}
+.panel-content {
+  height:calc(100% - 50px);
+  overflow-y:scroll;
+  padding:10px;
+}
+#close-user-panel {
+  background-color:#555;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+  padding:6px 12px;
+  font-size:14px;
+  cursor:pointer;
+}
+
+/* =========================== ✅ 리사이즈 핸들 (두께 확대) */
 .resize-handle { position:absolute; background:transparent; z-index:10; }
-.resize-handle.left   { left:0; top:0; width:6px; height:100%; cursor:ew-resize; }
-.resize-handle.right  { right:0; top:0; width:6px; height:100%; cursor:ew-resize; }
-.resize-handle.top    { top:0; left:0; width:100%; height:6px; cursor:ns-resize; }
-.resize-handle.bottom { bottom:0; left:0; width:100%; height:6px; cursor:ns-resize; }
+.resize-handle.left   { left:0; top:0; width:12px; height:100%; cursor:ew-resize; }
+.resize-handle.right  { right:0; top:0; width:12px; height:100%; cursor:ew-resize; }
+.resize-handle.top    { top:0; left:0; width:100%; height:12px; cursor:ns-resize; }
+.resize-handle.bottom { bottom:0; left:0; width:100%; height:12px; cursor:ns-resize; }
 .resize-handle:hover  { background:rgba(0,0,0,0.1); }
 
 /* =========================== ✅ 사용자 테이블 =========================== */
@@ -1552,50 +1562,5 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
-  
-<!-- ✅ 드래그 + 리사이즈 + 모바일 대응 -->
-<script>
-function makeResizable(el) {
-  const handles = el.querySelectorAll(".resize-handle");
-
-  handles.forEach(handle => {
-    // 모바일용
-    handle.addEventListener("touchstart", e => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const startX = touch.clientX;
-      const startY = touch.clientY;
-      const startWidth = el.offsetWidth;
-      const startHeight = el.offsetHeight;
-      const startLeft = el.offsetLeft;
-      const startTop = el.offsetTop;
-
-      document.ontouchmove = ev => {
-        const t = ev.touches[0];
-        if (handle.classList.contains("right")) {
-          el.style.width = (startWidth + (t.clientX - startX)) + "px";
-        } else if (handle.classList.contains("bottom")) {
-          el.style.height = (startHeight + (t.clientY - startY)) + "px";
-        } else if (handle.classList.contains("left")) {
-          const newWidth = startWidth - (t.clientX - startX);
-          if (newWidth > 200) {
-            el.style.width = newWidth + "px";
-            el.style.left = (startLeft + (t.clientX - startX)) + "px";
-          }
-        } else if (handle.classList.contains("top")) {
-          const newHeight = startHeight - (t.clientY - startY);
-          if (newHeight > 100) {
-            el.style.height = newHeight + "px";
-            el.style.top = (startTop + (t.clientY - startY)) + "px";
-          }
-        }
-      };
-
-      document.ontouchend = () => { document.ontouchmove = null; };
-    });
-  });
-}
-</script>
-  
 </body>
 </html>
