@@ -1250,40 +1250,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 끝부분 이벤트 처리 ----------------------
   if (leftEdge) {
-    // PC: 마우스가 좌측 끝에 닿으면 펼침
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) {
         panel.classList.add("touch-active");
       }
     });
-    // 모바일: 좌측 끝 터치 시 펼침
     leftEdge.addEventListener("touchstart", () => {
       if (panel.classList.contains("collapsed-left")) {
         panel.classList.add("touch-active");
       }
     });
-    // 모바일: 터치 끝나면 다시 접힘 (선택적으로 유지 가능)
-    leftEdge.addEventListener("touchend", () => {
-      panel.classList.remove("touch-active");
-    });
   }
 
   if (rightEdge) {
-    // PC: 마우스가 우측 끝에 닿으면 펼침
     rightEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-right")) {
         panel.classList.add("touch-active");
       }
     });
-    // 모바일: 우측 끝 터치 시 펼침
     rightEdge.addEventListener("touchstart", () => {
       if (panel.classList.contains("collapsed-right")) {
         panel.classList.add("touch-active");
       }
-    });
-    // 모바일: 터치 끝나면 다시 접힘 (선택적으로 유지 가능)
-    rightEdge.addEventListener("touchend", () => {
-      panel.classList.remove("touch-active");
     });
   }
 
@@ -1293,6 +1281,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
+
 
 
 </script>
