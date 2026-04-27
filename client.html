@@ -1547,8 +1547,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">위치 / 경로 보기</div>
-  
-    <!-- 위치찾기 -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
       <div class="location-search">
@@ -1572,9 +1570,7 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <!-- 일반지도 버튼 -->
     <div class="dropdown-item">
       <strong>일반지도</strong><br>
-      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">
-        일반지도 변환
-      </button>
+      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
     </div>
     <!-- 갱신 주기 설정 -->
     <div class="dropdown-item">
@@ -1621,7 +1617,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- ✅ 위치 정보 박스 -->
   <div id="locationBox">
     위치 정보를 가져오는 중...
-    <!-- 네 면 리사이즈 핸들 -->
     <div class="resize-handle left"></div>
     <div class="resize-handle right"></div>
     <div class="resize-handle top"></div>
@@ -1634,35 +1629,41 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     원하는 앱에 붙여넣어 공유하세요.
   </div>
 
-  <!-- 사용자 정보 패널 -->
-  <div id="user-panel">
-    <div class="panel-header">
-      <h3 id="user-panel-title">사용자 정보</h3>
-      <div class="panel-controls">
-        <button id="minimize-btn">━</button>
-        <button id="maximize-btn">⬜</button>
-        <button id="close-user-panel">✖ 닫기</button>
+  <!-- ✅ 사용자 패널 컨테이너 -->
+  <div class="panel-container">
+    <!-- 끝부분 이벤트 감지용 요소 -->
+    <div id="left-edge"></div>
+    <div id="right-edge"></div>
+
+    <!-- 사용자 정보 패널 -->
+    <div id="user-panel">
+      <div class="panel-header">
+        <h3 id="user-panel-title">사용자 정보</h3>
+        <div class="panel-controls">
+          <button id="minimize-btn">━</button>
+          <button id="maximize-btn">⬜</button>
+          <button id="close-user-panel">✖ 닫기</button>
+        </div>
       </div>
+      <div class="panel-content">
+        <div id="path-select-container">
+          <label for="path-user-select">경로 보기 선택:</label>
+          <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+            <option value="all">전체</option>
+          </select>
+        </div>
+        <div id="user-content">
+          <table id="user-table">
+            <thead><tr id="user-table-header"></tr></thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="resize-handle left"></div>
+      <div class="resize-handle right"></div>
+      <div class="resize-handle top"></div>
+      <div class="resize-handle bottom"></div>
     </div>
-    <div class="panel-content">
-      <div id="path-select-container">
-        <label for="path-user-select">경로 보기 선택:</label>
-        <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-          <option value="all">전체</option>
-        </select>
-      </div>
-      <div id="user-content">
-        <table id="user-table">
-          <thead><tr id="user-table-header"></tr></thead>
-          <tbody id="user-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-    <!-- 네 면 리사이즈 핸들 -->
-    <div class="resize-handle left"></div>
-    <div class="resize-handle right"></div>
-    <div class="resize-handle top"></div>
-    <div class="resize-handle bottom"></div>
   </div>
 
   <!-- 지도 영역 -->
@@ -1673,7 +1674,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   <!-- ✅ 라이트/다크 스타일 JSON 정의 -->
   <script>
-    /* 구글맵 초기화 및 라이트/다크 모드 토글 */
     const lightStyle = [...]; // 생략
     const darkStyle = [...];  // 생략
     function initMap() { /* 기존 코드 유지 */ }
@@ -1685,9 +1685,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
-
-  <!-- 끝부분 이벤트 감지용 요소 -->
-  <div id="left-edge"></div>
-  <div id="right-edge"></div>
 </body>
 </html>
+  
