@@ -1551,6 +1551,45 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   // ✅ 적용
   makeDraggableAndResizable("locationBox");
   makeDraggableAndResizable("user-panel");
+
+  makeDraggableAndResizable("user-panel");
+
+  // ✅ 리사이즈 수정 코드 추가
+  document.querySelectorAll(".resize-handle").forEach(handle => {
+    handle.addEventListener("mousedown", e => {
+      e.preventDefault();
+      const el = handle.parentElement;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = el.offsetWidth;
+      const startHeight = el.offsetHeight;
+      const startLeft = el.offsetLeft;
+      const startTop = el.offsetTop;
+
+      document.onmousemove = ev => {
+        if (handle.classList.contains("right")) {
+          el.style.width = (startWidth + (ev.clientX - startX)) + "px";
+        } else if (handle.classList.contains("bottom")) {
+          el.style.height = (startHeight + (ev.clientY - startY)) + "px";
+        } else if (handle.classList.contains("left")) {
+          const newWidth = startWidth - (ev.clientX - startX);
+          if (newWidth > 200) {
+            el.style.width = newWidth + "px";
+            el.style.left = (startLeft + (ev.clientX - startX)) + "px";
+          }
+        } else if (handle.classList.contains("top")) {
+          const newHeight = startHeight - (ev.clientY - startY);
+          if (newHeight > 100) {
+            el.style.height = newHeight + "px";
+            el.style.top = (startTop + (ev.clientY - startY)) + "px";
+          }
+        }
+      };
+
+      document.onmouseup = () => { document.onmousemove = null; };
+    });
+  });
 </script>
+  
 </body>
 </html>
