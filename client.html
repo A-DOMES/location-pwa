@@ -1489,88 +1489,50 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
-
+  
 <!-- ✅ 드래그 + 리사이즈 + 모바일 대응 -->
 <script>
-function makeDraggable(el) {
-  let offsetX, offsetY;
-
-  // PC 드래그
-  el.addEventListener("mousedown", e => {
-    offsetX = e.clientX - el.offsetLeft;
-    offsetY = e.clientY - el.offsetTop;
-    document.onmousemove = ev => {
-      el.style.left = (ev.clientX - offsetX) + "px";
-      el.style.top = (ev.clientY - offsetY) + "px";
-    };
-    document.onmouseup = () => { document.onmousemove = null; };
-  });
-
-  // 모바일 드래그
-  el.addEventListener("touchstart", e => {
-    const touch = e.touches[0];
-    offsetX = touch.clientX - el.offsetLeft;
-    offsetY = touch.clientY - el.offsetTop;
-    document.ontouchmove = ev => {
-      const t = ev.touches[0];
-      el.style.left = (t.clientX - offsetX) + "px";
-      el.style.top = (t.clientY - offsetY) + "px";
-    };
-    document.ontouchend = () => { document.ontouchmove = null; };
-  });
-}
-
 function makeResizable(el) {
   const handles = el.querySelectorAll(".resize-handle");
 
   handles.forEach(handle => {
-    handle.addEventListener("mousedown", e => {
+    // 모바일용
+    handle.addEventListener("touchstart", e => {
       e.preventDefault();
-      const startX = e.clientX;
-      const startY = e.clientY;
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
       const startWidth = el.offsetWidth;
       const startHeight = el.offsetHeight;
       const startLeft = el.offsetLeft;
       const startTop = el.offsetTop;
 
-      document.onmousemove = ev => {
+      document.ontouchmove = ev => {
+        const t = ev.touches[0];
         if (handle.classList.contains("right")) {
-          el.style.width = (startWidth + (ev.clientX - startX)) + "px";
+          el.style.width = (startWidth + (t.clientX - startX)) + "px";
         } else if (handle.classList.contains("bottom")) {
-          el.style.height = (startHeight + (ev.clientY - startY)) + "px";
+          el.style.height = (startHeight + (t.clientY - startY)) + "px";
         } else if (handle.classList.contains("left")) {
-          const newWidth = startWidth - (ev.clientX - startX);
+          const newWidth = startWidth - (t.clientX - startX);
           if (newWidth > 200) {
             el.style.width = newWidth + "px";
-            el.style.left = (startLeft + (ev.clientX - startX)) + "px";
+            el.style.left = (startLeft + (t.clientX - startX)) + "px";
           }
         } else if (handle.classList.contains("top")) {
-          const newHeight = startHeight - (ev.clientY - startY);
+          const newHeight = startHeight - (t.clientY - startY);
           if (newHeight > 100) {
             el.style.height = newHeight + "px";
-            el.style.top = (startTop + (ev.clientY - startY)) + "px";
+            el.style.top = (startTop + (t.clientY - startY)) + "px";
           }
         }
       };
 
-      document.onmouseup = () => { document.onmousemove = null; };
+      document.ontouchend = () => { document.ontouchmove = null; };
     });
   });
 }
-
-// ✅ 적용
-document.addEventListener("DOMContentLoaded", () => {
-  const locationBox = document.getElementById("locationBox");
-  const userPanel = document.getElementById("user-panel");
-
-  makeDraggable(locationBox);
-  makeResizable(locationBox);
-
-  makeDraggable(userPanel);
-  makeResizable(userPanel);
-});
 </script>
-
   
 </body>
 </html>
