@@ -1307,6 +1307,21 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.style = "";
   });
 
+  // ---------------------- 패널 자체 이벤트 처리 ----------------------
+  // PC: 마우스가 패널 위에 닿으면 펼침
+  panel.addEventListener("mouseenter", () => {
+    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
+      panel.classList.add("touch-active");
+    }
+  });
+
+  // 모바일: 패널 터치 시 펼침
+  panel.addEventListener("touchstart", () => {
+    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
+      panel.classList.add("touch-active");
+    }
+  });
+  
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
   makePanelDraggable("user-panel");
 
