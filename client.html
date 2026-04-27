@@ -1183,6 +1183,7 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.classList.remove("maximized", "collapsed-left", "collapsed-right");
 
     if (panel.classList.contains("snap-left")) {
+      // 좌측 Snap 상태일 때 → 좌측 숨김
       panel.classList.add("collapsed-left");
       panel.style.width = "5px";
       panel.style.left = "0";
@@ -1190,6 +1191,7 @@ document.addEventListener("DOMContentLoaded", () => {
       panel.style.top = "50px";
       panel.style.bottom = "auto";
     } else {
+      // 기본 또는 우측 Snap 상태일 때 → 우측 숨김
       panel.classList.add("collapsed-right");
       panel.style.width = "5px";
       panel.style.right = "0";
@@ -1217,6 +1219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
       panel.classList.remove("collapsed-left", "collapsed-right");
       if (window.innerWidth <= 768) {
+        // 모바일 기본: 하단 40%
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1224,6 +1227,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
+        // 데스크톱 기본: 오른쪽 600px
         panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
@@ -1249,30 +1253,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---------------------- 끝부분 이벤트 처리 ----------------------
-  // PC: 마우스가 좌측 끝에 닿으면 펼침
-  leftEdge.addEventListener("mouseenter", () => {
-    if (panel.classList.contains("collapsed-left")) {
-      panel.classList.add("touch-active");
-    }
-  });
-  // PC: 마우스가 우측 끝에 닿으면 펼침
-  rightEdge.addEventListener("mouseenter", () => {
-    if (panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
-  // 모바일: 좌측 끝 터치 시 펼침
-  leftEdge.addEventListener("touchstart", () => {
-    if (panel.classList.contains("collapsed-left")) {
-      panel.classList.add("touch-active");
-    }
-  });
-  // 모바일: 우측 끝 터치 시 펼침
-  rightEdge.addEventListener("touchstart", () => {
-    if (panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
+  if (leftEdge) {
+    // PC: 마우스가 좌측 끝에 닿으면 펼침
+    leftEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    // 모바일: 좌측 끝 터치 시 펼침
+    leftEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
+
+  if (rightEdge) {
+    // PC: 마우스가 우측 끝에 닿으면 펼침
+    rightEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    // 모바일: 우측 끝 터치 시 펼침
+    rightEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
 
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
   makePanelDraggable("user-panel");
@@ -1392,6 +1401,24 @@ input:checked + .slider:before { transform:translateX(26px); }
 #user-panel.collapsed-left.touch-active {
   width: 600px;
 }
+
+/* ▶ 모바일: 터치 시 복귀 */
+#user-panel.collapsed-left.touch-active {
+  width: 600px;
+}
+
+/* =========================== ✅ 끝부분 이벤트 감지용 요소 =========================== */
+#left-edge, #right-edge {
+  position: fixed;
+  top: 50px;
+  height: calc(100% - 50px);
+  width: 5px;
+  z-index: 6000;
+  background: transparent; /* 이벤트 감지용 투명 영역 */
+}
+#left-edge { left: 0; }
+#right-edge { right: 0; }
+
   
 /* ✅ 최대화 상태 */
 #user-panel.maximized {
@@ -1653,5 +1680,8 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
+  <!-- 끝부분 이벤트 감지용 요소 -->
+  <div id="left-edge"></div>
+  <div id="right-edge"></div>
 </body>
 </html>
