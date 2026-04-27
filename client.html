@@ -1178,19 +1178,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightEdge = document.getElementById("right-edge");
 
   // ---------------------- 최소화 버튼 ----------------------
-  minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
+minimizeBtn.addEventListener("click", () => {
+  // 모든 상태 초기화
+  panel.classList.remove("maximized", "touch-active");
 
-    if (panel.classList.contains("snap-left")) {
-      panel.classList.add("collapsed-left");
-    } else {
-      panel.classList.add("collapsed-right");
-    }
+  if (panel.classList.contains("snap-left")) {
+    panel.classList.remove("collapsed-right");
+    panel.classList.add("collapsed-left");
+  } else {
+    panel.classList.remove("collapsed-left");
+    panel.classList.add("collapsed-right");
+  }
 
-    // 인라인 스타일 제거 → CSS 규칙만 적용
-    panel.style = "";
-  });
+  // 인라인 스타일 제거 → CSS 규칙만 적용되도록
+  panel.style = "";
+});
+
 
   // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
