@@ -1008,15 +1008,13 @@ if (locationBox) {
 }
 
 // ---------------------- 패널 드래그 + Snap + Dock ----------------------
-function makePanelDraggable(panelId, dockId) {
+function makePanelDraggable(panelId) {
   const panel = document.getElementById(panelId);
-  const dockIcon = document.getElementById(dockId);
   const header = panel.querySelector(".panel-header"); // 헤더만 드래그 핸들로 지정
   let isDragging = false, offsetX = 0, offsetY = 0;
 
   // ▶ PC 드래그
   header.addEventListener("mousedown", (e) => {
-    if (e.target.id === dockId) return; // Dock 아이콘 클릭은 제외
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
@@ -1160,7 +1158,15 @@ function makeResizable(panelId) {
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
+  const minimizeBtn = document.getElementById("minimize-btn");
   const closeBtn = document.getElementById("close-user-panel");
+
+  // ---------------------- 최소화 버튼 ----------------------
+  minimizeBtn.addEventListener("click", () => {
+    // ▶ 최소화 → 접기(collapsed) 상태로 전환
+    panel.classList.remove("maximized");
+    panel.classList.add("collapsed");
+  });
 
   // ---------------------- 최대화 ↔ 접기 ↔ 기본 (순환 토글) ----------------------
   maximizeBtn.addEventListener("click", () => {
@@ -1206,11 +1212,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
-  makePanelDraggable("user-panel", "dock-icon-user");
+ makePanelDraggable("user-panel");
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
+
     
 </script>
 
@@ -1288,8 +1295,8 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ✅ 접기(collapsed) 상태: 화면 우측에 얇게 접힘 */
 #user-panel.collapsed {
-  width:40px;             /* 얇게 접힘 */
-  height:100%;            /* 세로 전체 차지 */
+  width:0px;            /* ✅ 완전히 숨김 */
+  height:100%;          /* 세로 전체 차지 */
   right:0;
   top:50px;
   overflow:hidden;
@@ -1297,7 +1304,7 @@ input:checked + .slider:before { transform:translateX(26px); }
 }
 /* ✅ 마우스/손가락 올리면 자동 펼침 */
 #user-panel.collapsed:hover {
-  width:600px;            /* 기본 폭으로 자동 펼침 */
+  width:600px;            /* ✅ 마우스/손가락 올리면 복귀 */
 }
 
 /* ✅ 최대화 상태 */
@@ -1510,7 +1517,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   <!-- 사용자 정보 패널 -->
   <div id="user-panel">
-    <div id="dock-icon-user">≡</div>
     <div class="panel-header">
       <h3 id="user-panel-title">사용자 정보</h3>
       <div class="panel-controls">
