@@ -1361,7 +1361,7 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 우측 접힘 상태 */
 #user-panel.collapsed-right {
-  width: 5px;
+  width: 7px;  /* 기존 5px → 7px */
   height: calc(100% - 50px);
   right: 0;        /* 반드시 우측 끝에 붙도록 */
   left: auto;
@@ -1381,7 +1381,7 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 좌측 접힘 상태 */
 #user-panel.collapsed-left {
-  width: 5px;
+  width: 7px;  /* 기존 5px → 7px */
   height: calc(100% - 50px);
   left: 0;         /* 반드시 좌측 끝에 붙도록 */
   right: auto;
@@ -1404,7 +1404,7 @@ input:checked + .slider:before { transform:translateX(26px); }
   position: fixed;
   top: 50px;
   height: calc(100% - 50px);
-  width: 5px;
+  width: 7px;  /* 이벤트 감지 영역도 동일하게 7px */
   z-index: 9999; /* 다른 요소보다 확실히 위 */
   background: transparent; /* 이벤트 감지용 투명 영역 */
   pointer-events: auto;     /* 이벤트가 반드시 잡히도록 */
@@ -1422,6 +1422,7 @@ input:checked + .slider:before { transform:translateX(26px); }
 #right-edge:hover ~ #user-panel.collapsed-right {
   width: 600px;
 }
+
 
   
 /* ✅ 최대화 상태 */
