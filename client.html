@@ -1189,12 +1189,31 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Aria
 .dropdown-item:hover { background:#e3f2fd; }
 
 /* ===========================
-   ✅ 위치찾기 입력창/버튼
+   ✅ 위치찾기 입력창/버튼 (행방향)
    =========================== */
-.location-search { display:flex; align-items:center; gap:8px; margin-top:6px; }
-#latInput, #lngInput { padding:6px; border:1px solid #ccc; border-radius:4px; margin-right:6px; }
-#location-check, .btn-check { padding:6px 12px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; }
+.location-search { display:flex; flex-direction:row; align-items:center; gap:8px; margin-top:6px; }
+#latInput, #lngInput { width:120px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:16px; box-sizing:border-box; }
+#location-check, .btn-check { padding:6px 12px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; font-size:16px; }
 #location-check:hover, .btn-check:hover { background:#1565c0; }
+
+/* ===========================
+   ✅ 모바일 반응형 (세로 모드: portrait)
+   =========================== */
+@media (max-width:768px) and (orientation:portrait) {
+  .location-search { flex-direction:column; align-items:stretch; }
+  #latInput, #lngInput { width:100%; font-size:18px; }
+  #location-check { width:100%; font-size:18px; margin-top:8px; }
+}
+
+/* ===========================
+   ✅ 모바일 반응형 (가로 모드: landscape)
+   =========================== */
+@media (max-width:768px) and (orientation:landscape) {
+  .location-search { flex-direction:row; align-items:center; }
+  #latInput, #lngInput { flex:1; min-width:100px; font-size:16px; }
+  #location-check { flex:0; font-size:16px; }
+}
+
 
 /* ===========================
    ✅ 토글 스위치 (환경설정/레이더)
