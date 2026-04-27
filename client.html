@@ -1109,30 +1109,31 @@ function makeResizable(panelId) {
     });
   });
 
-// ▶ PC 리사이즈 이동
-document.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const rect = panel.getBoundingClientRect();
-  if (currentHandle === "right") {
-    const newWidth = e.clientX - rect.left;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "left") {
-    const newWidth = rect.right - e.clientX;
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
-      panel.style.left = e.clientX + "px"; // 좌측 기준점 갱신
+  // ▶ PC 리사이즈 이동
+  document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
+
+    if (currentHandle === "right") {
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "left") {
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px"; // ✅ 왼쪽 기준점 갱신 → 오른쪽 고정
+      }
+    } else if (currentHandle === "bottom") {
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+    } else if (currentHandle === "top") {
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신 → 하단 고정
+      }
     }
-  } else if (currentHandle === "bottom") {
-    const newHeight = e.clientY - rect.top;
-    if (newHeight > 100) panel.style.height = newHeight + "px";
-  } else if (currentHandle === "top") {
-    const newHeight = rect.bottom - e.clientY;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신 → 하단 고정
-    }
-  }
-});
+  });
 
   // ▶ PC 리사이즈 종료
   document.addEventListener("mouseup", () => {
@@ -1147,32 +1148,32 @@ document.addEventListener("mousemove", (e) => {
     });
   });
 
-// ▶ 모바일 리사이즈 이동
-document.addEventListener("touchmove", (e) => {
-  if (!isResizing) return;
-  const t = e.touches[0];
-  const rect = panel.getBoundingClientRect();
+  // ▶ 모바일 리사이즈 이동
+  document.addEventListener("touchmove", (e) => {
+    if (!isResizing) return;
+    const t = e.touches[0];
+    const rect = panel.getBoundingClientRect();
 
-  if (currentHandle === "right") {
-    const newWidth = t.clientX - rect.left;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "left") {
-    const newWidth = rect.right - t.clientX;
-    if (newWidth > 200) {
-      panel.style.width = newWidth + "px";
-      panel.style.left = t.clientX + "px"; // 좌측 기준점 갱신
+    if (currentHandle === "right") {
+      const newWidth = t.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "left") {
+      const newWidth = rect.right - t.clientX;
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = t.clientX + "px"; // ✅ 모바일에서도 왼쪽 기준점 갱신
+      }
+    } else if (currentHandle === "bottom") {
+      const newHeight = t.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+    } else if (currentHandle === "top") {
+      const newHeight = rect.bottom - t.clientY;
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신
+      }
     }
-  } else if (currentHandle === "bottom") {
-    const newHeight = t.clientY - rect.top;
-    if (newHeight > 100) panel.style.height = newHeight + "px";
-  } else if (currentHandle === "top") {
-    const newHeight = rect.bottom - t.clientY;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신 → 하단 고정
-    }
-  }
-});
+  });
 
   // ▶ 모바일 리사이즈 종료
   document.addEventListener("touchend", () => {
@@ -1180,6 +1181,7 @@ document.addEventListener("touchmove", (e) => {
     document.body.style.userSelect = "auto";
   });
 }
+
 
 
 // ---------------------- 사용자 패널 초기화 ----------------------
