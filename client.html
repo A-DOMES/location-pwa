@@ -1368,16 +1368,16 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 우측 접힘 상태 */
 #user-panel.collapsed-right {
-  width: 5px;                   /* 완전히 숨기지 않고 hover 영역 확보 */
-  height: 100%;                 /* 세로 전체 차지 */
-  right: 0;                     /* 화면 오른쪽 끝에 붙임 */
-  top: 50px;                    /* 상단 여백 */
-  overflow: hidden;             /* 내부 내용 숨김 */
-  transition: width 0.3s ease;  /* 펼칠 때 애니메이션 */
+  width: 5px;
+  height: 100%;
+  right: 0;
+  top: 50px;
+  overflow: hidden;
+  transition: width 0.3s ease;
 }
 /* ▶ PC: 마우스가 우측 끝에 닿으면 자동 펼침 */
 #user-panel.collapsed-right:hover {
-  width: 600px;                 /* 원래 크기로 복귀 */
+  width: 600px;
 }
 /* ▶ 모바일: 터치 시 복귀 */
 #user-panel.collapsed-right.touch-active {
@@ -1386,9 +1386,9 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 좌측 접힘 상태 */
 #user-panel.collapsed-left {
-  width: 5px;                   /* hover 영역 확보 */
+  width: 5px;
   height: 100%;
-  left: 0;                      /* 화면 왼쪽 끝에 붙임 */
+  left: 0;
   top: 50px;
   overflow: hidden;
   transition: width 0.3s ease;
@@ -1397,11 +1397,6 @@ input:checked + .slider:before { transform:translateX(26px); }
 #user-panel.collapsed-left:hover {
   width: 600px;
 }
-/* ▶ 모바일: 터치 시 복귀 */
-#user-panel.collapsed-left.touch-active {
-  width: 600px;
-}
-
 /* ▶ 모바일: 터치 시 복귀 */
 #user-panel.collapsed-left.touch-active {
   width: 600px;
@@ -1418,6 +1413,17 @@ input:checked + .slider:before { transform:translateX(26px); }
 }
 #left-edge { left: 0; }
 #right-edge { right: 0; }
+
+/* =========================== ✅ 끝부분 hover 시 패널 펼침 연결 =========================== */
+/* 좌측 끝 hover → 패널 펼침 */
+#left-edge:hover ~ #user-panel.collapsed-left {
+  width: 600px;
+}
+
+/* 우측 끝 hover → 패널 펼침 */
+#right-edge:hover ~ #user-panel.collapsed-right {
+  width: 600px;
+}
 
   
 /* ✅ 최대화 상태 */
