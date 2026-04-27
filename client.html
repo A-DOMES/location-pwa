@@ -1169,7 +1169,6 @@ function makeResizable(panelId) {
   });
 }
 
-// ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
@@ -1180,21 +1179,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right");
+    // 모든 상태 초기화
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
 
     if (panel.classList.contains("snap-left")) {
-      // 좌측 Snap 상태일 때 → 좌측 숨김
       panel.classList.add("collapsed-left");
     } else {
-      // 기본 또는 우측 Snap 상태일 때 → 우측 숨김
       panel.classList.add("collapsed-right");
     }
 
-    // 인라인 스타일 제거 → CSS 클래스 규칙만 적용되도록
+    // 인라인 스타일 제거 → CSS 규칙만 적용
     panel.style = "";
   });
 
-  // ---------------------- 최대화 ↔ 접기 ↔ 기본 ----------------------
+  // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
       panel.classList.remove("maximized");
@@ -1207,7 +1205,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
       panel.classList.remove("collapsed-left", "collapsed-right");
       if (window.innerWidth <= 768) {
-        // 모바일 기본: 하단 40%
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1215,7 +1212,6 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
-        // 데스크톱 기본: 오른쪽 600px
         panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
