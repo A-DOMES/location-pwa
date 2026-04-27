@@ -1178,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
-    // ▶ 최소화 → 즉시 우측에 붙고 숨김
+    // ▶ 최소화 → 즉시 우측에 붙고 완전히 숨김
     panel.classList.remove("maximized");
     panel.classList.add("collapsed");
 
@@ -1242,10 +1242,7 @@ document.addEventListener("DOMContentLoaded", () => {
   panel.addEventListener("touchstart", () => {
     if (panel.classList.contains("collapsed")) {
       panel.classList.add("touch-active");
-      // 일정 시간 후 다시 숨김 (예: 3초)
-      setTimeout(() => {
-        panel.classList.remove("touch-active");
-      }, 3000);
+      // ❌ 자동 접힘 제거 → 펼친 상태 유지
     }
   });
 
