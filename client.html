@@ -1178,9 +1178,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
-    // ▶ 최소화 → 접기(collapsed) 상태로 전환
+    // ▶ 최소화 → 접기(collapsed) 상태로 전환 (즉시 우측 숨김)
     panel.classList.remove("maximized");
     panel.classList.add("collapsed");
+
+    // 인라인 스타일 초기화 (꼬임 방지)
+    panel.style.width = "";
+    panel.style.height = "";
+    panel.style.top = "";
+    panel.style.left = "";
+    panel.style.right = "";
+    panel.style.bottom = "";
   });
 
   // ---------------------- 최대화 ↔ 접기 ↔ 기본 (순환 토글) ----------------------
@@ -1224,8 +1232,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
     // ▶ 패널 닫기 → 상태 초기화
-    panel.classList.remove("open", "collapsed", "maximized", "snap-left", "snap-right");
+    panel.classList.remove("open", "collapsed", "maximized", "snap-left", "snap-right", "touch-active");
     panel.style = ""; // 인라인 스타일 초기화
+  });
+
+  // ---------------------- 모바일: 터치 시 복귀 처리 ----------------------
+  panel.addEventListener("touchstart", () => {
+    if (panel.classList.contains("collapsed")) {
+      panel.classList.add("touch-active");
+      // 일정 시간 후 다시 숨김 (예: 3초)
+      setTimeout(() => {
+        panel.classList.remove("touch-active");
+      }, 3000);
+    }
   });
 
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
@@ -1234,7 +1253,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
-   
+
 </script>
 
 
@@ -1323,6 +1342,11 @@ input:checked + .slider:before { transform:translateX(26px); }
   width:600px;            /* ✅ 마우스/손가락 올리면 복귀 */
 }
 
+/* 모바일: 터치 시 복귀 */
+#user-panel.collapsed.touch-active {
+  width: 600px;
+}
+  
 /* ✅ 최대화 상태 */
 #user-panel.maximized {
   width:100% !important;
