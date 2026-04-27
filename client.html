@@ -1109,70 +1109,65 @@ function makeResizable(panelId) {
     });
   });
 
-// ▶ PC 리사이즈 이동
-document.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const rect = panel.getBoundingClientRect();
-  if (currentHandle === "right") {
-    const newWidth = e.clientX - rect.left;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "left") {
-    const newWidth = rect.right - e.clientX;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "bottom") {
-    const newHeight = e.clientY - rect.top;
-    if (newHeight > 100) panel.style.height = newHeight + "px";
-  } else if (currentHandle === "top") {
-    const newHeight = rect.bottom - e.clientY;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = e.clientY + "px"; // ✅ top 위치도 갱신
+  // ▶ PC 리사이즈 이동
+  document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const rect = panel.getBoundingClientRect();
+    if (currentHandle === "right") {
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "left") {
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "bottom") {
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+    } else if (currentHandle === "top") {
+      const newHeight = rect.bottom - e.clientY;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
     }
-  }
-});
-
-// ▶ PC 리사이즈 종료
-document.addEventListener("mouseup", () => {
-  isResizing = false; document.body.style.userSelect = "auto";
-});
-
-// ▶ 모바일 리사이즈 시작
-handles.forEach(handle => {
-  handle.addEventListener("touchstart", () => {
-    isResizing = true; currentHandle = getHandleType(handle);
-    document.body.style.userSelect = "none";
   });
-});
 
-// ▶ 모바일 리사이즈 이동
-document.addEventListener("touchmove", (e) => {
-  if (!isResizing) return;
-  const t = e.touches[0];
-  const rect = panel.getBoundingClientRect();
+  // ▶ PC 리사이즈 종료
+  document.addEventListener("mouseup", () => {
+    isResizing = false; document.body.style.userSelect = "auto";
+  });
 
-  if (currentHandle === "right") {
-    const newWidth = t.clientX - rect.left;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "left") {
-    const newWidth = rect.right - t.clientX;
-    if (newWidth > 200) panel.style.width = newWidth + "px";
-  } else if (currentHandle === "bottom") {
-    const newHeight = t.clientY - rect.top;
-    if (newHeight > 100) panel.style.height = newHeight + "px";
-  } else if (currentHandle === "top") {
-    const newHeight = rect.bottom - t.clientY;
-    if (newHeight > 100) {
-      panel.style.height = newHeight + "px";
-      panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 top 위치 갱신
+  // ▶ 모바일 리사이즈 시작
+  handles.forEach(handle => {
+    handle.addEventListener("touchstart", () => {
+      isResizing = true; currentHandle = getHandleType(handle);
+      document.body.style.userSelect = "none";
+    });
+  });
+
+  // ▶ 모바일 리사이즈 이동
+  document.addEventListener("touchmove", (e) => {
+    if (!isResizing) return;
+    const t = e.touches[0];
+    const rect = panel.getBoundingClientRect();
+
+    if (currentHandle === "right") {
+      const newWidth = t.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "left") {
+      const newWidth = rect.right - t.clientX;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+    } else if (currentHandle === "bottom") {
+      const newHeight = t.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+    } else if (currentHandle === "top") {
+      const newHeight = rect.bottom - t.clientY;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
     }
-  }
-});
+  });
 
-// ▶ 모바일 리사이즈 종료
-document.addEventListener("touchend", () => {
-  isResizing = false;
-  document.body.style.userSelect = "auto";
-});
+  // ▶ 모바일 리사이즈 종료
+  document.addEventListener("touchend", () => {
+    isResizing = false;
+    document.body.style.userSelect = "auto";
+  });
+}
 
 
 // ---------------------- 사용자 패널 초기화 ----------------------
