@@ -23,7 +23,7 @@ const poiIcons = {
 // ---------------------- 지도 초기화 ----------------------
 function initMap() {
   // ✅ 원하는 기본 좌표 (순천시 기준)
-  const defaultPos = { lat: 34.95, lng: 127.49 };
+  const defaultPos = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
@@ -32,6 +32,12 @@ function initMap() {
     styles: null // 기본은 일반지도
   });
 
+  // ✅ 우클릭 시 원래 위치로 복귀
+  google.maps.event.addListener(map, 'contextmenu', function() {
+    console.log("우클릭 이벤트 발생!");
+    map.setOptions({ center: originalCenter, zoom: 7 });
+  });
+  
   // ✅ 라이트/다크 모드 토글
   const themeToggle = document.getElementById("themeToggle");
   if (themeToggle) {
