@@ -751,16 +751,19 @@ const radiusValue = document.getElementById("radiusValue");
 const radiusUnitSelect = document.getElementById("radiusUnit");
 const radarToggle = document.getElementById("radarToggle");
 
+// 슬라이더 값 변경 시 반영
 slider.addEventListener("input", (e) => {
   radarRadius = parseInt(e.target.value, 10);
   radiusValue.textContent = radarRadius + radarUnit;
 });
 
+// 단위 선택 변경 시 반영
 radiusUnitSelect.addEventListener("change", (e) => {
   radarUnit = e.target.value;
   radiusValue.textContent = radarRadius + radarUnit;
 });
 
+// 레이더 표시 ON/OFF
 radarToggle.addEventListener("change", (e) => {
   if (!e.target.checked && radarPolygon) {
     radarPolygon.setMap(null); // 레이더 숨김
@@ -830,6 +833,7 @@ if (navigator.geolocation) {
     { enableHighAccuracy: true }
   );
 }
+
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
