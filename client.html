@@ -2,6 +2,9 @@
 여기에 레이더부분을 넣어서 수정한 코드
 client.htmo 260427
 
+조금더 수정한 파일이긴하데 최소화버튼을누르면 바로 우측에 붙는 문제만 되면 해결되는 코드임..
+client.htmo 260427
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -724,87 +727,89 @@ window.setCustomInterval = function() {
 };
 
 
-// ---------------------- 전역 변수 ----------------------
+// ---------------------- 관리자 모드 위치 추적 ----------------------
+// 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
+// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 변경 가능)
+
 let myMarker = null;
 let radarPolygon = null;
-let radarRadius = 50;
-let radarUnit = "m";
 
-// ---------------------- 레이더 관련 함수 ----------------------
-function convertToDegrees(value, unit) { ... }
+// ✅ 기본값: 50m, 단위는 m
+let radarRadius = 50; 
+let radarUnit = "m"; // 기본 단위: m → 필요시 "km"로 변경
 
-function updateRadarPolygon(centerLatLng) { ... }
-
-function initRadarUI() {
-  const radiusValue = document.getElementById("radiusValue");
-  if (radiusValue) {
-    radiusValue.textContent = radarRadius + " " + radarUnit;
+// ✅ 단위 변환 함수 (m 또는 km → 도 단위)
+function convertToDegrees(value, unit) {
+  // 1도 ≈ 111,000m
+  if (unit === "m") {
+    return value / 111000;
+  } else if (unit === "km") {
+    return (value * 1000) / 111000;
   }
-  updateRadarPolygon();
+  return value / 111000; // 기본 m 처리
 }
 
-// ---------------------- 데이터 로드 ----------------------
-async function loadData() {
-  const response = await fetch("/api/data");
-  allData = await response.json();
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
 
-  showMap(allData);              // 지도 표시
-  populatePathSelect(allData);   // 경로 선택 갱신
+      // ✅ 내 위치 마커 (빨간 원형)
+      if (!myMarker) {
+        myMarker = new google.maps.Marker({
+          position: myPos,
+          map: map,
+          title: "내 위치",
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: "#FF0000",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2,
+            scale: 10
+          }
+        });
+      } else {
+        myMarker.setPosition(myPos); // 마커 위치 갱신
+      }
 
-  if (allData.length > 0) {
-    updateUserPanelContent("current"); // ✅ 패널 갱신
-  }
+      // ✅ 방향 레이더 (부채꼴)
+      const angle = 90;   // 부채꼴 각도
+      const points = [];
 
-  initRadarUI(); // ✅ 데이터 로드 후 레이더 초기화
+      // ✅ 반경을 도 단위로 변환 (기본값 50m)
+      const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
+
+      for (let a = -angle/2; a <= angle/2; a += 5) {
+        const rad = (heading + a) * Math.PI / 180;
+        const latOffset = radiusInDegrees * Math.cos(rad);
+        const lngOffset = radiusInDegrees * Math.sin(rad);
+        points.push({
+          lat: myPos.lat + latOffset,
+          lng: myPos.lng + lngOffset
+        });
+      }
+      points.unshift(myPos);
+
+      if (radarPolygon) {
+        radarPolygon.setPath(points); // 기존 레이더 갱신
+      } else {
+        radarPolygon = new google.maps.Polygon({
+          paths: points,
+          strokeColor: "#00BFFF",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#00BFFF",
+          fillOpacity: 0.25,
+          map: map
+        });
+      }
+    },
+    (err) => console.error("위치 추적 실패:", err),
+    { enableHighAccuracy: true }
+  );
 }
-
-// ---------------------- DOM 준비 후 이벤트 연결 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const slider = document.getElementById("radiusSlider");
-  const radiusValue = document.getElementById("radiusValue");
-  const radiusUnitSelect = document.getElementById("radiusUnit");
-  const radarToggle = document.getElementById("radarToggle");
-
-  // ✅ 슬라이더/단위/토글 이벤트 연결
-  slider.addEventListener("input", (e) => { ... });
-  radiusUnitSelect.addEventListener("change", (e) => { ... });
-  radarToggle.addEventListener("change", (e) => { ... });
-
-  // ✅ 위치 권한 요청 (사용자 위치 공유 창 뜨도록)
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (!myMarker) {
-          myMarker = new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
-        } else {
-          myMarker.setPosition(myPos);
-        }
-        updateRadarPolygon();
-      },
-      (err) => console.error("위치 추적 실패:", err),
-      { enableHighAccuracy: true }
-    );
-  }
-});
-
-// ---------------------- 사용자 패널 클릭 이벤트 ----------------------
-row.addEventListener("click", () => {
-  if (user.lat && user.lng) {
-    clearMarkers();
-    const marker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map,
-      title: `사용자: ${user.phone}`,
-      animation: google.maps.Animation.BOUNCE
-    });
-    markers.push(marker);
-    map.setCenter({ lat: user.lat, lng: user.lng });
-    map.setZoom(15);
-
-    updateRadarPolygon({ lat: user.lat, lng: user.lng });
-  }
-});
 
 
     
@@ -1283,7 +1288,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 </script>
-
 
 <!-- 스타일 -->
 <style>
