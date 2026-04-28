@@ -17,25 +17,8 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
     zoom: 15,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null // 기본은 일반지도
+    mapTypeId: google.maps.MapTypeId.ROADMAP
   });
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-    });
-  }
-
-  // ✅ 일반지도 버튼
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setOptions({ styles: null });
-    });
-  }
 
   // ✅ 거리 측정 이벤트 등록
   google.maps.event.addListener(map, 'click', (event) => {
