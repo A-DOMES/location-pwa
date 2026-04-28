@@ -725,12 +725,13 @@ window.setCustomInterval = function() {
 
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-let myMarker = null;
-let radarPolygon = null;
+let myMarker = null;       // 내 위치 마커
+let radarPolygon = null;   // 레이더 반경 폴리곤
 
-let radarRadius = 50;   // 기본 반경
-let radarUnit = "m";    // 기본 단위
+let radarRadius = 50;      // 기본 반경 (50m)
+let radarUnit = "m";       // 기본 단위 (미터)
 
+// 단위를 지도 좌표계에 맞게 변환
 function convertToDegrees(value, unit) {
   if (unit === "m") return value / 111000;
   if (unit === "km") return (value * 1000) / 111000;
@@ -739,15 +740,18 @@ function convertToDegrees(value, unit) {
 
 // ✅ 레이더 갱신 함수
 function updateRadarPolygon(centerLatLng) {
+  // 중심 좌표가 없으면 내 위치 마커 기준으로
   if (!centerLatLng) {
     if (!myMarker) return;
     centerLatLng = myMarker.getPosition().toJSON();
   }
+
   const heading = 0; // 기본 방향
-  const angle = 90;
+  const angle = 90;  // 부채꼴 각도
   const points = [];
   const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
 
+  // 부채꼴 좌표 계산
   for (let a = -angle/2; a <= angle/2; a += 5) {
     const rad = (heading + a) * Math.PI / 180;
     const latOffset = radiusInDegrees * Math.cos(rad);
@@ -756,6 +760,7 @@ function updateRadarPolygon(centerLatLng) {
   }
   points.unshift(centerLatLng);
 
+  // 기존 폴리곤 갱신 또는 새로 생성
   if (radarPolygon) {
     radarPolygon.setPath(points);
     radarPolygon.setMap(map);
@@ -776,7 +781,7 @@ function updateRadarPolygon(centerLatLng) {
 function initRadarUI() {
   const radiusValue = document.getElementById("radiusValue");
   if (radiusValue) {
-    radiusValue.textContent = radarRadius + " " + radarUnit;
+    radiusValue.textContent = radarRadius + " " + radarUnit; // 기본값 표시
   }
   updateRadarPolygon(); // 값 갱신 후 레이더도 즉시 적용
 }
@@ -788,21 +793,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const radiusUnitSelect = document.getElementById("radiusUnit");
   const radarToggle = document.getElementById("radarToggle");
 
-  // ✅ 초기화 함수 호출 (DOM 준비 후)
+  // DOM 준비 후 초기화 실행
   initRadarUI();
 
+  // 반경 슬라이더 이벤트
   slider.addEventListener("input", (e) => {
     radarRadius = parseInt(e.target.value, 10);
     radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon(); // 반경 변경 시 즉시 갱신
+    updateRadarPolygon();
   });
 
+  // 단위 변경 이벤트
   radiusUnitSelect.addEventListener("change", (e) => {
     radarUnit = e.target.value;
     radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon(); // 단위 변경 시 즉시 갱신
+    updateRadarPolygon();
   });
 
+  // 레이더 표시/숨김 토글
   radarToggle.addEventListener("change", (e) => {
     if (!e.target.checked && radarPolygon) {
       radarPolygon.setMap(null);
@@ -844,20 +852,21 @@ if (navigator.geolocation) {
 }
 
 // ---------------------- 사용자 패널 클릭 이벤트 확장 ----------------------
+// renderUserTable 안의 row.addEventListener("click", ...) 부분
 row.addEventListener("click", () => {
   if (user.lat && user.lng) {
     clearMarkers();
     const marker = new google.maps.Marker({
       position: { lat: user.lat, lng: user.lng },
       map,
-      title: `사용자: ${user.phone}`,
+      title: `사용자: ${user.phone}`, // ✅ phone 값 표시
       animation: google.maps.Animation.BOUNCE
     });
     markers.push(marker);
     map.setCenter({ lat: user.lat, lng: user.lng });
     map.setZoom(15);
 
-    // ✅ 클릭한 사용자 위치에서 레이더 반경 표시
+    // 클릭한 사용자 위치에서 레이더 반경 표시
     updateRadarPolygon({ lat: user.lat, lng: user.lng });
   }
 });
@@ -870,11 +879,10 @@ async function loadData() {
   populatePathSelect(allData);
 
   if (allData.length > 0) {
-    updateUserPanelContent("current"); // 사용자 패널 갱신
+    updateUserPanelContent("current"); // ✅ 사용자 패널 먼저 갱신
   }
 
-  // ✅ 데이터 로드 후에도 초기화 실행
-  initRadarUI();
+  initRadarUI(); // ✅ 데이터 로드 후 레이더 초기화
 }
 
     
