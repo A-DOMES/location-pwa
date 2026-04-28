@@ -2,7 +2,6 @@ let map, myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
 
-// ✅ POI별 커스텀 아이콘 매핑
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -14,7 +13,7 @@ const poiIcons = {
 };
 
 function initMap() {
-  const defaultPos = { lat: 37.5665, lng: 126.9780 }; // 서울 시청 예시
+  const defaultPos = { lat: 37.5665, lng: 126.9780 };
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
     zoom: 15,
@@ -34,7 +33,6 @@ function initMap() {
   google.maps.event.addListenerOnce(map, 'idle', addCompass);
 }
 
-// ✅ 레이더 갱신
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -66,7 +64,6 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-// ✅ 내 위치 추적 + 경로 기록
 let pathCoords = [];
 let pathPolyline;
 
@@ -123,7 +120,6 @@ if (navigator.geolocation) {
   );
 }
 
-// ✅ 다중 반경 표시
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -139,14 +135,12 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-// ✅ POI 마커 관리
 let poiMarkers = [];
 function clearPoiMarkers() {
   poiMarkers.forEach(m => m.setMap(null));
   poiMarkers = [];
 }
 
-// ✅ 목적지 안내
 let directionsService = new google.maps.DirectionsService();
 let directionsRenderer = new google.maps.DirectionsRenderer();
 directionsRenderer.setMap(map);
@@ -165,7 +159,6 @@ function showRouteToDestination(destination) {
   });
 }
 
-// ✅ 반경 내 POI 표시
 function showNearbyPlaces(myPos, radiusMeters) {
   clearPoiMarkers();
   const service = new google.maps.places.PlacesService(map);
@@ -184,7 +177,6 @@ function showNearbyPlaces(myPos, radiusMeters) {
               icon: { url: poiIcons[type], scaledSize: new google.maps.Size(32, 32) }
             });
 
-            // InfoWindow 표시
             marker.addListener("click", () => {
               infowindow.setContent(`<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}<br>(더블클릭하면 경로 안내)`);
               infowindow.open(map, marker);
@@ -202,7 +194,6 @@ function showNearbyPlaces(myPos, radiusMeters) {
   });
 }
 
-// ✅ 나침반 표시
 let compassMarkers = [];
 function clearCompass() {
   compassMarkers.forEach(m => m.setMap(null));
@@ -231,5 +222,4 @@ function addCompass() {
   });
 }
 
-// ✅ initMap을 전역에 등록
 window.initMap = initMap;
