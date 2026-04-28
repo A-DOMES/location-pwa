@@ -900,17 +900,14 @@ if (btnDecrease) {
   });
 }
 
-
   // ✅ 표시 업데이트 함수
-  function updateDisplay() {
-    if (radiusUnit === "m") {
-      radiusValue.textContent = radarRadiusMeters + " m";
-    } else {
-      radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
-    }
+function updateDisplay() {
+  if (radiusUnit === "m") {
+    radiusValue.textContent = radarRadiusMeters + " m";
+  } else {
+    radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
   }
-  updateDisplay();
-});
+}
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
