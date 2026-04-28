@@ -639,29 +639,29 @@ function getMapIdByDevice() {
 
 
 function initMap() {
-  const mapId = getMapIdByDevice();
+  const mapId = getMapIdByDevice(); // 기기별 Map ID 가져오기
 
-  // ✅ 초기 중심 좌표 지정 (큰 그림용)
+  // 기본 중심 좌표 (대한민국 중앙)
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    mapId: mapId
+    mapId: mapId // ✅ Map ID 기반 벡터지도
   });
 
-  // ✅ 우클릭 시 원래 위치로 복귀
+  // 우클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
-    console.log("우클릭 이벤트 발생!");
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 데이터 로딩 시작
+  // 데이터 로딩 시작
   loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분
+  intervalId = setInterval(loadData, 300000); // 5분마다 갱신
 }
 
 window.initMap = initMap;
+
 
 
 
@@ -698,17 +698,22 @@ window.moveToUser = function(lat, lng, phone) {
 const themeToggle = document.getElementById("themeToggle");
 if (themeToggle) {
   themeToggle.addEventListener("change", () => {
-    // body 클래스 토글
     document.body.classList.toggle("dark-mode", themeToggle.checked);
 
-    // ✅ 벡터 지도(roadmap)일 때만 스타일 적용
-    if (map.getMapTypeId() === "roadmap") {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
-      } else {
-        map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
-      }
+    // ✅ Map ID 기반으로 스타일 전환
+    if (themeToggle.checked) {
+      map.setOptions({ mapId: "DARK_MAP_ID" });   // 다크 모드 Map ID
+    } else {
+      map.setOptions({ mapId: "LIGHT_MAP_ID" });  // 라이트 모드 Map ID
     }
+  });
+}
+
+// 일반지도 버튼
+const defaultMapBtn = document.getElementById("defaultMapBtn");
+if (defaultMapBtn) {
+  defaultMapBtn.addEventListener("click", () => {
+    map.setOptions({ styles: null }); // ✅ 기본 Roadmap으로 복귀
   });
 }
 
