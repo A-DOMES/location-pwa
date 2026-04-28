@@ -729,6 +729,7 @@ window.setCustomInterval = function() {
 
 let myMarker = null;
 let radarPolygon = null;
+let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
 
 // ✅ 기본값: 50m, 단위는 m
 let radarRadius = 50; 
@@ -747,6 +748,11 @@ function convertToDegrees(value, unit) {
 
 // ✅ 레이더 갱신 함수 (마커 위치 기준으로 다시 그림)
 function updateRadarPolygon(myPos, heading) {
+  if (!radarEnabled) {
+    if (radarPolygon) radarPolygon.setMap(null); // off 상태면 지도에서 제거
+    return;
+  }
+
   const angle = 90;   // 부채꼴 각도
   const points = [];
 
@@ -765,6 +771,7 @@ function updateRadarPolygon(myPos, heading) {
 
   if (radarPolygon) {
     radarPolygon.setPath(points); // 기존 레이더 갱신
+    radarPolygon.setMap(map);
   } else {
     radarPolygon = new google.maps.Polygon({
       paths: points,
@@ -811,30 +818,37 @@ if (navigator.geolocation) {
   );
 }
 
-// ---------------------- 슬라이더/단위 변경 기능 ----------------------
+// ---------------------- 슬라이더/단위 변경 + on/off 기능 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("radiusSlider");
   const radiusValue = document.getElementById("radiusValue");
   const radiusUnitSelect = document.getElementById("radiusUnit");
+  const radarToggle = document.getElementById("radarToggle");
 
   if (radiusValue) {
     radiusValue.textContent = radarRadius + " " + radarUnit;
   }
 
-  // ✅ 슬라이더로 반경 변경 → 레이더도 갱신
+  // ✅ 슬라이더로 반경 변경 → 최대 300km 제한 + 레이더 갱신
   if (slider) {
     slider.addEventListener("input", (e) => {
       radarRadius = parseInt(e.target.value, 10);
+
+      // km 단위일 때 최대 300km 제한
+      if (radarUnit === "km" && radarRadius > 300) {
+        radarRadius = 300;
+      }
+
       radiusValue.textContent = radarRadius + " " + radarUnit;
 
       if (myMarker) {
         const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0); // heading은 기본값 0
+        updateRadarPolygon(pos, 0);
       }
     });
   }
 
-  // ✅ 단위 변경 (m ↔ km) → 레이더도 갱신
+  // ✅ 단위 변경 (m ↔ km) → 레이더 갱신
   if (radiusUnitSelect) {
     radiusUnitSelect.addEventListener("change", (e) => {
       radarUnit = e.target.value;
@@ -846,8 +860,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-});
 
+  // ✅ 레이더 on/off 버튼
+  if (radarToggle) {
+    radarToggle.addEventListener("change", (e) => {
+      radarEnabled = e.target.checked;
+      if (!radarEnabled && radarPolygon) {
+        radarPolygon.setMap(null); // off면 지도에서 제거
+      } else if (radarEnabled && myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0); // on이면 다시 그리기
+      }
+    });
+  }
+});
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
