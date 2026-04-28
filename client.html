@@ -678,29 +678,35 @@ window.moveToUser = function(lat, lng, phone) {
   });
 };
   
-// 라이트/다크 모드 전환
+// ✅ 라이트/다크 모드 토글
 const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    if (themeToggle.checked) {
-      map.setOptions({ mapId: "YOUR_DARK_MAP_ID" });   // ✅ 실제 다크 Map ID
-    } else {
-      map.setOptions({ mapId: "YOUR_LIGHT_MAP_ID" });  // ✅ 실제 라이트 Map ID
-    }
-  });
-}
+themeToggle.addEventListener("change", () => {
+  if (themeToggle.checked) {
+    // 다크 벡터 지도
+    map.setOptions({ mapId: "YOUR_DARK_MAP_ID" });
+  } else {
+    // 라이트 벡터 지도
+    map.setOptions({ mapId: "YOUR_LIGHT_MAP_ID" });
+  }
+});
 
-// 일반지도 버튼
+// ✅ 일반 지도 버튼
 const defaultMapBtn = document.getElementById("defaultMapBtn");
-if (defaultMapBtn) {
-  defaultMapBtn.addEventListener("click", () => {
-    map.setOptions({
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      styles: null,
-      mapId: null
-    });
+defaultMapBtn.addEventListener("click", () => {
+  // 기본 지도 복귀
+  map.setOptions({
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null,
+    mapId: null
   });
-}
+
+  // 토글 상태도 초기화 → 일반 지도에서는 토글이 꺼져 있어야 함
+  themeToggle.checked = false;
+
+  // 필요하다면 중심과 줌도 초기화
+  map.setOptions({ center: originalCenter, zoom: 7 });
+});
+
 
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
