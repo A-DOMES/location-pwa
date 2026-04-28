@@ -908,7 +908,8 @@ function updateDisplay() {
     radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
   }
 }
-
+  updateDisplay();
+}); // ← 여기서 DOMContentLoaded 블록을 닫아야 함
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
 function formatToKST(isoString) {
