@@ -860,45 +860,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-// ➕ 버튼 (미세조정: 1m씩 증가)
+// ➕ 버튼
 if (btnIncrease) {
   btnIncrease.addEventListener("click", () => {
     radarRadiusMeters += 1;
     if (radarRadiusMeters > 300000) radarRadiusMeters = 300000;
 
-    // ✅ 슬라이더 값 갱신
     slider.value = radarRadiusMeters;
-
-    // ✅ 숫자 표시 갱신
-    updateDisplay();
-
-    // ✅ 지도 반영
-    if (myMarker) {
-      const pos = myMarker.getPosition().toJSON();
-      updateRadarPolygon(pos, 0);
-    }
+    slider.dispatchEvent(new Event("input")); // UI와 숫자 갱신 강제
   });
 }
 
-// ➖ 버튼 (미세조정: 1m씩 감소)
+// ➖ 버튼
 if (btnDecrease) {
   btnDecrease.addEventListener("click", () => {
     radarRadiusMeters -= 1;
     if (radarRadiusMeters < 1) radarRadiusMeters = 1;
 
-    // ✅ 슬라이더 값 갱신
     slider.value = radarRadiusMeters;
-
-    // ✅ 숫자 표시 갱신
-    updateDisplay();
-
-    // ✅ 지도 반영
-    if (myMarker) {
-      const pos = myMarker.getPosition().toJSON();
-      updateRadarPolygon(pos, 0);
-    }
+    slider.dispatchEvent(new Event("input")); // UI와 숫자 갱신 강제
   });
 }
+
 
   // ✅ 표시 업데이트 함수
 function updateDisplay() {
