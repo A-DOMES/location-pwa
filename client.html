@@ -1,3 +1,6 @@
+조금더 수정한 파일이긴하데 최소화버튼을누르면 바로 우측에 붙는 문제만 되면 해결되는 코드임..
+client.htmo 260427
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1088,7 +1091,7 @@ function makePanelDraggable(panelId) {
   });
 }
 
-// ---------------------- 네 면 리사이즈 기능 ----------------------
+// ---------------------- 네 면 리사이즈 ----------------------
 function makeResizable(panelId) {
   const panel = document.getElementById(panelId);
   const handles = panel.querySelectorAll(".resize-handle");
@@ -1104,8 +1107,7 @@ function makeResizable(panelId) {
   // ▶ PC 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("mousedown", () => {
-      isResizing = true;
-      currentHandle = getHandleType(handle);
+      isResizing = true; currentHandle = getHandleType(handle);
       document.body.style.userSelect = "none";
     });
   });
@@ -1114,49 +1116,30 @@ function makeResizable(panelId) {
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
-
     if (currentHandle === "right") {
       const newWidth = e.clientX - rect.left;
       if (newWidth > 200) panel.style.width = newWidth + "px";
-
     } else if (currentHandle === "left") {
-      if (panel.classList.contains("snap-left")) {
-        // ✅ 좌측 Snap 상태 → 왼쪽 고정, 오른쪽만 움직임
-        const newWidth = e.clientX - rect.left;
-        if (newWidth > 200) panel.style.width = newWidth + "px";
-      } else {
-        // 기본 상태 → 오른쪽 고정, 왼쪽 움직임
-        const newWidth = rect.right - e.clientX;
-        if (newWidth > 200) {
-          panel.style.width = newWidth + "px";
-          panel.style.left = e.clientX + "px";
-        }
-      }
-
+      const newWidth = rect.right - e.clientX;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
     } else if (currentHandle === "bottom") {
       const newHeight = e.clientY - rect.top;
       if (newHeight > 100) panel.style.height = newHeight + "px";
-
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - e.clientY;
-      if (newHeight > 100) {
-        panel.style.height = newHeight + "px";
-        panel.style.top = e.clientY + "px";
-      }
+      if (newHeight > 100) panel.style.height = newHeight + "px";
     }
   });
 
   // ▶ PC 리사이즈 종료
   document.addEventListener("mouseup", () => {
-    isResizing = false;
-    document.body.style.userSelect = "auto";
+    isResizing = false; document.body.style.userSelect = "auto";
   });
 
   // ▶ 모바일 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("touchstart", () => {
-      isResizing = true;
-      currentHandle = getHandleType(handle);
+      isResizing = true; currentHandle = getHandleType(handle);
       document.body.style.userSelect = "none";
     });
   });
@@ -1170,31 +1153,15 @@ function makeResizable(panelId) {
     if (currentHandle === "right") {
       const newWidth = t.clientX - rect.left;
       if (newWidth > 200) panel.style.width = newWidth + "px";
-
     } else if (currentHandle === "left") {
-      if (panel.classList.contains("snap-left")) {
-        // ✅ 좌측 Snap 상태 → 왼쪽 고정, 오른쪽만 움직임
-        const newWidth = t.clientX - rect.left;
-        if (newWidth > 200) panel.style.width = newWidth + "px";
-      } else {
-        // 기본 상태 → 오른쪽 고정, 왼쪽 움직임
-        const newWidth = rect.right - t.clientX;
-        if (newWidth > 200) {
-          panel.style.width = newWidth + "px";
-          panel.style.left = t.clientX + "px";
-        }
-      }
-
+      const newWidth = rect.right - t.clientX;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
     } else if (currentHandle === "bottom") {
       const newHeight = t.clientY - rect.top;
       if (newHeight > 100) panel.style.height = newHeight + "px";
-
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - t.clientY;
-      if (newHeight > 100) {
-        panel.style.height = newHeight + "px";
-        panel.style.top = t.clientY + "px";
-      }
+      if (newHeight > 100) panel.style.height = newHeight + "px";
     }
   });
 
@@ -1205,113 +1172,42 @@ function makeResizable(panelId) {
   });
 }
 
-// ---------------------- 사용자 패널 초기화 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const panel = document.getElementById("user-panel");
-
-  // ▶ 드래그 + Snap 기능 적용
-  makePanelDraggable("user-panel");
-
-  // ▶ 네 면 리사이즈 기능 적용
-  makeResizable("user-panel");
-});
-
-
-// ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
   const minimizeBtn = document.getElementById("minimize-btn");
   const closeBtn = document.getElementById("close-user-panel");
-
-  // ---------------------- 이벤트 영역 제거 함수 ----------------------
-  function removeEdgeZones() {
-    document.querySelectorAll(".edge-zone").forEach(zone => zone.remove());
-  }
+  const leftEdge = document.getElementById("left-edge");
+  const rightEdge = document.getElementById("right-edge");
 
   // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
     // 모든 상태 초기화
-    panel.classList.remove("maximized", "touch-active");
-    removeEdgeZones(); // 기존 이벤트 영역 제거
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
 
     if (panel.classList.contains("snap-left")) {
-      // 좌측 Snap 상태일 때 → 좌측 숨김
-      panel.classList.remove("collapsed-right");
       panel.classList.add("collapsed-left");
-      panel.style.width = "15px";   // ✅ 폭 수정 (CSS와 동일하게)
-      panel.style.left = "0";
-      panel.style.right = "auto";
-      panel.style.top = "50px";
-      panel.style.bottom = "auto";
-
-      // 좌측 이벤트 영역 동적 생성
-      const leftEdge = document.createElement("div");
-      leftEdge.className = "edge-zone left";
-      document.body.appendChild(leftEdge);
-
-      // PC: hover / 모바일: touch
-      leftEdge.addEventListener("mouseenter", () => {
-        if (panel.classList.contains("collapsed-left")) {
-          panel.classList.add("touch-active");
-        }
-      });
-      leftEdge.addEventListener("touchstart", () => {
-        if (panel.classList.contains("collapsed-left")) {
-          panel.classList.add("touch-active");
-        }
-      });
     } else {
-      // 기본 또는 우측 Snap 상태일 때 → 우측 숨김
-      panel.classList.remove("collapsed-left");
       panel.classList.add("collapsed-right");
-      panel.style.width = "15px";   // ✅ 폭 수정 (CSS와 동일하게)
-      panel.style.right = "0";
-      panel.style.left = "auto";
-      panel.style.top = "50px";
-      panel.style.bottom = "auto";
-
-      // 우측 이벤트 영역 동적 생성
-      const rightEdge = document.createElement("div");
-      rightEdge.className = "edge-zone right";
-      document.body.appendChild(rightEdge);
-
-      // PC: hover / 모바일: touch
-      rightEdge.addEventListener("mouseenter", () => {
-        if (panel.classList.contains("collapsed-right")) {
-          panel.classList.add("touch-active");
-        }
-      });
-      rightEdge.addEventListener("touchstart", () => {
-        if (panel.classList.contains("collapsed-right")) {
-          panel.classList.add("touch-active");
-        }
-      });
     }
+
+    // 인라인 스타일 제거 → CSS 규칙만 적용
+    panel.style = "";
   });
 
   // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
-      // 이미 최대화 상태 → 접힘으로 전환
       panel.classList.remove("maximized");
       if (panel.classList.contains("snap-left")) {
         panel.classList.add("collapsed-left");
-        panel.style.width = "15px";   // ✅ 폭 수정
-        panel.style.left = "0";
-        panel.style.right = "auto";
       } else {
         panel.classList.add("collapsed-right");
-        panel.style.width = "15px";   // ✅ 폭 수정
-        panel.style.right = "0";
-        panel.style.left = "auto";
       }
+      panel.style = "";
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      // 접힘 상태 → 기본 상태로 복귀
       panel.classList.remove("collapsed-left", "collapsed-right");
-      removeEdgeZones(); // 이벤트 영역 제거
       if (window.innerWidth <= 768) {
-        // 모바일 기본: 하단 40%
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1319,9 +1215,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
-        // 데스크톱 기본: 오른쪽 패널 크기 선택
-        const defaultWidth = window.innerWidth > 1400 ? "1000px" : "600px";
-        panel.style.width = defaultWidth;
+        panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
         panel.style.right = "0";
@@ -1329,9 +1223,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.bottom = "auto";
       }
     } else {
-      // 기본 상태 → 최대화
       panel.classList.add("maximized");
-      removeEdgeZones(); // 이벤트 영역 제거
       panel.style.width = "100%";
       panel.style.height = "100%";
       panel.style.top = "0";
@@ -1352,31 +1244,44 @@ document.addEventListener("DOMContentLoaded", () => {
       "snap-right",
       "touch-active"
     );
-    removeEdgeZones(); // 이벤트 영역 제거
     panel.style = "";
   });
 
-  // ---------------------- 패널 자체 이벤트 처리 ----------------------
-  // PC: 마우스가 패널 위에 닿으면 펼침
-  panel.addEventListener("mouseenter", () => {
-    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
+  // ---------------------- 끝부분 이벤트 처리 ----------------------
+  if (leftEdge) {
+    leftEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    leftEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
 
-  // 모바일: 패널 터치 시 펼침
-  panel.addEventListener("touchstart", () => {
-    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
-  
+  if (rightEdge) {
+    rightEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    rightEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
+
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
   makePanelDraggable("user-panel");
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
+
+
 
 </script>
 
@@ -1444,7 +1349,7 @@ input:checked + .slider:before { transform:translateX(26px); }
   background: #fff;             /* 배경색 흰색 */
   border-left: 1px solid #ccc;  /* 오른쪽 패널 구분선 */
   display: none;                /* 기본은 숨김 */
-  z-index: 2000;                /* 최상위로 올림 */
+  z-index: 5000;                /* 최상위로 올림 */
   padding: 20px;                /* 내부 여백 */
   overflow-y: auto;             /* 세로 스크롤 */
   font-size: 15px;              /* 글자 크기 */
@@ -1456,12 +1361,10 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 우측 접힘 상태 */
 #user-panel.collapsed-right {
-  width: 15px;  /* 최소화 시 패널 폭 */
-  height: calc(100% - 50px);
-  right: 0;        /* 반드시 우측 끝에 붙도록 */
-  left: auto;
+  width: 5px;
+  height: 100%;
+  right: 0;
   top: 50px;
-  bottom: auto;
   overflow: hidden;
   transition: width 0.3s ease;
 }
@@ -1476,12 +1379,10 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 좌측 접힘 상태 */
 #user-panel.collapsed-left {
-  width: 15px;  /* 최소화 시 패널 폭 */
-  height: calc(100% - 50px);
-  left: 0;         /* 반드시 좌측 끝에 붙도록 */
-  right: auto;
+  width: 5px;
+  height: 100%;
+  left: 0;
   top: 50px;
-  bottom: auto;
   overflow: hidden;
   transition: width 0.3s ease;
 }
@@ -1499,8 +1400,8 @@ input:checked + .slider:before { transform:translateX(26px); }
   position: fixed;
   top: 50px;
   height: calc(100% - 50px);
-  width: 15px;  /* 이벤트 감지 영역도 동일하게 5px */
-  z-index: 100; /* 다른 요소보다 확실히 위 */
+  width: 5px;
+  z-index: 9999; /* 다른 요소보다 확실히 위 */
   background: transparent; /* 이벤트 감지용 투명 영역 */
   pointer-events: auto;     /* 이벤트가 반드시 잡히도록 */
 }
@@ -1728,36 +1629,36 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <div id="left-edge"></div>
     <div id="right-edge"></div>
 
- <!-- 사용자 정보 패널 -->
-<div id="user-panel">
-  <div class="panel-header">
-    <h3 id="user-panel-title">사용자 정보</h3>
-    <div class="panel-controls">
-      <button id="minimize-btn">━</button>
-      <button id="maximize-btn">⬜</button>
-      <button id="close-user-panel">✖ 닫기</button>
+    <!-- 사용자 정보 패널 -->
+    <div id="user-panel">
+      <div class="panel-header">
+        <h3 id="user-panel-title">사용자 정보</h3>
+        <div class="panel-controls">
+          <button id="minimize-btn">━</button>
+          <button id="maximize-btn">⬜</button>
+          <button id="close-user-panel">✖ 닫기</button>
+        </div>
+      </div>
+      <div class="panel-content">
+        <div id="path-select-container">
+          <label for="path-user-select">경로 보기 선택:</label>
+          <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+            <option value="all">전체</option>
+          </select>
+        </div>
+        <div id="user-content">
+          <table id="user-table">
+            <thead><tr id="user-table-header"></tr></thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="resize-handle left"></div>
+      <div class="resize-handle right"></div>
+      <div class="resize-handle top"></div>
+      <div class="resize-handle bottom"></div>
     </div>
   </div>
-  <div class="panel-content">
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
-    <div id="user-content">
-      <table id="user-table">
-        <thead><tr id="user-table-header"></tr></thead>
-        <tbody id="user-table-body"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="resize-handle left"></div>
-  <div class="resize-handle right"></div>
-  <div class="resize-handle top"></div>
-  <div class="resize-handle bottom"></div>
-</div>
-
 
   <!-- 지도 영역 -->
   <div id="map"></div>
@@ -1780,4 +1681,5 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 </body>
 </html>
+  
   
