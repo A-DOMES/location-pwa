@@ -20,9 +20,12 @@ client.htmo 260428
   
   // 레이더 관련 전역 변수만 별도 관리
   let radarPolygon = null;
-  let radarEnabled = true;
+  let myMarker = null;
+  let radarEnabled = true;    // ✅ 레이더 on/off 상태 관리
   let radarRadiusMeters = 50;
   let radarUnit = "m";
+
+    
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -732,10 +735,6 @@ window.setCustomInterval = function() {
 // ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-let myMarker = null;
-let radarPolygon = null;
-let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-
 // ✅ 내부 값은 항상 미터 단위로 저장
 let radarRadiusMeters = 50; 
 let radarUnit = "m"; // 표시 단위: m 또는 km
@@ -1787,8 +1786,6 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
-  <!-- 내가 만든 지도 기능 -->
-  <script src="client.js"></script>
 </body>
 </html>
   
