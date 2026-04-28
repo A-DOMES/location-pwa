@@ -1,3 +1,11 @@
+분리된 코드, client.html, client.js, client.css로 구분이 된 코드
+client.html 전체구조 완성본, 
+client.js 구성함,
+client.css 구성하기전 통합코드임..
+
+조금더 수정한 파일이긴하데 최소화버튼을누르면 바로 우측에 붙는 문제만 되면 해결되는 코드임..
+client.htmo 260429-1
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -82,7 +90,7 @@ async function loadData(token = null) {
           await navigator.clipboard.writeText(shareUrl);
 
           // ✅ 공유 팝업 표시
-          const popup = document.("popupMessage");
+          const popup = document.getElementById("popupMessage");
           popup.style.display = "block";
           popup.style.opacity = "1";
           setTimeout(() => {
@@ -92,7 +100,7 @@ async function loadData(token = null) {
         };
       }
     } else {
-      document.("locationBox").innerHTML =
+      document.getElementById("locationBox").innerHTML =
         "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
@@ -104,7 +112,7 @@ async function loadData(token = null) {
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
-    const value = parseInt(document.("intervalValue").value);
+    const value = parseInt(document.getElementById("intervalValue").value);
     const unit = document.getElementById("intervalUnit").value;
 
     if (isNaN(value) || value <= 0) {
@@ -123,7 +131,7 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-// ---------------------- 지도 초기화 ----------------------
+  // ---------------------- 지도 초기화 ----------------------
   window.onload = () => {
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 36.5, lng: 127.5 },
@@ -629,6 +637,7 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
+
 function initMap() {
   const mapId = getMapIdByDevice();
 
@@ -653,7 +662,9 @@ function initMap() {
 }
 
 window.initMap = initMap;
-    
+
+
+
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -1525,30 +1536,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- ✅ 라이트/다크 스타일 JSON 정의 -->
   <script>
-    const lightStyle = [
-      { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] }
-    ];
-  
-    const darkStyle = [
-      { elementType: "geometry", stylers: [{ color: "#212121" }] },
-      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] }
-    ];
-      function initMap() { /* 기존 코드 유지 */ }
-      window.initMap = initMap;
+    const lightStyle = [...]; // 생략
+    const darkStyle = [...];  // 생략
+    function initMap() { /* 기존 코드 유지 */ }
+    window.initMap = initMap;
   </script>
-
 
   <!-- MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
   <script src="client.js"></script>
-  
+
   <!-- Google Maps API -->
 <script async defer 
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&libraries=places,geometry&callback=initMap">
