@@ -743,7 +743,7 @@ function updateRadarPolygon(centerLatLng) {
     if (!myMarker) return;
     centerLatLng = myMarker.getPosition().toJSON();
   }
-  const heading = 0; // 기본 방향 (필요시 heading 값 사용)
+  const heading = 0; // 기본 방향
   const angle = 90;
   const points = [];
   const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
@@ -772,6 +772,15 @@ function updateRadarPolygon(centerLatLng) {
   }
 }
 
+// ✅ 초기화 함수 (DOM 값 갱신 + 레이더 적용)
+function initRadarUI() {
+  const radiusValue = document.getElementById("radiusValue");
+  if (radiusValue) {
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  }
+  updateRadarPolygon(); // 값 갱신 후 레이더도 즉시 적용
+}
+
 // ✅ 환경설정 패널 UI 이벤트 연결
 document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("radiusSlider");
@@ -779,21 +788,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const radiusUnitSelect = document.getElementById("radiusUnit");
   const radarToggle = document.getElementById("radarToggle");
 
-  // ✅ 초기값 강제 세팅 (50m 기본 표시)
-  if (radiusValue) {
-    radiusValue.textContent = radarRadius + " " + radarUnit;
-  }
+  // ✅ 초기화 함수 호출 (DOM 준비 후)
+  initRadarUI();
 
   slider.addEventListener("input", (e) => {
     radarRadius = parseInt(e.target.value, 10);
     radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon(); // ✅ 반경 변경 시 즉시 갱신
+    updateRadarPolygon(); // 반경 변경 시 즉시 갱신
   });
 
   radiusUnitSelect.addEventListener("change", (e) => {
     radarUnit = e.target.value;
     radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon(); // ✅ 단위 변경 시 즉시 갱신
+    updateRadarPolygon(); // 단위 변경 시 즉시 갱신
   });
 
   radarToggle.addEventListener("change", (e) => {
@@ -829,7 +836,7 @@ if (navigator.geolocation) {
         myMarker.setPosition(myPos);
       }
 
-      updateRadarPolygon(); // ✅ 위치 갱신 시 레이더도 갱신
+      updateRadarPolygon(); // 위치 갱신 시 레이더도 갱신
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
@@ -837,7 +844,6 @@ if (navigator.geolocation) {
 }
 
 // ---------------------- 사용자 패널 클릭 이벤트 확장 ----------------------
-// renderUserTable 안의 row.addEventListener("click", ...) 부분을 이렇게 확장하세요:
 row.addEventListener("click", () => {
   if (user.lat && user.lng) {
     clearMarkers();
@@ -855,6 +861,21 @@ row.addEventListener("click", () => {
     updateRadarPolygon({ lat: user.lat, lng: user.lng });
   }
 });
+
+// ---------------------- 데이터 로드 ----------------------
+async function loadData() {
+  const response = await fetch("/api/data");
+  allData = await response.json();
+  showMap(allData);
+  populatePathSelect(allData);
+
+  if (allData.length > 0) {
+    updateUserPanelContent("current"); // 사용자 패널 갱신
+  }
+
+  // ✅ 데이터 로드 후에도 초기화 실행
+  initRadarUI();
+}
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
