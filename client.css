@@ -17,23 +17,14 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Aria
 }
 
 #settings-panel {
-  position: absolute;
-  top: 60px;   /* 상단바 아래 */
-  left: 20px;  /* 화면 왼쪽 */
-  z-index: 100; /* 지도보다 위 */
+  position: absolute;   /* ✅ 지도 위에 고정 */
+  top: 60px;            /* 상단바 바로 아래 */
+  right: 20px;          /* 화면 오른쪽 여백 */
+  z-index: 100;         /* 지도보다 위 */
   background: #fff;
   border: 1px solid #ccc;
   padding: 10px;
-}
-
-#connection-panel {
-  position: absolute;
-  top: 60px;
-  left: 200px; /* 원하는 위치 */
-  z-index: 100;
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 10px;
+  width: 280px;         /* 패널 폭 고정 */
 }
 
 
