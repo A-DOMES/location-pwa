@@ -1645,59 +1645,69 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     </div>
   </div>
 
-  <!-- 환경설정 패널 -->
-  <div id="settings-panel" class="dropdown-panel">
-    <!-- 라이트/다크 모드 토글 -->
-    <div class="dropdown-item">
-      <strong>벡터지도 (라이트/다크)</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
-    <!-- 일반지도 버튼 -->
-    <div class="dropdown-item">
-      <strong>일반지도</strong><br>
-      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
-    </div>
-    <!-- 갱신 주기 설정 -->
-    <div class="dropdown-item">
-      <strong>갱신 주기 설정</strong><br>
-      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
-          <option value="minutes">분</option>
-          <option value="seconds">초</option>
-        </select>
-        <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
-      </div>
-    </div>
-    <!-- 레이더 반경 설정 -->
-    <div class="dropdown-item" id="radar-settings">
-      <strong>레이더 반경 설정</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="radarToggle" checked>
-        <span class="slider"></span>
-      </label>
-      <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
-        <span id="radiusValue">50m</span>
-        <select id="radiusUnit">
-          <option value="m" selected>m</option>
-          <option value="km">km</option>
-        </select>
-      </div>
-    </div>
-    <!-- 마커 클러스터링 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
-    </div>
-    <!-- 최근 50개 데이터만 표시 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+<!-- 환경설정 패널 -->
+<div id="settings-panel" class="dropdown-panel">
+  <!-- 라이트/다크 모드 토글 -->
+  <div class="dropdown-item">
+    <strong>벡터지도 (라이트/다크)</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="themeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- 일반지도 버튼 -->
+  <div class="dropdown-item">
+    <strong>일반지도</strong><br>
+    <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
+  </div>
+
+  <!-- 갱신 주기 설정 -->
+  <div class="dropdown-item">
+    <strong>갱신 주기 설정</strong><br>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
+      <select id="intervalUnit" style="font-size:18px; padding:6px;">
+        <option value="minutes">분</option>
+        <option value="seconds">초</option>
+      </select>
+      <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
     </div>
   </div>
+
+  <!-- 레이더 반경 설정 -->
+  <div class="dropdown-item" id="radar-settings">
+    <strong>레이더 반경 설정</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="radarToggle" checked>
+      <span class="slider"></span>
+    </label>
+    <br>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <input type="range" id="radiusSlider" min="1" max="300000" step="1" value="50" style="flex:1;">
+      <span id="radiusValue">50m</span>
+      <select id="radiusUnit">
+        <option value="m" selected>m</option>
+        <option value="km">km</option>
+      </select>
+    </div>
+    <!-- ✅ 미세조정 버튼 추가 -->
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <button id="btnDecrease" style="font-size:18px; padding:6px 12px;">➖ 줄이기</button>
+      <button id="btnIncrease" style="font-size:18px; padding:6px 12px;">➕ 늘리기</button>
+    </div>
+  </div>
+
+  <!-- 마커 클러스터링 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+  </div>
+
+  <!-- 최근 50개 데이터만 표시 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+  </div>
+</div>
 
   <!-- 실시간 위치공유 -->
   <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
