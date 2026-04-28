@@ -745,36 +745,29 @@ function convertToDegrees(value, unit) {
   return value / 111000; // 기본 m 처리
 }
 
-// ✅ 환경설정 UI (슬라이더) 이벤트 연결
+// ✅ 레이더 반경 UI 이벤트 연결
 const slider = document.getElementById("radiusSlider");
 const radiusValue = document.getElementById("radiusValue");
+const radiusUnitSelect = document.getElementById("radiusUnit");
+const radarToggle = document.getElementById("radarToggle");
 
 slider.addEventListener("input", (e) => {
-  radarRadius = parseInt(e.target.value, 10); // ✅ 반경 값 갱신
-  radarUnit = "m"; // 단위는 m 유지
-  radiusValue.textContent = radarRadius + "m";
+  radarRadius = parseInt(e.target.value, 10);
+  radiusValue.textContent = radarRadius + radarUnit;
+});
 
-  // ✅ 기존 레이더를 즉시 갱신
-  if (radarPolygon && myMarker) {
-    const pos = myMarker.getPosition();
-    const heading = 0; // 필요시 현재 heading 값 가져오기
-    const angle = 90;
-    const points = [];
+radiusUnitSelect.addEventListener("change", (e) => {
+  radarUnit = e.target.value;
+  radiusValue.textContent = radarRadius + radarUnit;
+});
 
-    const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
-    for (let a = -angle/2; a <= angle/2; a += 5) {
-      const rad = (heading + a) * Math.PI / 180;
-      const latOffset = radiusInDegrees * Math.cos(rad);
-      const lngOffset = radiusInDegrees * Math.sin(rad);
-      points.push({
-        lat: pos.lat() + latOffset,
-        lng: pos.lng() + lngOffset
-      });
-    }
-    points.unshift({ lat: pos.lat(), lng: pos.lng() });
-    radarPolygon.setPath(points);
+radarToggle.addEventListener("change", (e) => {
+  if (!e.target.checked && radarPolygon) {
+    radarPolygon.setMap(null); // 레이더 숨김
+  } else if (e.target.checked && radarPolygon) {
+    radarPolygon.setMap(map);  // 레이더 표시
   }
-}
+});
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
@@ -805,7 +798,7 @@ if (navigator.geolocation) {
       const angle = 90;   // 부채꼴 각도
       const points = [];
 
-      // ✅ 반경을 도 단위로 변환 (기본값 50m → 슬라이더 값 반영)
+      // ✅ 반경을 도 단위로 변환 (슬라이더/단위 반영)
       const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
 
       for (let a = -angle/2; a <= angle/2; a += 5) {
@@ -1639,23 +1632,34 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
         <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
       </div>
     </div>
-    <!-- 레이더 반경 설정 -->
-    <div class="dropdown-item" id="radar-settings">
-      <strong>레이더 반경 설정</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="radarToggle" checked>
-        <span class="slider"></span>
-      </label>
-      <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
-        <span id="radiusValue">50m</span>
-        <select id="radiusUnit">
-          <option value="m" selected>m</option>
-          <option value="km">km</option>
-        </select>
-      </div>
-    </div>
+<!-- 레이더 반경 설정 -->
+<div class="dropdown-item" id="radar-settings">
+  <strong>레이더 반경 설정</strong><br>
+  <!-- ✅ 레이더 표시 ON/OFF -->
+  <label class="switch">
+    <input type="checkbox" id="radarToggle" checked>
+    <span class="slider"></span>
+  </label>
+  <br>
+  <!-- ✅ 반경 슬라이더 + 값 표시 + 단위 선택 -->
+  <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+    <input 
+      type="range" 
+      id="radiusSlider" 
+      min="1" 
+      max="200000" 
+      step="10" 
+      value="50" 
+      style="flex:1;"
+    >
+    <span id="radiusValue">50m</span>
+    <select id="radiusUnit">
+      <option value="m" selected>m</option>
+      <option value="km">km</option>
+    </select>
+  </div>
+</div>
+
     <!-- 마커 클러스터링 옵션 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
