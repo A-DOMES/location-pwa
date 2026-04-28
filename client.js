@@ -71,7 +71,7 @@ function initMap() {
     navigator.geolocation.getCurrentPosition((pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       map.setCenter(myPos);
-      map.setZoom(15);
+      map.setZoom(7);
     });
   }
 }
