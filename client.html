@@ -1097,13 +1097,19 @@ function makePanelDraggable(panelId) {
       if (newWidth > 200) panel.style.width = newWidth + "px";
     } else if (currentHandle === "left") {
       const newWidth = rect.right - e.clientX;
-      if (newWidth > 200) panel.style.width = newWidth + "px";
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = e.clientX + "px"; // ✅ 왼쪽 기준점 갱신 → 오른쪽 고정
+      }
     } else if (currentHandle === "bottom") {
       const newHeight = e.clientY - rect.top;
       if (newHeight > 100) panel.style.height = newHeight + "px";
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - e.clientY;
-      if (newHeight > 100) panel.style.height = newHeight + "px";
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신 → 하단 고정
+      }
     }
   });
 
@@ -1131,13 +1137,19 @@ function makePanelDraggable(panelId) {
       if (newWidth > 200) panel.style.width = newWidth + "px";
     } else if (currentHandle === "left") {
       const newWidth = rect.right - t.clientX;
-      if (newWidth > 200) panel.style.width = newWidth + "px";
+      if (newWidth > 200) {
+        panel.style.width = newWidth + "px";
+        panel.style.left = t.clientX + "px"; // ✅ 모바일에서도 왼쪽 기준점 갱신 → 오른쪽 고정
+      }
     } else if (currentHandle === "bottom") {
       const newHeight = t.clientY - rect.top;
       if (newHeight > 100) panel.style.height = newHeight + "px";
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - t.clientY;
-      if (newHeight > 100) panel.style.height = newHeight + "px";
+      if (newHeight > 100) {
+        panel.style.height = newHeight + "px";
+        panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신 → 하단 고정
+      }
     }
   });
 
@@ -1146,7 +1158,6 @@ function makePanelDraggable(panelId) {
     isResizing = false;
     document.body.style.userSelect = "auto";
   });
-}
 
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
