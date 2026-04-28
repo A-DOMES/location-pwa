@@ -137,27 +137,7 @@ function clearPoiMarkers() {
   poiMarkers = [];
 }
 
-// ✅ 목적지 경로 안내 (Directions API)
-let directionsService = new google.maps.DirectionsService();
-let directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
-
-directionsRenderer.setMap(map);
-
-function showRouteToDestination(destination) {
-  if (!myMarker) return;
-  const request = {
-    origin: myMarker.getPosition(),
-    destination: destination,
-    travelMode: google.maps.TravelMode.WALKING
-  };
-  directionsService.route(request, (result, status) => {
-    if (status === google.maps.DirectionsStatus.OK) {
-      directionsRenderer.setDirections(result);
-    }
-  });
-}
-
-// ✅ 반경 내 POI 표시 (중복 제거 + InfoWindow + 목적지 안내)
+// ✅ 반경 내 POI 표시 (중복 제거 + InfoWindow)
 function showNearbyPlaces(myPos, radiusMeters) {
   clearPoiMarkers();
   const service = new google.maps.places.PlacesService(map);
@@ -182,10 +162,10 @@ function showNearbyPlaces(myPos, radiusMeters) {
             }
           });
 
-          // InfoWindow + 목적지 안내
+          // InfoWindow 추가
           marker.addListener("click", () => {
             infowindow.setContent(
-              `<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}<br><button onclick="showRouteToDestination({lat:${place.geometry.location.lat()}, lng:${place.geometry.location.lng()}})">여기로 경로 안내</button>`
+              `<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}`
             );
             infowindow.open(map, marker);
           });
