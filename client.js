@@ -263,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const connectionPanel = document.getElementById("connection-panel");
   const settingsPanel = document.getElementById("settings-panel");
 
+  // 접속현황 버튼
   if (btnConnection) {
     btnConnection.onclick = () => {
       settingsPanel.classList.remove("open");
@@ -270,6 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  // 환경설정 버튼
   if (btnSettings) {
     btnSettings.onclick = () => {
       connectionPanel.classList.remove("open");
@@ -306,5 +308,5 @@ function addCompass() {
   });
 }
 
-// ✅ Google Maps API callback 연결
+// ---------------------- Google Maps API callback 연결 ----------------------
 window.initMap = initMap;
