@@ -2,6 +2,7 @@ let map, myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
 
+// ✅ POI별 커스텀 아이콘 매핑
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -13,43 +14,15 @@ const poiIcons = {
 };
 
 function initMap() {
-  const defaultPos = { lat: 37.5665, lng: 126.9780 };
+  const defaultPos = { lat: 37.5665, lng: 126.9780 }; // 서울 시청 예시
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
     zoom: 15,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null // 기본은 일반지도
+    mapTypeId: google.maps.MapTypeId.ROADMAP
   });
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-    });
-  }
-
-  // ✅ 일반지도 버튼
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setOptions({ styles: null });
-    });
-  }
-
-  // ✅ 거리 측정 이벤트 등록
-  google.maps.event.addListener(map, 'click', (event) => {
-    if (!myMarker) return;
-    const clickedPos = event.latLng;
-    const myPos = myMarker.getPosition();
-    const distance = google.maps.geometry.spherical.computeDistanceBetween(myPos, clickedPos);
-    alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
-  });
-
-  // ✅ 지도 로딩 완료 후 나침반 표시
-  google.maps.event.addListenerOnce(map, 'idle', addCompass);
 }
 
+// ✅ 레이더 갱신
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -81,9 +54,7 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-let pathCoords = [];
-let pathPolyline;
-
+// ✅ 내 위치 추적 + 지도 회전
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -108,28 +79,15 @@ if (navigator.geolocation) {
         myMarker.setPosition(myPos);
       }
 
-      // 경로 기록
-      pathCoords.push(myPos);
-      if (pathPolyline) {
-        pathPolyline.setPath(pathCoords);
-      } else {
-        pathPolyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#FF0000",
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-      }
-
       updateRadarPolygon(myPos, heading);
       drawMultipleCircles(myPos);
       showNearbyPlaces(myPos, radarRadiusMeters);
 
+      // ✅ 지도 방향 회전
       map.setHeading(heading);
       map.setTilt(45);
 
+      // ✅ 나침반 표시
       addCompass();
     },
     (err) => console.error("위치 추적 실패:", err),
@@ -137,6 +95,7 @@ if (navigator.geolocation) {
   );
 }
 
+// ✅ 다중 반경 표시
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -152,73 +111,45 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-let poiMarkers = [];
-function clearPoiMarkers() {
-  poiMarkers.forEach(m => m.setMap(null));
-  poiMarkers = [];
-}
-
-let directionsService = new google.maps.DirectionsService();
-let directionsRenderer = new google.maps.DirectionsRenderer();
-directionsRenderer.setMap(map);
-
-function showRouteToDestination(destination) {
-  if (!myMarker) return;
-  const request = {
-    origin: myMarker.getPosition(),
-    destination: destination,
-    travelMode: google.maps.TravelMode.WALKING
-  };
-  directionsService.route(request, (result, status) => {
-    if (status === google.maps.DirectionsStatus.OK) {
-      directionsRenderer.setDirections(result);
-    }
-  });
-}
-
+// ✅ 반경 내 POI 표시
 function showNearbyPlaces(myPos, radiusMeters) {
-  clearPoiMarkers();
   const service = new google.maps.places.PlacesService(map);
   const types = Object.keys(poiIcons);
-  const infowindow = new google.maps.InfoWindow();
 
   types.forEach(type => {
-    service.nearbySearch({ location: myPos, radius: radiusMeters, type: [type] },
-      (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-          results.forEach(place => {
-            const marker = new google.maps.Marker({
-              position: place.geometry.location,
-              map: map,
-              title: place.name,
-              icon: { url: poiIcons[type], scaledSize: new google.maps.Size(32, 32) }
-            });
-
-            marker.addListener("click", () => {
-              infowindow.setContent(`<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}<br>(더블클릭하면 경로 안내)`);
-              infowindow.open(map, marker);
-            });
-
-            // ✅ 더블클릭 시 목적지 안내
-            marker.addListener("dblclick", () => {
-              showRouteToDestination(place.geometry.location);
-            });
-
-            poiMarkers.push(marker);
+    service.nearbySearch({
+      location: myPos,
+      radius: radiusMeters,
+      type: [type]
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK) {
+        results.forEach(place => {
+          new google.maps.Marker({
+            position: place.geometry.location,
+            map: map,
+            title: place.name,
+            icon: {
+              url: poiIcons[type],
+              scaledSize: new google.maps.Size(32, 32)
+            }
           });
-        }
-      });
+        });
+      }
+    });
   });
 }
 
-let compassMarkers = [];
-function clearCompass() {
-  compassMarkers.forEach(m => m.setMap(null));
-  compassMarkers = [];
-}
+// ✅ 거리 측정
+google.maps.event.addListener(map, 'click', (event) => {
+  if (!myMarker) return;
+  const clickedPos = event.latLng;
+  const myPos = myMarker.getPosition();
+  const distance = google.maps.geometry.spherical.computeDistanceBetween(myPos, clickedPos);
+  alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
+});
 
+// ✅ 나침반 표시
 function addCompass() {
-  clearCompass();
   const bounds = map.getBounds();
   if (!bounds) return;
   const center = bounds.getCenter();
@@ -230,13 +161,13 @@ function addCompass() {
     { label: "W", pos: { lat: center.lat(), lng: center.lng() - offset } }
   ];
   directions.forEach(d => {
-    const marker = new google.maps.Marker({
+    new google.maps.Marker({
       position: d.pos,
       map: map,
       label: d.label
     });
-    compassMarkers.push(marker);
   });
 }
 
+// ✅ initMap을 전역에 등록 (API callback에서 호출 가능하게)
 window.initMap = initMap;
