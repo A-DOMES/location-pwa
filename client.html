@@ -13,10 +13,16 @@ client.htmo 260428
   <script>
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-  let polylines = []; // 경로 Polyline 저장 배열
+  let polylines = [];
   let geoWatchId = null;
-  let originalCenter;  // 초기 중심 좌표
+  let originalCenter;
   let marker, currentLat, currentLng;
+  
+  // 레이더 관련 전역 변수만 별도 관리
+  let radarPolygon = null;
+  let radarEnabled = true;
+  let radarRadiusMeters = 50;
+  let radarUnit = "m";
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
