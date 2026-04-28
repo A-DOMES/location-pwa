@@ -1,15 +1,23 @@
-레이더반경 구현된 코드..
-client.htmo 260428
+client.html 전체구조 완성본, 
+client.js 구성함,
+client.css 구성하기전 통합코드임..
+
+조금더 수정한 파일이긴하데 최소화버튼을누르면 바로 우측에 붙는 문제만 되면 해결되는 코드임..
+client.htmo 260429-1
 
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
+
+  <!-- ✅ CSS는 head 안에 -->
+  <link rel="stylesheet" href="client.css"> 
+  
   <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
   <script src="config.js"></script>
- 	
-  <!-- 2. 사용자 코드 -->
+
+  <!-- 1. 사용자 코드 -->
   <script>
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
@@ -1372,251 +1380,9 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 });
 
-
-
 </script>
-
-
-<!-- 스타일 -->
-<style>
-  
-/* =========================== ✅ 기본 레이아웃 및 상단바 =========================== */
-html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial,sans-serif; }
-#top-bar { position:fixed; top:0; left:0; width:100%; height:50px; background:#1a237e; color:white; display:flex; justify-content:space-between; align-items:center; z-index:1000; padding:0 20px; }
-#menu-buttons { display:flex; gap:20px; margin-top:4px; }
-.menu-btn { cursor:pointer; padding:6px 12px; background:#3949ab; border-radius:4px; user-select:none; display:flex; align-items:center; gap:6px; }
-.icon { font-size:16px; }
-#title { font-size:20px; font-weight:bold; text-align:right; margin-right:50px; }
-
-/* =========================== ✅ 지도 영역 =========================== */
-#map { position:absolute; top:50px; left:0; width:100%; height:calc(100% - 50px); background:#ddd; z-index:1; }
-
-/* =========================== ✅ 드롭다운 패널 =========================== */
-.dropdown-panel { position:absolute; top:50px; background:white; border:1px solid #ccc; width:260px; display:none; z-index:2000; box-shadow:0 2px 6px rgba(0,0,0,0.25); padding:10px 0; }
-.dropdown-panel.open { display:block; }
-.dropdown-item { padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; font-size:16px; font-weight:500; }
-.dropdown-item:hover { background:#e3f2fd; }
-
-/* =========================== ✅ 위치찾기 입력창/버튼 =========================== */
-.location-search { display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; }
-#latInput, #lngInput, #location-check { width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:16px; box-sizing:border-box; }
-#location-check { background:#1976d2; color:white; border:none; cursor:pointer; }
-#location-check:hover { background:#1565c0; }
-
-/* =========================== ✅ 토글 스위치 =========================== */
-.switch { position:relative; display:inline-block; width:50px; height:24px; }
-.switch input { opacity:0; width:0; height:0; }
-.slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; transition:.4s; border-radius:24px; }
-.slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; transition:.4s; border-radius:50%; }
-input:checked + .slider { background:#2196F3; }
-input:checked + .slider:before { transform:translateX(26px); }
-
-/* =========================== ✅ 레이더 설정 슬라이더 =========================== */
-#radar-settings { margin-top:10px; padding:8px; border-top:1px solid #ddd; }
-#radiusSlider { width:100%; margin-top:8px; height:6px; background:#ccc; }
-#radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
-
-/* =========================== ✅ 위치 정보 박스 =========================== */
-#locationBox { position:absolute; top:6%; left:20%; transform:translateX(-50%); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
-#locationBox.open { display:block; }
-.location-header { display:flex; justify-content:space-between; align-items:center; }
-.location-header button { background:none; border:none; font-size:18px; cursor:pointer; }
-.coord { display:flex; align-items:center; margin-top:8px; font-size:16px; }
-.coord svg { width:18px; height:18px; fill:#1976d2; margin-right:6px; vertical-align:middle; }
-#shareBtn { margin-top:12px; padding:8px 14px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; font-size:16px; transition:background 0.3s; }
-#shareBtn:hover { background:#1565c0; }
-
-/* =========================== ✅ 공유 팝업 메시지 =========================== */
-#popupMessage { position:absolute; top:80px; left:50%; transform:translateX(-50%); background:#1976d2; color:white; padding:10px 16px; border-radius:6px; font-size:14px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.2); display:none; z-index:1000; opacity:0; transition:opacity 0.5s ease, top 0.5s ease; }
-#popupMessage.show { display:block; opacity:1; }
-
-/* =========================== ✅ 사용자 패널 =========================== */
-#user-panel {
-  position: fixed;              /* 화면에 고정 */
-  top: 50px;                    /* 상단 여백 */
-  right: 0;                     /* 기본은 오른쪽에 붙음 */
-  width: 600px;                 /* 기본 너비 */
-  height: calc(100% - 50px);    /* 상단 50px 제외 전체 높이 */
-  background: #fff;             /* 배경색 흰색 */
-  border-left: 1px solid #ccc;  /* 오른쪽 패널 구분선 */
-  display: none;                /* 기본은 숨김 */
-  z-index: 5000;                /* 최상위로 올림 */
-  padding: 20px;                /* 내부 여백 */
-  overflow-y: auto;             /* 세로 스크롤 */
-  font-size: 15px;              /* 글자 크기 */
-  cursor: move;                 /* 드래그 가능 */
-}
-#user-panel.open { display: block; } /* open 클래스가 붙으면 보임 */
-
-/* =========================== ✅ 사용자 패널 접기 상태 =========================== */
-
-/* ▶ 우측 접힘 상태 */
-#user-panel.collapsed-right {
-  width: 5px;
-  height: 100%;
-  right: 0;
-  top: 50px;
-  overflow: hidden;
-  transition: width 0.3s ease;
-}
-/* ▶ PC: 마우스가 우측 끝에 닿으면 자동 펼침 */
-#user-panel.collapsed-right:hover {
-  width: 600px;
-}
-/* ▶ 모바일/JS: 터치 또는 이벤트 시 복귀 */
-#user-panel.collapsed-right.touch-active {
-  width: 600px;
-}
-
-/* ▶ 좌측 접힘 상태 */
-#user-panel.collapsed-left {
-  width: 5px;
-  height: 100%;
-  left: 0;
-  top: 50px;
-  overflow: hidden;
-  transition: width 0.3s ease;
-}
-/* ▶ PC: 마우스가 좌측 끝에 닿으면 자동 펼침 */
-#user-panel.collapsed-left:hover {
-  width: 600px;
-}
-/* ▶ 모바일/JS: 터치 또는 이벤트 시 복귀 */
-#user-panel.collapsed-left.touch-active {
-  width: 600px;
-}
-
-/* =========================== ✅ 끝부분 이벤트 감지용 요소 =========================== */
-#left-edge, #right-edge {
-  position: fixed;
-  top: 50px;
-  height: calc(100% - 50px);
-  width: 5px;
-  z-index: 9999; /* 다른 요소보다 확실히 위 */
-  background: transparent; /* 이벤트 감지용 투명 영역 */
-  pointer-events: auto;     /* 이벤트가 반드시 잡히도록 */
-}
-#left-edge { left: 0; }
-#right-edge { right: 0; }
-
-/* =========================== ✅ 끝부분 hover 시 패널 펼침 연결 =========================== */
-/* 좌측 끝 hover → 패널 펼침 */
-#left-edge:hover ~ #user-panel.collapsed-left {
-  width: 600px;
-}
-
-/* 우측 끝 hover → 패널 펼침 */
-#right-edge:hover ~ #user-panel.collapsed-right {
-  width: 600px;
-}
-
-  
-/* ✅ 최대화 상태 */
-#user-panel.maximized {
-  width:100% !important;
-  height:100% !important;
-  top:0 !important;
-  left:0 !important;
-  right:0 !important;
-  bottom:0 !important;
-}
-
-/* ✅ Snap 상태 */
-#user-panel.snap-left { left:0; right:auto; }
-#user-panel.snap-right { right:0; left:auto; }
-
-/* ✅ 헤더와 컨텐츠 */
-.panel-header {
-  height:50px;
-  border-bottom:1px solid #ddd;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:0 10px;
-  cursor:move;
-}
-.panel-content {
-  height:calc(100% - 50px);
-  overflow-y:scroll;
-  padding:10px;
-}
-#close-user-panel {
-  background-color:#555;
-  color:#fff;
-  border:none;
-  border-radius:4px;
-  padding:6px 12px;
-  font-size:14px;
-  cursor:pointer;
-}
-
-/* =========================== ✅ 리사이즈 핸들 (두께 확대) */
-.resize-handle { position:absolute; background:transparent; z-index:10; }
-.resize-handle.left   { left:0; top:0; width:12px; height:100%; cursor:ew-resize; }
-.resize-handle.right  { right:0; top:0; width:12px; height:100%; cursor:ew-resize; }
-.resize-handle.top    { top:0; left:0; width:100%; height:12px; cursor:ns-resize; }
-.resize-handle.bottom { bottom:0; left:0; width:100%; height:12px; cursor:ns-resize; }
-.resize-handle:hover  { background:rgba(0,0,0,0.1); }
-
-/* =========================== ✅ 사용자 테이블 =========================== */
-#user-table { width:100%; border-collapse:collapse; margin-top:10px; }
-#user-table th, #user-table td { border:1px solid #ccc; padding:8px; text-align:center; }
-#user-table th { background:#f5f5f5; font-weight:bold; }
-#user-table-header { background:#f5f5f5; font-weight:bold; }
-#user-table-body tr:nth-child(even) { background:#fafafa; }
-#user-table-body tr:hover { background:#e3f2fd; }
-
-/* =========================== ✅ 메시지 박스 =========================== */
-#message-box { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:8px 16px; border-radius:4px; display:none; z-index:4000; font-size:16px; }
-
-/* =========================== ✅ 라이트/다크 모드 =========================== */
-body.dark-mode { background-color:#121212; color:#e0e0e0; }
-body.dark-mode #top-bar { background:#333; color:#fff; }
-body.dark-mode .dropdown-panel { background:#222; color:#ddd; }
-body.dark-mode .menu-btn { background:#444; color:#fff; }
-
-/* =========================== ✅ 모바일 반응형 (세로 모드: portrait) =========================== */
-@media (max-width:768px) and (orientation:portrait) {
-  #top-bar { flex-wrap:wrap; font-size:18px; }
-  .menu-btn { padding:10px 16px; font-size:18px; }
-  #map { height:calc(100% - 100px); }
-  .dropdown-panel { width:100%; left:0; }
-  #user-panel { width:100%; height:40%; bottom:0; top:auto; border-left:none; border-top:1px solid #ccc; border-radius:12px 12px 0 0; }
-  .user-card { font-size:16px; padding:14px; }
-  .user-name { font-size:18px; }
-  #message-box { font-size:18px; }
-  #locationBox { top:auto; bottom:60px; right:10px; left:10px; width:auto; max-width:90%; }
-  #popupMessage { top:auto; bottom:120px; font-size:16px; padding:12px 18px; }
-
-  /* ✅ 위치찾기: 세로 모드에서는 3행 배치 */
-  .location-search { flex-direction:column; align-items:stretch; gap:10px; }
-  #latInput, #lngInput, #location-check { width:100%; font-size:18px; padding:10px; }
-  #location-check { margin-top:8px; }
-}
-
-/* =========================== ✅ 모바일 반응형 (가로 모드: landscape) =========================== */
-@media (max-width:768px) and (orientation:landscape) {
-  #top-bar { font-size:16px; }
-  .menu-btn { padding:8px 14px; font-size:16px; }
-  #map { height:calc(100% - 50px); }
-  .dropdown-panel { width:60%; right:0; }
-  #user-panel { width:50%; height:calc(100% - 50px); top:50px; right:0; border-left:1px solid #ccc; border-top:none; border-radius:0; }
-  .user-card { font-size:15px; padding:12px; }
-  .user-name { font-size:16px; }
-  #message-box { font-size:16px; }
-  #locationBox { top:70px; right:10px; left:auto; width:45%; max-width:45%; }
-  #popupMessage { top:70px; left:50%; transform:translateX(-50%); font-size:14px; padding:10px 14px; }
-
-  /* ✅ 위치찾기: 가로 모드에서는 한 줄 배치 */
-  .location-search { flex-direction:row; align-items:center; gap:8px; }
-  #latInput, #lngInput { flex:1; min-width:100px; font-size:16px; }
-  #location-check { flex:0; font-size:16px; padding:6px 12px; }
-}
-  
-</style>
 </head>
-
-  
+ 
 <body>
   <!-- 상단바 -->
   <div id="top-bar">
@@ -1781,6 +1547,8 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
 
+  <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
+  <script src="client.js"></script>
 </body>
 </html>
   
