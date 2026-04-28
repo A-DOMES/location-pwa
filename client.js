@@ -1,4 +1,4 @@
-let myMarker, radarPolygon;
+let map, myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
 let pathCoords = [];
@@ -7,6 +7,18 @@ let poiMarkers = [];
 let compassMarkers = [];
 let directionsService = new google.maps.DirectionsService();
 let directionsRenderer = new google.maps.DirectionsRenderer();
+directionsRenderer.setMap(map);
+
+// ✅ POI 아이콘 정의
+const poiIcons = {
+  cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
+  convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
+  restaurant: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
+  gas_station: "https://cdn-icons-png.flaticon.com/512/2933/2933914.png",
+  bank: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+  pharmacy: "https://cdn-icons-png.flaticon.com/512/2969/2969375.png",
+  bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png"
+};
 
 // ---------------------- 레이더 ----------------------
 function updateRadarPolygon(myPos, heading) {
