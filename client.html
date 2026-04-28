@@ -1,6 +1,3 @@
-레이더반경 구현된 코드..
-client.htmo 260428
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -10,50 +7,33 @@ client.htmo 260428
 
   
   <!-- 2. 사용자 코드 -->
-  <script>
-  // ---------------------- 전역 변수 ----------------------
-  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-  let polylines = [];
-  let geoWatchId = null;
-  let originalCenter;
-  let marker, currentLat, currentLng;
-  
-  // 레이더 관련 전역 변수만 별도 관리
-  let radarPolygon = null;
-  let myMarker = null;
-  let radarEnabled = true;    // ✅ 레이더 on/off 상태 관리
-  let radarRadiusMeters = 50;
-  let radarUnit = "m";
 
-    
-    
-  // ---------------------- 마커 제거 함수 ----------------------
-  function clearMarkers() {
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-  }
+<script>
+// ---------------------- 전역 변수 ----------------------
+let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+let polylines = [];
+let geoWatchId = null;
+let originalCenter;
+let marker, currentLat, currentLng;
 
-  // ---------------------- 거리 계산 함수 ----------------------
-  function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371; // 지구 반지름 (km)
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 +
-              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-              Math.sin(dLng/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
+// 레이더 관련 전역 변수
+let radarPolygon = null;
+let myMarker = null;
+let radarEnabled = true;
+let radarRadiusMeters = 50;
+let radarUnit = "m";
 
-  // ---------------------- 문자열 기반 색상 함수 ----------------------
-  function stringToColor(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-    return "#" + "00000".substring(0, 6 - c.length) + c;
-  }
+// ---------------------- 거리 계산 ----------------------
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+            Math.sin(dLng/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
@@ -64,170 +44,23 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
-    // 드롭다운 갱신
     populatePathSelect();
-
-    // ✅ 데이터 정상 수신 후 지도 표시
     showMap();
 
-    // ✅ 위치 정보 박스 갱신
     if (allData.length > 0) {
-      const user = allData[0]; // 첫 번째 사용자 기준
-      const locationBox = document.getElementById("locationBox");
-      locationBox.innerHTML = `
-        현재 위치: <br>
-        위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-        경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-        주소: ${user.address || "-"} <br>
-        <button id="shareBtn">현재 위치 공유</button>
-      `;
-
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl =
-            `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-          await navigator.clipboard.writeText(shareUrl);
-
-          // ✅ 공유 팝업 표시
-          const popup = document.getElementById("popupMessage");
-          popup.style.display = "block";
-          popup.style.opacity = "1";
-          setTimeout(() => {
-            popup.style.opacity = "0";
-            setTimeout(() => { popup.style.display = "none"; }, 2000);
-          }, 3000);
-        };
-      }
+      updateLocationBox(allData[0]);
     } else {
-      document.getElementById("locationBox").innerHTML =
-        "❌ 위치 데이터를 불러올 수 없습니다.";
+      document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
     console.error("데이터 로드 실패:", err);
-    showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
-
-  // ---------------------- 갱신 주기 설정 ----------------------
-  function setCustomInterval() {
-    const value = parseInt(document.getElementById("intervalValue").value);
-    const unit = document.getElementById("intervalUnit").value;
-
-    if (isNaN(value) || value <= 0) {
-      alert("1 이상의 값을 입력하세요.");
-      return;
-    }
-
-    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-
-    clearInterval(intervalId);
-    intervalId = setInterval(loadData, newInterval);
-
-    const msgBox = document.getElementById("message-box");
-    msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-    msgBox.style.display = "block";
-    setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-  }
-
-  // ---------------------- 지도 초기화 ----------------------
-  window.onload = () => {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapTypeId: "roadmap",   // 기본 지도 타입
-      styles: null            // ✅ 스타일 적용하지 않음 → 일반지도
-    });
-
-    // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
-    const themeToggle = document.getElementById("themeToggle");
-    if (themeToggle) {
-      themeToggle.addEventListener("change", () => {
-        document.body.classList.toggle("dark-mode", themeToggle.checked);
-        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-      });
-    }
-
-    // ✅ 데이터 로딩 및 기본 갱신 주기
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
-  };
-
-  // ---------------------- 드롭다운 갱신 ----------------------
-  function populatePathSelect(viewMode = "all") {
-    const select = document.getElementById("path-user-select");
-    if (!select) return;
-    select.innerHTML = "";
-
-    const allOption = document.createElement("option");
-    allOption.value = "all";
-    allOption.textContent = "전체";
-    select.appendChild(allOption);
-
-    let users = [];
-    if (viewMode === "current") {
-      const now = new Date();
-      users = allData.filter(u => {
-        const updated = new Date(u.updated);
-        return (now - updated <= 5 * 60 * 1000);
-      });
-    } else {
-      users = allData;
-    }
-
-    users.forEach(user => {
-      const option = document.createElement("option");
-      option.value = user.phone;
-      option.textContent = user.phone;
-      select.appendChild(option);
-    });
-  }
-
-  // ---------------------- 지도 초기화 보조 ----------------------
-  function clearMap() {
-    if (markerCluster) {
-      markerCluster.clearMarkers();
-      markerCluster = null;
-    }
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-    polylines.forEach(p => p.setMap(null));
-    polylines = [];
-  }
 
 // ---------------------- 지도 표시 ----------------------
 function showMap() {
   clearMap();
   if (!map) return;
-
-  // ✅ 모드별 커스텀 마커 아이콘 정의
-  const iconCurrent = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#0000FF",   // 파랑
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
-  };
-
-  const iconAll = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#FF0000",   // 빨강
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
-  };
-
-  const iconPaths = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#00CC00",   // 초록
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
-  };
 
   if (mode === "current") {
     const now = new Date();
@@ -245,268 +78,261 @@ function showMap() {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: iconCurrent,
-        title: `${user.phone} (${user.status}, ${user.updated})`,
         animation: google.maps.Animation.BOUNCE
       });
       markers.push(marker);
-
-      // ✅ 마커 클릭 시 위치 박스 갱신
-      marker.addListener("click", () => {
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block"; // 팝업 표시
-      });
+      marker.addListener("click", () => updateLocationBox(user));
     });
-
   } else if (mode === "all") {
     allData.forEach(user => {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: iconAll,
-        title: `${user.phone} (${user.status}, ${user.time})`,
         animation: google.maps.Animation.BOUNCE
       });
       markers.push(marker);
-
-      // ✅ 마커 클릭 시 위치 박스 갱신
-      marker.addListener("click", () => {
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block"; // 팝업 표시
-      });
+      marker.addListener("click", () => updateLocationBox(user));
     });
-
   } else if (mode === "paths") {
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-
-    let users = allData;
-    if (selectedPhone !== "all") {
-      users = allData.filter(u => u.phone === selectedPhone);
-    }
-
-    users.forEach(user => {
-      const pathCoords = [];
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) pathCoords.push({ lat, lng });
-      }
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        polylines.push(polyline);
-
-        const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map: map,
-          icon: iconPaths,
-          title: `${user.phone} / ${user.updated}`,
-          animation: google.maps.Animation.BOUNCE
-        });
-        markers.push(marker);
-
-        // ✅ 마커 클릭 시 위치 박스 갱신
-        marker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block"; // 팝업 표시
-        });
+    allData.forEach(user => {
+      const pathPoints = parsePathArray(user.path);
+      if (pathPoints.length > 0) {
+        drawPath(pathPoints, user.distance || 0);
       }
     });
   }
 
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
-  }
-  
-  // ✅ 위치 정보 박스 갱신 추가 (첫 화면에도 적용)
-  if (allData.length > 0) {
-    const user = allData[0]; // 첫 번째 사용자 기준
-    updateLocationBox(user); // 최신 버전 호출 (핀셋+닉네임 포함)
-    document.getElementById("locationBox").style.display = "block"; // 팝업 표시
-  } else {
-    document.getElementById("locationBox").innerHTML =
-      "❌ 위치 데이터를 불러올 수 없습니다.";
-  }
-  
   updateUserPanelContent(mode);
-  }
+}
 
-  // ---------------------- 사용자 패널 ----------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    const btnConnection = document.getElementById("btn-connection");
-    const btnSettings = document.getElementById("btn-settings");
-    const connectionPanel = document.getElementById("connection-panel");
-    const settingsPanel = document.getElementById("settings-panel");
-    const userPanel = document.getElementById("user-panel");
-    const select = document.getElementById("path-user-select");
+// ---------------------- 사용자 패널 갱신 ----------------------
+function updateUserPanelContent(viewMode = "current") {
+  const tbody = document.getElementById("user-table-body");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-    // ✅ 드롭다운 선택 이벤트
-    if (select) {
-      select.addEventListener("change", e => {
-        const selectedPhone = e.target.value;
-        const title = document.getElementById("user-panel-title");
-
-        if (selectedPhone === "all") {
-          updateUserPanelContent("all");
-          renderUserTable(allData, "all");
-        } else {
-          const user = allData.find(u => u.phone === selectedPhone);
-          if (user) {
-            const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
-            updateUserPanelContent(modeForTable);
-            renderUserTable([user], modeForTable);
-
-            if (modeForTable === "paths") {
-              const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-              if (pathPoints.length > 0) {
-                let distanceKm = 0;
-                for (let i = 1; i < pathPoints.length; i++) {
-                  distanceKm += calculateDistance(
-                    pathPoints[i-1].lat, pathPoints[i-1].lng,
-                    pathPoints[i].lat, pathPoints[i].lng
-                  );
-                }
-                drawPath(pathPoints, distanceKm);
-              }
-            } else {
-              moveToUser(user.lat, user.lng, user.phone);
-            }
-          } else {
-            renderUserTable([], "current");
-          }
+  let users = [];
+  if (viewMode === "current") {
+    const now = new Date();
+    const latestByUser = {};
+    allData.forEach(user => {
+      const updated = new Date(user.updated);
+      if (now - updated <= 5 * 60 * 1000) {
+        const key = user.phone;
+        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
+          latestByUser[key] = user;
         }
-      });
-    }
-
-    // ✅ 버튼 이벤트
-    btnConnection.onclick = () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    };
-
-    btnSettings.onclick = () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    };
-
-    // ✅ 닫기 버튼 이벤트
-    const closeBtn = document.getElementById("close-user-panel");
-    if (closeBtn) {
-      closeBtn.onclick = () => {
-        userPanel.classList.remove("open");
-      };
-    }
-  });
-    
-
-// ---------------------- 사용자 패널 열기 ----------------------
-window.openUserPanel = function(viewMode) {
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-  const userPanel = document.getElementById("user-panel");
-
-  // 다른 패널 닫기
-  connectionPanel?.classList.remove("open");
-  settingsPanel?.classList.remove("open");
-  userPanel?.classList.add("open");
-
-  // 모드 갱신
-  mode = viewMode;
-
-  // ✅ 기존 마커/경로 제거
-  clearMarkers();
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
-  polylines = [];
-
-  // 패널 제목 갱신
-  const title = document.getElementById("user-panel-title");
-  if (title) {
-    if (viewMode === "current") title.textContent = "현재 접속자";
-    else if (viewMode === "all") title.textContent = "전체 사용자";
-    else if (viewMode === "paths") title.textContent = "위치/경로 보기";
+      }
+    });
+    users = Object.values(latestByUser);
+  } else {
+    users = allData;
   }
 
-  // 패널 내용 갱신
-  updateUserPanelContent(viewMode);
-};
+  renderUserTable(users, viewMode);
+}
 
-    
+// ---------------------- 사용자 테이블 렌더링 ----------------------
+function renderUserTable(users, viewMode = "current") {
+  const tbody = document.getElementById("user-table-body");
+  tbody.innerHTML = "";
+
+  users.forEach(user => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>${user.status || "-"}</td>
+      <td>${user.time || "-"}</td>
+      <td>${user.updated || "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.lat}, ${user.lng}</td>
+    `;
+    row.addEventListener("click", () => {
+      if (user.lat && user.lng) {
+        map.setCenter({ lat: user.lat, lng: user.lng });
+        map.setZoom(15);
+      }
+    });
+    tbody.appendChild(row);
+  });
+}
+
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
   const locationBox = document.getElementById("locationBox");
   locationBox.innerHTML = `
-    <div class="location-header">
-      <span>
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             viewBox="0 0 24 24" 
-             width="18" height="18" 
-             style="vertical-align:middle; margin-right:4px; fill:#d32f2f;">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13
-                   c0-3.87-3.13-7-7-7zm0 9.5
-                   c-1.38 0-2.5-1.12-2.5-2.5
-                   s1.12-2.5 2.5-2.5
-                   2.5 1.12 2.5 2.5
-                   -1.12 2.5-2.5 2.5z"/>
-        </svg>
-        ${user.phone || "사용자"} 위치 정보
-      </span>
-      <button id="closeLocationBox">✖</button>
-    </div>
-    <div class="coord">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-      위도: ${user.lat ? user.lat.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-      경도: ${user.lng ? user.lng.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7h20L12 2zm0 3.19L18.47 9H5.53L12 5.19zM4 10h16v10H4V10z"/></svg>
-      주소: ${user.address || "-"}
-    </div>
-    <button id="shareBtn">현재 위치 공유</button>
+    <div>${user.phone} 위치 정보</div>
+    위도: ${user.lat} <br>
+    경도: ${user.lng} <br>
+    주소: ${user.address || "-"}
   `;
-
-  // ✅ 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("closeLocationBox");
-  if (closeBtn) {
-    closeBtn.onclick = () => {
-      locationBox.style.display = "none";
-    };
-  }
-
-  // ✅ 공유 버튼 이벤트
-  const shareBtn = document.getElementById("shareBtn");
-  if (shareBtn) {
-    shareBtn.onclick = async () => {
-      const shareUrl =
-        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-      await navigator.clipboard.writeText(shareUrl);
-
-      const popup = document.getElementById("popupMessage");
-      popup.style.display = "block";
-      popup.style.opacity = "1";
-      setTimeout(() => {
-        popup.style.opacity = "0";
-        setTimeout(() => { popup.style.display = "none"; }, 2000);
-      }, 3000);
-    };
-  }
-
-  // ✅ 드래그 기능 적용
-  makeDraggable(locationBox);
 }
 
+// ---------------------- 레이더 갱신 ----------------------
+function convertToDegrees(meters) {
+  return meters / 111000;
+}
 
-   
+function updateRadarPolygon(myPos, heading) {
+  if (!radarEnabled) {
+    if (radarPolygon) radarPolygon.setMap(null);
+    return;
+  }
+  const angle = 90;
+  const points = [];
+  const radiusInDegrees = convertToDegrees(radarRadiusMeters);
+
+  for (let a = -angle/2; a <= angle/2; a += 5) {
+    const rad = (heading + a) * Math.PI / 180;
+    const latOffset = radiusInDegrees * Math.cos(rad);
+    const lngOffset = radiusInDegrees * Math.sin(rad);
+    points.push({ lat: myPos.lat + latOffset, lng: myPos.lng + lngOffset });
+  }
+  points.unshift(myPos);
+
+  if (radarPolygon) {
+    radarPolygon.setPath(points);
+    radarPolygon.setMap(map);
+  } else {
+    radarPolygon = new google.maps.Polygon({
+      paths: points,
+      strokeColor: "#00BFFF",
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: "#00BFFF",
+      fillOpacity: 0.25,
+      map: map
+    });
+  }
+}
+
+// ---------------------- 내 위치 추적 ----------------------
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const heading = pos.coords.heading || 0;
+      if (!myMarker) {
+        myMarker = new google.maps.Marker({ position: myPos, map: map });
+      } else {
+        myMarker.setPosition(myPos);
+      }
+      updateRadarPolygon(myPos, heading);
+    },
+    (err) => console.error("위치 추적 실패:", err),
+    { enableHighAccuracy: true }
+  );
+}
+
+// ---------------------- 이벤트 통합 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const slider = document.getElementById("radiusSlider");
+  const radiusValue = document.getElementById("radiusValue");
+  const unitSelect = document.getElementById("radiusUnit");
+  const toggle = document.getElementById("radarToggle");
+  const btnIncrease = document.getElementById("btnIncrease");
+  const btnDecrease = document.getElementById("btnDecrease");
+
+  function updateDisplay() {
+    radiusValue.textContent = radarUnit === "m"
+      ? radarRadiusMeters + " m"
+      : (radarRadiusMeters / 1000).toFixed(1) + " km";
+  }
+
+  slider.addEventListener("input", e => {
+    radarRadiusMeters = parseInt(e.target.value, 10);
+    updateDisplay();
+    if (myMarker) updateRadarPolygon(myMarker.getPosition().toJSON(), 0);
+  });
+
+  unitSelect.addEventListener("change", e => {
+    radarUnit = e.target.value;
+    updateDisplay();
+  });
+
+  toggle.addEventListener("change", e => {
+    radarEnabled = e.target.checked;
+    if (!radarEnabled && radarPolygon) radarPolygon.setMap(null);
+  });
+
+  btnIncrease.addEventListener("click", () => {
+    radarRadiusMeters = Math.min(radarRadiusMeters + 50, 300000);
+    slider.value = radarRadiusMeters;
+    updateDisplay();
+    if (myMarker) updateRadarPolygon(myMarker.getPosition().toJSON(), 0);
+  });
+
+  btnDecrease.addEventListener("click", () => {
+    radarRadiusMeters = Math.max(radarRadiusMeters - 50, 1);
+    slider.value = radarRadiusMeters;
+    updateDisplay();
+    if (myMarker) {
+      updateRadarPolygon(myMarker.getPosition().toJSON(), 0);
+    }
+  });
+
+  // ✅ 초기 표시
+  updateDisplay();
+});
+
+// ---------------------- 지도 초기화 ----------------------
+function initMap() {
+  originalCenter = { lat: 36.5, lng: 127.5 };
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: originalCenter,
+    zoom: 7,
+    mapTypeId: "roadmap"
+  });
+
+  // ✅ 데이터 로딩 시작
+  loadData();
+  intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+}
+
+window.initMap = initMap;
+
+// ---------------------- 드롭다운 갱신 ----------------------
+function populatePathSelect(viewMode = "all") {
+  const select = document.getElementById("path-user-select");
+  if (!select) return;
+  select.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "전체";
+  select.appendChild(allOption);
+
+  let users = [];
+  if (viewMode === "current") {
+    const now = new Date();
+    users = allData.filter(u => {
+      const updated = new Date(u.updated);
+      return (now - updated <= 5 * 60 * 1000);
+    });
+  } else {
+    users = allData;
+  }
+
+  users.forEach(user => {
+    const option = document.createElement("option");
+    option.value = user.phone;
+    option.textContent = user.phone;
+    select.appendChild(option);
+  });
+}
+
+// ---------------------- 지도 초기화 보조 ----------------------
+function clearMap() {
+  if (markerCluster) {
+    markerCluster.clearMarkers();
+    markerCluster = null;
+  }
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  polylines.forEach(p => p.setMap(null));
+  polylines = [];
+}
+
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
   const points = [];
@@ -524,18 +350,14 @@ function parsePathArray(pathArray) {
 function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
-  // ✅ 기존 경로 지우기
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines.forEach(line => line.setMap(null));
   polylines = [];
 
-  // 두께 계산 (최소 5, 최대 18)
   let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
-
-  // 색상 단계
-  let color = "#0000FF"; // 0~20km → 파랑
-  if (distanceKm > 20) color = "#FFA500"; // 20~50km → 주황
-  if (distanceKm > 50) color = "#00FF00"; // 50~100km → 초록
-  if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
+  let color = "#0000FF";
+  if (distanceKm > 20) color = "#FFA500";
+  if (distanceKm > 50) color = "#00FF00";
+  if (distanceKm > 100) color = "#FF0000";
 
   const pathLine = new google.maps.Polyline({
     path: points,
@@ -546,584 +368,44 @@ function drawPath(points, distanceKm) {
   });
 
   pathLine.setMap(map);
-  polylines.push(pathLine);  // ← polylines에만 추가
+  polylines.push(pathLine);
 }
 
-    
-// ---------------------- 사용자 패널 내용 업데이트 ----------------------
-function updateUserPanelContent(viewMode = "current") {
-  const tbody = document.getElementById("user-table-body");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+// ---------------------- 사용자 패널 열기 ----------------------
+window.openUserPanel = function(viewMode) {
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+  const userPanel = document.getElementById("user-panel");
 
-  let users = [];
+  connectionPanel?.classList.remove("open");
+  settingsPanel?.classList.remove("open");
+  userPanel?.classList.add("open");
 
-  if (viewMode === "current") {
-    // ✅ 최근 5분 이내 접속자만 추출
-    const now = new Date();
-    const latestByUser = {};
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
-      }
-    });
-    users = Object.values(latestByUser);
+  mode = viewMode;
+  clearMap();
 
-  } else if (viewMode === "all") {
-    // ✅ 전체 사용자
-    users = allData;
-
-  } else if (viewMode === "paths") {
-    // ✅ 전체 사용자 경로
-    users = allData;
-    users.forEach(user => {
-      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-      user.distance = 0;
-      if (pathPoints.length > 1) {
-        for (let i = 1; i < pathPoints.length; i++) {
-          user.distance += calculateDistance(
-            pathPoints[i-1].lat, pathPoints[i-1].lng,
-            pathPoints[i].lat, pathPoints[i].lng
-          );
-        }
-      }
-      if (pathPoints.length > 0) {
-        drawPath(pathPoints, user.distance);
-      }
-    });
+  const title = document.getElementById("user-panel-title");
+  if (title) {
+    if (viewMode === "current") title.textContent = "현재 접속자";
+    else if (viewMode === "all") title.textContent = "전체 사용자";
+    else if (viewMode === "paths") title.textContent = "위치/경로 보기";
   }
 
-  updateTableHeader(viewMode);
-  renderUserTable(users, viewMode); // ✅ 항상 전체 목록 출력
-}
-
-
-/* ---------------------- 테이블 헤더 갱신 ---------------------- */
-function updateTableHeader(viewMode) {
-  const headerRow = document.getElementById("user-table-header");
-  if (!headerRow) return;
-  headerRow.innerHTML = "";
-
-  if (viewMode === "paths") {
-    headerRow.innerHTML = `
-      <th>닉네임</th>
-      <th>이동<br>거리</th>
-      <th>로그인<br>시각</th>
-      <th>최근 갱신</th>      
-      <th>위도/경도</th>
-      <th>주소</th>
-    `;
-  } else {
-    headerRow.innerHTML = `
-      <th>닉네임</th>
-      <th>상태</th>
-      <th>로그인<br>시각</th>
-      <th>최근 갱신</th>
-      <th>주소</th>
-      <th>위도/경도</th>
-    `;
-  }
-}
-
-function getMapIdByDevice() {
-  const ua = navigator.userAgent.toLowerCase();
-  if (/android/.test(ua)) return CONFIG.mapIds.android;
-  if (/iphone|ipad|ipod/.test(ua)) return CONFIG.mapIds.ios;
-  if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
-  return CONFIG.mapIds.fixed;
-}
-
-
-function initMap() {
-  const mapId = getMapIdByDevice();
-
-  // ✅ 초기 중심 좌표 지정 (큰 그림용)
-  originalCenter = { lat: 36.5, lng: 127.5 };
-
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapId: mapId
-  });
-
-  // ✅ 우클릭 시 원래 위치로 복귀
-  google.maps.event.addListener(map, 'contextmenu', function() {
-    console.log("우클릭 이벤트 발생!");
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-
-  // ✅ 데이터 로딩 시작
-  loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분
-}
-
-window.initMap = initMap;
-
-
-
-/* ---------------------- 위치찾기 기능 ---------------------- */
-window.moveToLatLng = function() {
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-  if (isNaN(lat) || isNaN(lng)) {
-    alert("올바른 위도와 경도를 입력하세요.");
-    return;
-  }
-  if (!map) {
-    alert("지도가 아직 초기화되지 않았습니다.");
-    return;
-  }
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
+  updateUserPanelContent(viewMode);
 };
 
-/* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
-window.moveToUser = function(lat, lng, phone) {
-  if (!map) return;
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-  new google.maps.Marker({
-    position: { lat: lat, lng: lng },
-    map: map,
-    title: `사용자: ${phone}`,
-    animation: google.maps.Animation.BOUNCE
-  });
-};
-  
-/* ---------------------- 라이트/다크 모드 전환 ---------------------- */
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    // body 클래스 토글
-    document.body.classList.toggle("dark-mode", themeToggle.checked);
-
-    // ✅ 벡터 지도(roadmap)일 때만 스타일 적용
-    if (map.getMapTypeId() === "roadmap") {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
-      } else {
-        map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
-      }
-    }
-  });
-}
-
-/* ---------------------- 갱신 주기 설정 ---------------------- */
-window.setCustomInterval = function() {
-  const value = parseInt(document.getElementById("intervalValue").value, 10);
-  const unit = document.getElementById("intervalUnit").value;
-  let intervalMs = 300000;
-  if (unit === "minutes") intervalMs = value * 60000;
-  else if (unit === "seconds") intervalMs = value * 1000;
-
-  clearInterval(intervalId);
-  intervalId = setInterval(loadData, intervalMs);
-
-  const msgBox = document.getElementById("message-box");
-  msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-  msgBox.style.display = "block";
-  setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-};
-
-
-// ---------------------- 관리자 모드 위치 추적 ----------------------
-// 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
-// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
-
-// ---------------------- 관리자 모드 위치 추적 ----------------------
-// ✅ 내부 값은 항상 미터 단위로 저장
-let radarRadiusMeters = 50; 
-let radarUnit = "m"; // 표시 단위: m 또는 km
-
-// ✅ 단위 변환 함수 (미터 → 도 단위)
-function convertToDegrees(meters) {
-  return meters / 111000; // 1도 ≈ 111,000m
-}
-
-// ✅ 레이더 갱신 함수
-function updateRadarPolygon(myPos, heading) {
-  if (!radarEnabled) {
-    if (radarPolygon) radarPolygon.setMap(null);
-    return;
-  }
-
-  const angle = 90;
-  const points = [];
-  const radiusInDegrees = convertToDegrees(radarRadiusMeters);
-
-  for (let a = -angle/2; a <= angle/2; a += 5) {
-    const rad = (heading + a) * Math.PI / 180;
-    const latOffset = radiusInDegrees * Math.cos(rad);
-    const lngOffset = radiusInDegrees * Math.sin(rad);
-    points.push({
-      lat: myPos.lat + latOffset,
-      lng: myPos.lng + lngOffset
-    });
-  }
-  points.unshift(myPos);
-
-  if (radarPolygon) {
-    radarPolygon.setPath(points); 
-    radarPolygon.setMap(map);
-  } else {
-    radarPolygon = new google.maps.Polygon({
-      paths: points,
-      strokeColor: "#00BFFF",
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: "#00BFFF",
-      fillOpacity: 0.25,
-      map: map
-    });
-  }
-}
-
-// ✅ 내 위치 추적
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(
-    (pos) => {
-      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      const heading = pos.coords.heading || 0;
-
-      if (!myMarker) {
-        myMarker = new google.maps.Marker({
-          position: myPos,
-          map: map,
-          title: "내 위치",
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2,
-            scale: 10
-          }
-        });
-      } else {
-        myMarker.setPosition(myPos);
-      }
-
-      updateRadarPolygon(myPos, heading);
-    },
-    (err) => console.error("위치 추적 실패:", err),
-    { enableHighAccuracy: true }
-  );
-}
-
-// ---------------------- 슬라이더/단위 변경 + 버튼 + on/off ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const slider = document.getElementById("radiusSlider");
-  const radiusValue = document.getElementById("radiusValue");
-  const radiusUnitSelect = document.getElementById("radiusUnit");
-  const radarToggle = document.getElementById("radarToggle");
-  const btnIncrease = document.getElementById("btnIncrease"); // ➕ 버튼
-  const btnDecrease = document.getElementById("btnDecrease"); // ➖ 버튼
-
-  // ✅ 슬라이더는 항상 미터 단위 (min=1, max=300000 → 300km)
-  if (slider) {
-    slider.min = 1;
-    slider.max = 300000;
-    slider.value = radarRadiusMeters;
-
-    slider.addEventListener("input", (e) => {
-      radarRadiusMeters = parseInt(e.target.value, 10);
-      updateDisplay();
-      if (myMarker) {
-        const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0);
-      }
-    });
-  }
-
-  // ✅ 단위 변경
-  if (radiusUnitSelect) {
-    radiusUnitSelect.addEventListener("change", (e) => {
-      radarUnit = e.target.value;
-      updateDisplay();
-      if (myMarker) {
-        const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0);
-      }
-    });
-  }
-
-  // ✅ on/off 버튼
-  if (radarToggle) {
-    radarToggle.addEventListener("change", (e) => {
-      radarEnabled = e.target.checked;
-      if (!radarEnabled && radarPolygon) {
-        radarPolygon.setMap(null);
-      } else if (radarEnabled && myMarker) {
-        const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0);
-      }
-    });
-  }
-
-  // ✅ ➕ 버튼 (미세조정: 1m씩 증가)
-  if (btnIncrease) {
-    btnIncrease.addEventListener("click", () => {
-      radarRadiusMeters += 50;
-      if (radarRadiusMeters > 300000) radarRadiusMeters = 300000;
-      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
-      updateDisplay();
-      if (myMarker) {
-        const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0);
-      }
-    });
-  }
-
-  // ✅ ➖ 버튼 (미세조정: 1m씩 감소)
-  if (btnDecrease) {
-    btnDecrease.addEventListener("click", () => {
-      radarRadiusMeters -= 50;
-      if (radarRadiusMeters < 1) radarRadiusMeters = 1;
-      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
-      updateDisplay();
-      if (myMarker) {
-        const pos = myMarker.getPosition().toJSON();
-        updateRadarPolygon(pos, 0);
-      }
-    });
-  }
-
-  // ✅ 표시 업데이트 함수
-  function updateDisplay() {
-    if (radiusUnit === "m") {
-      radiusValue.textContent = radarRadiusMeters + " m";
-    } else {
-      radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
-    }
-  }
-
-  updateDisplay();
-});
-
-    
-/* ---------------------- 한국표준시 변환 ---------------------- */  
-function formatToKST(isoString) {
-  if (!isoString) return "-";
-  const date = new Date(isoString);
-  return date.toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
-}
-
-/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-window.renderUserTable = function(users, viewMode = "current") {
-  const tbody = document.getElementById("user-table-body");
-  tbody.innerHTML = "";
-
-  users.forEach(user => {
-    const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
-    
-    if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-        <td>${user.address || "-"}</td>
-      `;
-    } else {
-      // ✅ current / all 모드: 상태 포함
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-      `;
-    }
-
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 마커 하나만 표시
-    row.addEventListener("click", () => {
-      if (user.lat && user.lng) {
-        clearMarkers(); // 이전 마커 제거
-        const marker = new google.maps.Marker({
-          position: { lat: user.lat, lng: user.lng },
-          map,
-          title: `사용자: ${user.phone}`,
-          animation: google.maps.Animation.BOUNCE
-        });
-        markers.push(marker);
-        map.setCenter({ lat: user.lat, lng: user.lng });
-        map.setZoom(15);
-      }
-    });
-
-    tbody.appendChild(row);
-  });
-};
-
-// ✅ 전체 사용자 내역을 패널에 출력하는 함수
-function renderAllUsersPanel() {
-  const tbody = document.getElementById("user-table-body");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  allData.forEach(user => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${user.phone || "-"}</td>
-      <td>${user.status || "-"}</td>
-      <td>${user.time ? formatToKST(user.time) : "-"}</td>
-      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-      <td>${user.address || "-"}</td>
-      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-    
-/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
-window.focusOnUser = function(lat, lng) {
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-};
-
-  
-/* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
-const btnLocation = document.getElementById("location-check");
-if (btnLocation) {
-  btnLocation.addEventListener("click", moveToLatLng);
-}
-
-// ---------------------- 최종 위치찾기 코드 정리 ----------------------
-// 위치찾기용 마커 저장 변수
-let locationMarker = null;
-
-window.moveToLatLng = function() {
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    alert("올바른 위도와 경도를 입력하세요.");
-    return;
-  }
-  if (!map) {
-    alert("지도가 아직 초기화되지 않았습니다.");
-    return;
-  }
-
-  // 지도 중심 이동 + 확대
-  map.setCenter({ lat: lat, lng: lng });
-  map.setZoom(15);
-
-  // 기존 마커 제거
-  if (locationMarker) {
-    locationMarker.setMap(null);
-  }
-
-  // 새 마커 표시
-  locationMarker = new google.maps.Marker({
-    position: { lat: lat, lng: lng },
-    map: map,
-    title: "입력한 위치",
-    animation: google.maps.Animation.DROP
-  });
-
-  // ✅ 메시지 박스 표시
-  const msgBox = document.getElementById("message-box");
-  msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
-  msgBox.style.display = "block";
-
-  // 3초 후 자동 숨김
-  setTimeout(() => {
-    msgBox.style.display = "none";
-  }, 3000);
-};
-
-// 버튼 이벤트 연결
-document.addEventListener("DOMContentLoaded", () => {
-  const btnLocation = document.getElementById("location-check");
-  if (btnLocation) {
-    btnLocation.addEventListener("click", moveToLatLng);
-  }
-});
-
-
-// ---------------------- 드래그 기능 (locationBox) ----------------------
-function makeDraggable(element) {
-  let offsetX = 0, offsetY = 0, isDown = false;
-
-  // ▶ PC 드래그 시작
-  element.addEventListener('mousedown', (e) => {
-    isDown = true;
-    offsetX = e.clientX - element.offsetLeft;
-    offsetY = e.clientY - element.offsetTop;
-    element.style.right = ""; // 오른쪽 고정 해제
-  });
-
-  // ▶ PC 드래그 종료
-  document.addEventListener('mouseup', () => { isDown = false; });
-
-  // ▶ PC 드래그 이동
-  document.addEventListener('mousemove', (e) => {
-    if (isDown) {
-      element.style.left = (e.clientX - offsetX) + 'px';
-      element.style.top = (e.clientY - offsetY) + 'px';
-    }
-  });
-
-  // ▶ 모바일 드래그 시작
-  element.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
-    offsetX = touch.clientX - element.offsetLeft;
-    offsetY = touch.clientY - element.offsetTop;
-    element.style.right = "";
-    isDown = true;
-  });
-
-  // ▶ 모바일 드래그 종료
-  document.addEventListener('touchend', () => { isDown = false; });
-
-  // ▶ 모바일 드래그 이동
-  document.addEventListener('touchmove', (e) => {
-    if (isDown) {
-      const t = e.touches[0];
-      element.style.left = (t.clientX - offsetX) + 'px';
-      element.style.top = (t.clientY - offsetY) + 'px';
-    }
-  });
-}
-
-// ✅ locationBox에 드래그 기능 적용
-const locationBox = document.getElementById("locationBox");
-if (locationBox) {
-  makeDraggable(locationBox);
-}
-
-// ---------------------- 패널 드래그 + Snap ----------------------
+// ---------------------- 사용자 패널 드래그 + Snap ----------------------
 function makePanelDraggable(panelId) {
   const panel = document.getElementById(panelId);
-  const header = panel.querySelector(".panel-header"); // 헤더만 드래그 핸들로 지정
+  const header = panel.querySelector(".panel-header");
   let isDragging = false, offsetX = 0, offsetY = 0;
 
-  // ▶ PC 드래그 시작
   header.addEventListener("mousedown", (e) => {
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
   });
 
-  // ▶ PC 드래그 이동
   document.addEventListener("mousemove", (e) => {
     if (isDragging) {
       panel.style.left = (e.clientX - offsetX) + "px";
@@ -1131,45 +413,7 @@ function makePanelDraggable(panelId) {
     }
   });
 
-  // ▶ PC 드래그 종료 + Snap 처리
   document.addEventListener("mouseup", () => {
-    if (isDragging) {
-      isDragging = false;
-      const rect = panel.getBoundingClientRect();
-      if (rect.left < 50) {
-        // 좌측 Snap
-        panel.style.left = "0px"; panel.style.right = "auto";
-        panel.classList.add("snap-left"); panel.classList.remove("snap-right");
-      } else if (window.innerWidth - rect.right < 50) {
-        // 우측 Snap → collapsed 상태로 숨김
-        panel.style.right = "0px"; panel.style.left = "auto";
-        panel.classList.add("collapsed", "snap-right");
-        panel.classList.remove("snap-left");
-      } else {
-        panel.classList.remove("snap-left", "snap-right");
-      }
-    }
-  });
-
-  // ▶ 모바일 드래그 시작
-  header.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    offsetX = touch.clientX - panel.offsetLeft;
-    offsetY = touch.clientY - panel.offsetTop;
-    isDragging = true;
-  });
-
-  // ▶ 모바일 드래그 이동
-  document.addEventListener("touchmove", (e) => {
-    if (isDragging) {
-      const t = e.touches[0];
-      panel.style.left = (t.clientX - offsetX) + "px";
-      panel.style.top = (t.clientY - offsetY) + "px";
-    }
-  });
-
-  // ▶ 모바일 드래그 종료 + Snap 처리
-  document.addEventListener("touchend", () => {
     if (isDragging) {
       isDragging = false;
       const rect = panel.getBoundingClientRect();
@@ -1200,7 +444,6 @@ function makeResizable(panelId) {
     return "bottom";
   }
 
-  // ▶ PC 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("mousedown", () => {
       isResizing = true; currentHandle = getHandleType(handle);
@@ -1208,7 +451,6 @@ function makeResizable(panelId) {
     });
   });
 
-  // ▶ PC 리사이즈 이동
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
@@ -1227,97 +469,28 @@ function makeResizable(panelId) {
     }
   });
 
-  // ▶ PC 리사이즈 종료
   document.addEventListener("mouseup", () => {
     isResizing = false; document.body.style.userSelect = "auto";
   });
-
-  // ▶ 모바일 리사이즈 시작
-  handles.forEach(handle => {
-    handle.addEventListener("touchstart", () => {
-      isResizing = true; currentHandle = getHandleType(handle);
-      document.body.style.userSelect = "none";
-    });
-  });
-
-  // ▶ 모바일 리사이즈 이동
-  document.addEventListener("touchmove", (e) => {
-    if (!isResizing) return;
-    const t = e.touches[0];
-    const rect = panel.getBoundingClientRect();
-
-    if (currentHandle === "right") {
-      const newWidth = t.clientX - rect.left;
-      if (newWidth > 200) panel.style.width = newWidth + "px";
-    } else if (currentHandle === "left") {
-      const newWidth = rect.right - t.clientX;
-      if (newWidth > 200) panel.style.width = newWidth + "px";
-    } else if (currentHandle === "bottom") {
-      const newHeight = t.clientY - rect.top;
-      if (newHeight > 100) panel.style.height = newHeight + "px";
-    } else if (currentHandle === "top") {
-      const newHeight = rect.bottom - t.clientY;
-      if (newHeight > 100) panel.style.height = newHeight + "px";
-    }
-  });
-
-  // ▶ 모바일 리사이즈 종료
-  document.addEventListener("touchend", () => {
-    isResizing = false;
-    document.body.style.userSelect = "auto";
-  });
 }
 
+// ---------------------- 패널 버튼 이벤트 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
   const minimizeBtn = document.getElementById("minimize-btn");
   const closeBtn = document.getElementById("close-user-panel");
-  const leftEdge = document.getElementById("left-edge");
-  const rightEdge = document.getElementById("right-edge");
 
-  // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-
-    if (panel.classList.contains("snap-left")) {
-      panel.classList.add("collapsed-left");
-    } else {
-      panel.classList.add("collapsed-right");
-    }
-
-    // 인라인 스타일 제거 → CSS 규칙만 적용
+    panel.classList.remove("maximized", "snap-left", "snap-right");
+    panel.classList.add("collapsed-right");
     panel.style = "";
   });
 
-  // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
       panel.classList.remove("maximized");
-      if (panel.classList.contains("snap-left")) {
-        panel.classList.add("collapsed-left");
-      } else {
-        panel.classList.add("collapsed-right");
-      }
       panel.style = "";
-    } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      panel.classList.remove("collapsed-left", "collapsed-right");
-      if (window.innerWidth <= 768) {
-        panel.style.width = "100%";
-        panel.style.height = "40%";
-        panel.style.top = "auto";
-        panel.style.bottom = "0";
-        panel.style.left = "0";
-        panel.style.right = "0";
-      } else {
-        panel.style.width = "600px";
-        panel.style.height = "calc(100% - 50px)";
-        panel.style.top = "50px";
-        panel.style.right = "0";
-        panel.style.left = "auto";
-        panel.style.bottom = "auto";
-      }
     } else {
       panel.classList.add("maximized");
       panel.style.width = "100%";
@@ -1376,12 +549,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
-
-
-
 </script>
 
-
+                                 
 <!-- 스타일 -->
 <style>
   
