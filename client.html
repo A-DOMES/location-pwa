@@ -807,6 +807,33 @@ if (navigator.geolocation) {
   );
 }
 
+// ---------------------- 슬라이더/단위 변경 기능 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const slider = document.getElementById("radiusSlider");
+  const radiusValue = document.getElementById("radiusValue");
+  const radiusUnitSelect = document.getElementById("radiusUnit");
+
+  // ✅ 초기 표시
+  if (radiusValue) {
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  }
+
+  // ✅ 슬라이더로 반경 변경
+  if (slider) {
+    slider.addEventListener("input", (e) => {
+      radarRadius = parseInt(e.target.value, 10);
+      radiusValue.textContent = radarRadius + " " + radarUnit;
+    });
+  }
+
+  // ✅ 단위 변경 (m ↔ km)
+  if (radiusUnitSelect) {
+    radiusUnitSelect.addEventListener("change", (e) => {
+      radarUnit = e.target.value;
+      radiusValue.textContent = radarRadius + " " + radarUnit;
+    });
+  }
+});
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
