@@ -1,28 +1,14 @@
-let map, myMarker, radarPolygon;
+let myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
+let pathCoords = [];
+let pathPolyline;
+let poiMarkers = [];
+let compassMarkers = [];
+let directionsService = new google.maps.DirectionsService();
+let directionsRenderer = new google.maps.DirectionsRenderer();
 
-// ✅ POI별 커스텀 아이콘 매핑
-const poiIcons = {
-  cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
-  convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
-  restaurant: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-  gas_station: "https://cdn-icons-png.flaticon.com/512/2933/2933914.png",
-  bank: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
-  pharmacy: "https://cdn-icons-png.flaticon.com/512/2969/2969375.png",
-  bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png"
-};
-
-function initMap() {
-  const defaultPos = { lat: 37.5665, lng: 126.9780 }; // 서울 시청 예시
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: defaultPos,
-    zoom: 15,
-    mapTypeId: google.maps.MapTypeId.ROADMAP
-  });
-}
-
-// ✅ 레이더 갱신
+// ---------------------- 레이더 ----------------------
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -54,7 +40,7 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-// ✅ 내 위치 추적 + 지도 회전
+// ---------------------- 위치 추적 ----------------------
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -79,15 +65,28 @@ if (navigator.geolocation) {
         myMarker.setPosition(myPos);
       }
 
+      // 경로 기록
+      pathCoords.push(myPos);
+      if (pathPolyline) {
+        pathPolyline.setPath(pathCoords);
+      } else {
+        pathPolyline = new google.maps.Polyline({
+          path: pathCoords,
+          geodesic: true,
+          strokeColor: "#FF0000",
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+          map: map
+        });
+      }
+
       updateRadarPolygon(myPos, heading);
       drawMultipleCircles(myPos);
       showNearbyPlaces(myPos, radarRadiusMeters);
 
-      // ✅ 지도 방향 회전
       map.setHeading(heading);
       map.setTilt(45);
 
-      // ✅ 나침반 표시
       addCompass();
     },
     (err) => console.error("위치 추적 실패:", err),
@@ -95,7 +94,7 @@ if (navigator.geolocation) {
   );
 }
 
-// ✅ 다중 반경 표시
+// ---------------------- 원형 표시 ----------------------
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -111,45 +110,68 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-// ✅ 반경 내 POI 표시
-function showNearbyPlaces(myPos, radiusMeters) {
-  const service = new google.maps.places.PlacesService(map);
-  const types = Object.keys(poiIcons);
+// ---------------------- 주변 장소 ----------------------
+function clearPoiMarkers() {
+  poiMarkers.forEach(m => m.setMap(null));
+  poiMarkers = [];
+}
 
-  types.forEach(type => {
-    service.nearbySearch({
-      location: myPos,
-      radius: radiusMeters,
-      type: [type]
-    }, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK) {
-        results.forEach(place => {
-          new google.maps.Marker({
-            position: place.geometry.location,
-            map: map,
-            title: place.name,
-            icon: {
-              url: poiIcons[type],
-              scaledSize: new google.maps.Size(32, 32)
-            }
-          });
-        });
-      }
-    });
+function showRouteToDestination(destination) {
+  if (!myMarker) return;
+  const request = {
+    origin: myMarker.getPosition(),
+    destination: destination,
+    travelMode: google.maps.TravelMode.WALKING
+  };
+  directionsService.route(request, (result, status) => {
+    if (status === google.maps.DirectionsStatus.OK) {
+      directionsRenderer.setDirections(result);
+    }
   });
 }
 
-// ✅ 거리 측정
-google.maps.event.addListener(map, 'click', (event) => {
-  if (!myMarker) return;
-  const clickedPos = event.latLng;
-  const myPos = myMarker.getPosition();
-  const distance = google.maps.geometry.spherical.computeDistanceBetween(myPos, clickedPos);
-  alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
-});
+function showNearbyPlaces(myPos, radiusMeters) {
+  clearPoiMarkers();
+  const service = new google.maps.places.PlacesService(map);
+  const types = Object.keys(poiIcons);
+  const infowindow = new google.maps.InfoWindow();
 
-// ✅ 나침반 표시
+  types.forEach(type => {
+    service.nearbySearch({ location: myPos, radius: radiusMeters, type: [type] },
+      (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          results.forEach(place => {
+            const marker = new google.maps.Marker({
+              position: place.geometry.location,
+              map: map,
+              title: place.name,
+              icon: { url: poiIcons[type], scaledSize: new google.maps.Size(32, 32) }
+            });
+
+            marker.addListener("click", () => {
+              infowindow.setContent(`<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}<br>(더블클릭하면 경로 안내)`);
+              infowindow.open(map, marker);
+            });
+
+            marker.addListener("dblclick", () => {
+              showRouteToDestination(place.geometry.location);
+            });
+
+            poiMarkers.push(marker);
+          });
+        }
+      });
+  });
+}
+
+// ---------------------- 나침반 ----------------------
+function clearCompass() {
+  compassMarkers.forEach(m => m.setMap(null));
+  compassMarkers = [];
+}
+
 function addCompass() {
+  clearCompass();
   const bounds = map.getBounds();
   if (!bounds) return;
   const center = bounds.getCenter();
@@ -161,13 +183,33 @@ function addCompass() {
     { label: "W", pos: { lat: center.lat(), lng: center.lng() - offset } }
   ];
   directions.forEach(d => {
-    new google.maps.Marker({
+    const marker = new google.maps.Marker({
       position: d.pos,
       map: map,
       label: d.label
     });
+    compassMarkers.push(marker);
   });
 }
 
-// ✅ initMap을 전역에 등록 (API callback에서 호출 가능하게)
-window.initMap = initMap;
+// ---------------------- 버튼 이벤트 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+
+  if (btnConnection) {
+    btnConnection.onclick = () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
+    };
+  }
+
+  if (btnSettings) {
+    btnSettings.onclick = () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    };
+  }
+});
