@@ -649,9 +649,6 @@ function initMap() {
 
 window.initMap = initMap;
 
-
-
-
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -1522,8 +1519,8 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 
- <!-- ✅ 지도 영역 -->
-  <div id="map" style="width:100%; height:100vh;"></div>
+   <!-- ✅ 지도 영역 -->
+  <div id="map"></div>
 
   <!-- 메시지 박스 -->
   <div id="message-box"></div>
