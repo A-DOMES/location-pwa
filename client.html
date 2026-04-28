@@ -1,13 +1,14 @@
-20260428코드 수정, 약간 느낌이 약한코드라고 느껴지는 코드 그러나 잘 작동하고 있음
+레이더반경 구현된 코드..
+client.htmo 260428
 
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <title>A-DOMES 위치정보시스템</title>
-
-
-
+  <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
+  <script src="config.js"></script>
+ 	
   <!-- 2. 사용자 코드 -->
   <script>
   // ---------------------- 전역 변수 ----------------------
@@ -628,7 +629,6 @@ function getMapIdByDevice() {
 }
 
 
-
 function initMap() {
   const mapId = getMapIdByDevice();
 
@@ -723,33 +723,67 @@ window.setCustomInterval = function() {
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
-// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 변경 가능)
+// ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
+// ---------------------- 관리자 모드 위치 추적 ----------------------
 let myMarker = null;
 let radarPolygon = null;
+let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
 
-// ✅ 기본값: 50m, 단위는 m
-let radarRadius = 50; 
-let radarUnit = "m"; // 기본 단위: m → 필요시 "km"로 변경
+// ✅ 내부 값은 항상 미터 단위로 저장
+let radarRadiusMeters = 50; 
+let radarUnit = "m"; // 표시 단위: m 또는 km
 
-// ✅ 단위 변환 함수 (m 또는 km → 도 단위)
-function convertToDegrees(value, unit) {
-  // 1도 ≈ 111,000m
-  if (unit === "m") {
-    return value / 111000;
-  } else if (unit === "km") {
-    return (value * 1000) / 111000;
-  }
-  return value / 111000; // 기본 m 처리
+// ✅ 단위 변환 함수 (미터 → 도 단위)
+function convertToDegrees(meters) {
+  return meters / 111000; // 1도 ≈ 111,000m
 }
 
+// ✅ 레이더 갱신 함수
+function updateRadarPolygon(myPos, heading) {
+  if (!radarEnabled) {
+    if (radarPolygon) radarPolygon.setMap(null);
+    return;
+  }
+
+  const angle = 90;
+  const points = [];
+  const radiusInDegrees = convertToDegrees(radarRadiusMeters);
+
+  for (let a = -angle/2; a <= angle/2; a += 5) {
+    const rad = (heading + a) * Math.PI / 180;
+    const latOffset = radiusInDegrees * Math.cos(rad);
+    const lngOffset = radiusInDegrees * Math.sin(rad);
+    points.push({
+      lat: myPos.lat + latOffset,
+      lng: myPos.lng + lngOffset
+    });
+  }
+  points.unshift(myPos);
+
+  if (radarPolygon) {
+    radarPolygon.setPath(points); 
+    radarPolygon.setMap(map);
+  } else {
+    radarPolygon = new google.maps.Polygon({
+      paths: points,
+      strokeColor: "#00BFFF",
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: "#00BFFF",
+      fillOpacity: 0.25,
+      map: map
+    });
+  }
+}
+
+// ✅ 내 위치 추적
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
+      const heading = pos.coords.heading || 0;
 
-      // ✅ 내 위치 마커 (빨간 원형)
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
@@ -765,46 +799,105 @@ if (navigator.geolocation) {
           }
         });
       } else {
-        myMarker.setPosition(myPos); // 마커 위치 갱신
+        myMarker.setPosition(myPos);
       }
 
-      // ✅ 방향 레이더 (부채꼴)
-      const angle = 90;   // 부채꼴 각도
-      const points = [];
-
-      // ✅ 반경을 도 단위로 변환 (기본값 50m)
-      const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
-
-      for (let a = -angle/2; a <= angle/2; a += 5) {
-        const rad = (heading + a) * Math.PI / 180;
-        const latOffset = radiusInDegrees * Math.cos(rad);
-        const lngOffset = radiusInDegrees * Math.sin(rad);
-        points.push({
-          lat: myPos.lat + latOffset,
-          lng: myPos.lng + lngOffset
-        });
-      }
-      points.unshift(myPos);
-
-      if (radarPolygon) {
-        radarPolygon.setPath(points); // 기존 레이더 갱신
-      } else {
-        radarPolygon = new google.maps.Polygon({
-          paths: points,
-          strokeColor: "#00BFFF",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#00BFFF",
-          fillOpacity: 0.25,
-          map: map
-        });
-      }
+      updateRadarPolygon(myPos, heading);
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
   );
 }
 
+// ---------------------- 슬라이더/단위 변경 + 버튼 + on/off ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const slider = document.getElementById("radiusSlider");
+  const radiusValue = document.getElementById("radiusValue");
+  const radiusUnitSelect = document.getElementById("radiusUnit");
+  const radarToggle = document.getElementById("radarToggle");
+  const btnIncrease = document.getElementById("btnIncrease"); // ➕ 버튼
+  const btnDecrease = document.getElementById("btnDecrease"); // ➖ 버튼
+
+  // ✅ 슬라이더는 항상 미터 단위 (min=1, max=300000 → 300km)
+  if (slider) {
+    slider.min = 1;
+    slider.max = 300000;
+    slider.value = radarRadiusMeters;
+
+    slider.addEventListener("input", (e) => {
+      radarRadiusMeters = parseInt(e.target.value, 10);
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
+
+  // ✅ 단위 변경
+  if (radiusUnitSelect) {
+    radiusUnitSelect.addEventListener("change", (e) => {
+      radarUnit = e.target.value;
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
+
+  // ✅ on/off 버튼
+  if (radarToggle) {
+    radarToggle.addEventListener("change", (e) => {
+      radarEnabled = e.target.checked;
+      if (!radarEnabled && radarPolygon) {
+        radarPolygon.setMap(null);
+      } else if (radarEnabled && myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
+
+  // ✅ ➕ 버튼 (미세조정: 1m씩 증가)
+  if (btnIncrease) {
+    btnIncrease.addEventListener("click", () => {
+      radarRadiusMeters += 50;
+      if (radarRadiusMeters > 300000) radarRadiusMeters = 300000;
+      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
+
+  // ✅ ➖ 버튼 (미세조정: 1m씩 감소)
+  if (btnDecrease) {
+    btnDecrease.addEventListener("click", () => {
+      radarRadiusMeters -= 50;
+      if (radarRadiusMeters < 1) radarRadiusMeters = 1;
+      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
+
+  // ✅ 표시 업데이트 함수
+  function updateDisplay() {
+    if (radiusUnit === "m") {
+      radiusValue.textContent = radarRadiusMeters + " m";
+    } else {
+      radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
+    }
+  }
+
+  updateDisplay();
+});
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
@@ -1089,6 +1182,27 @@ function makePanelDraggable(panelId) {
   });
 }
 
+// ---------------------- 네 면 리사이즈 ----------------------
+function makeResizable(panelId) {
+  const panel = document.getElementById(panelId);
+  const handles = panel.querySelectorAll(".resize-handle");
+  let isResizing = false, currentHandle = null;
+
+  function getHandleType(handle) {
+    if (handle.classList.contains("left")) return "left";
+    if (handle.classList.contains("right")) return "right";
+    if (handle.classList.contains("top")) return "top";
+    return "bottom";
+  }
+
+  // ▶ PC 리사이즈 시작
+  handles.forEach(handle => {
+    handle.addEventListener("mousedown", () => {
+      isResizing = true; currentHandle = getHandleType(handle);
+      document.body.style.userSelect = "none";
+    });
+  });
+
   // ▶ PC 리사이즈 이동
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
@@ -1149,101 +1263,42 @@ function makePanelDraggable(panelId) {
   });
 }
 
-// ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
   const minimizeBtn = document.getElementById("minimize-btn");
   const closeBtn = document.getElementById("close-user-panel");
-
-  // ---------------------- 이벤트 영역 제거 함수 ----------------------
-  function removeEdgeZones() {
-    document.querySelectorAll(".edge-zone").forEach(zone => zone.remove());
-  }
+  const leftEdge = document.getElementById("left-edge");
+  const rightEdge = document.getElementById("right-edge");
 
   // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
     // 모든 상태 초기화
-    panel.classList.remove("maximized", "touch-active");
-    removeEdgeZones(); // 기존 이벤트 영역 제거
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
 
     if (panel.classList.contains("snap-left")) {
-      // 좌측 Snap 상태일 때 → 좌측 숨김
-      panel.classList.remove("collapsed-right");
       panel.classList.add("collapsed-left");
-      panel.style.width = "15px";   // ✅ 폭 수정 (CSS와 동일하게)
-      panel.style.left = "0";
-      panel.style.right = "auto";
-      panel.style.top = "50px";
-      panel.style.bottom = "auto";
-
-      // 좌측 이벤트 영역 동적 생성
-      const leftEdge = document.createElement("div");
-      leftEdge.className = "edge-zone left";
-      document.body.appendChild(leftEdge);
-
-      // PC: hover / 모바일: touch
-      leftEdge.addEventListener("mouseenter", () => {
-        if (panel.classList.contains("collapsed-left")) {
-          panel.classList.add("touch-active");
-        }
-      });
-      leftEdge.addEventListener("touchstart", () => {
-        if (panel.classList.contains("collapsed-left")) {
-          panel.classList.add("touch-active");
-        }
-      });
     } else {
-      // 기본 또는 우측 Snap 상태일 때 → 우측 숨김
-      panel.classList.remove("collapsed-left");
       panel.classList.add("collapsed-right");
-      panel.style.width = "15px";   // ✅ 폭 수정 (CSS와 동일하게)
-      panel.style.right = "0";
-      panel.style.left = "auto";
-      panel.style.top = "50px";
-      panel.style.bottom = "auto";
-
-      // 우측 이벤트 영역 동적 생성
-      const rightEdge = document.createElement("div");
-      rightEdge.className = "edge-zone right";
-      document.body.appendChild(rightEdge);
-
-      // PC: hover / 모바일: touch
-      rightEdge.addEventListener("mouseenter", () => {
-        if (panel.classList.contains("collapsed-right")) {
-          panel.classList.add("touch-active");
-        }
-      });
-      rightEdge.addEventListener("touchstart", () => {
-        if (panel.classList.contains("collapsed-right")) {
-          panel.classList.add("touch-active");
-        }
-      });
     }
+
+    // 인라인 스타일 제거 → CSS 규칙만 적용
+    panel.style = "";
   });
 
   // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
-      // 이미 최대화 상태 → 접힘으로 전환
       panel.classList.remove("maximized");
       if (panel.classList.contains("snap-left")) {
         panel.classList.add("collapsed-left");
-        panel.style.width = "15px";   // ✅ 폭 수정
-        panel.style.left = "0";
-        panel.style.right = "auto";
       } else {
         panel.classList.add("collapsed-right");
-        panel.style.width = "15px";   // ✅ 폭 수정
-        panel.style.right = "0";
-        panel.style.left = "auto";
       }
+      panel.style = "";
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      // 접힘 상태 → 기본 상태로 복귀
       panel.classList.remove("collapsed-left", "collapsed-right");
-      removeEdgeZones(); // 이벤트 영역 제거
       if (window.innerWidth <= 768) {
-        // 모바일 기본: 하단 40%
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1251,10 +1306,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
-        // 데스크톱 기본: 오른쪽 패널 크기 선택
-        // ✅ 필요에 따라 600px 또는 1000px로 설정 가능
-        const defaultWidth = window.innerWidth > 1400 ? "1000px" : "600px";
-        panel.style.width = defaultWidth;
+        panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
         panel.style.right = "0";
@@ -1262,9 +1314,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.bottom = "auto";
       }
     } else {
-      // 기본 상태 → 최대화
       panel.classList.add("maximized");
-      removeEdgeZones(); // 이벤트 영역 제거
       panel.style.width = "100%";
       panel.style.height = "100%";
       panel.style.top = "0";
@@ -1285,31 +1335,44 @@ document.addEventListener("DOMContentLoaded", () => {
       "snap-right",
       "touch-active"
     );
-    removeEdgeZones(); // 이벤트 영역 제거
     panel.style = "";
   });
 
-  // ---------------------- 패널 자체 이벤트 처리 ----------------------
-  // PC: 마우스가 패널 위에 닿으면 펼침
-  panel.addEventListener("mouseenter", () => {
-    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
+  // ---------------------- 끝부분 이벤트 처리 ----------------------
+  if (leftEdge) {
+    leftEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    leftEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-left")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
 
-  // 모바일: 패널 터치 시 펼침
-  panel.addEventListener("touchstart", () => {
-    if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
-      panel.classList.add("touch-active");
-    }
-  });
-  
+  if (rightEdge) {
+    rightEdge.addEventListener("mouseenter", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+    rightEdge.addEventListener("touchstart", () => {
+      if (panel.classList.contains("collapsed-right")) {
+        panel.classList.add("touch-active");
+      }
+    });
+  }
+
   // ---------------------- 드래그 + Snap 기능 적용 ----------------------
   makePanelDraggable("user-panel");
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 });
+
+
 
 </script>
 
@@ -1377,7 +1440,7 @@ input:checked + .slider:before { transform:translateX(26px); }
   background: #fff;             /* 배경색 흰색 */
   border-left: 1px solid #ccc;  /* 오른쪽 패널 구분선 */
   display: none;                /* 기본은 숨김 */
-  z-index: 2000;                /* 최상위로 올림 */
+  z-index: 5000;                /* 최상위로 올림 */
   padding: 20px;                /* 내부 여백 */
   overflow-y: auto;             /* 세로 스크롤 */
   font-size: 15px;              /* 글자 크기 */
@@ -1389,12 +1452,10 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 우측 접힘 상태 */
 #user-panel.collapsed-right {
-  width: 15px;  /* 최소화 시 패널 폭 */
-  height: calc(100% - 50px);
-  right: 0;        /* 반드시 우측 끝에 붙도록 */
-  left: auto;
+  width: 5px;
+  height: 100%;
+  right: 0;
   top: 50px;
-  bottom: auto;
   overflow: hidden;
   transition: width 0.3s ease;
 }
@@ -1409,12 +1470,10 @@ input:checked + .slider:before { transform:translateX(26px); }
 
 /* ▶ 좌측 접힘 상태 */
 #user-panel.collapsed-left {
-  width: 15px;  /* 최소화 시 패널 폭 */
-  height: calc(100% - 50px);
-  left: 0;         /* 반드시 좌측 끝에 붙도록 */
-  right: auto;
+  width: 5px;
+  height: 100%;
+  left: 0;
   top: 50px;
-  bottom: auto;
   overflow: hidden;
   transition: width 0.3s ease;
 }
@@ -1432,8 +1491,8 @@ input:checked + .slider:before { transform:translateX(26px); }
   position: fixed;
   top: 50px;
   height: calc(100% - 50px);
-  width: 15px;  /* 이벤트 감지 영역도 동일하게 5px */
-  z-index: 100; /* 다른 요소보다 확실히 위 */
+  width: 5px;
+  z-index: 9999; /* 다른 요소보다 확실히 위 */
   background: transparent; /* 이벤트 감지용 투명 영역 */
   pointer-events: auto;     /* 이벤트가 반드시 잡히도록 */
 }
@@ -1583,59 +1642,69 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     </div>
   </div>
 
-  <!-- 환경설정 패널 -->
-  <div id="settings-panel" class="dropdown-panel">
-    <!-- 라이트/다크 모드 토글 -->
-    <div class="dropdown-item">
-      <strong>벡터지도 (라이트/다크)</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
-    <!-- 일반지도 버튼 -->
-    <div class="dropdown-item">
-      <strong>일반지도</strong><br>
-      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
-    </div>
-    <!-- 갱신 주기 설정 -->
-    <div class="dropdown-item">
-      <strong>갱신 주기 설정</strong><br>
-      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
-          <option value="minutes">분</option>
-          <option value="seconds">초</option>
-        </select>
-        <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
-      </div>
-    </div>
-    <!-- 레이더 반경 설정 -->
-    <div class="dropdown-item" id="radar-settings">
-      <strong>레이더 반경 설정</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="radarToggle" checked>
-        <span class="slider"></span>
-      </label>
-      <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
-        <span id="radiusValue">50m</span>
-        <select id="radiusUnit">
-          <option value="m" selected>m</option>
-          <option value="km">km</option>
-        </select>
-      </div>
-    </div>
-    <!-- 마커 클러스터링 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
-    </div>
-    <!-- 최근 50개 데이터만 표시 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+<!-- 환경설정 패널 -->
+<div id="settings-panel" class="dropdown-panel">
+  <!-- 라이트/다크 모드 토글 -->
+  <div class="dropdown-item">
+    <strong>벡터지도 (라이트/다크)</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="themeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- 일반지도 버튼 -->
+  <div class="dropdown-item">
+    <strong>일반지도</strong><br>
+    <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
+  </div>
+
+  <!-- 갱신 주기 설정 -->
+  <div class="dropdown-item">
+    <strong>갱신 주기 설정</strong><br>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
+      <select id="intervalUnit" style="font-size:18px; padding:6px;">
+        <option value="minutes">분</option>
+        <option value="seconds">초</option>
+      </select>
+      <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
     </div>
   </div>
+
+  <!-- 레이더 반경 설정 -->
+  <div class="dropdown-item" id="radar-settings">
+    <strong>레이더 반경 설정</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="radarToggle" checked>
+      <span class="slider"></span>
+    </label>
+    <br>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <input type="range" id="radiusSlider" min="1" max="300000" step="1" value="50" style="flex:1;">
+      <span id="radiusValue">50m</span>
+      <select id="radiusUnit">
+        <option value="m" selected>m</option>
+        <option value="km">km</option>
+      </select>
+    </div>
+    <!-- ✅ 미세조정 버튼 추가 -->
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <button id="btnDecrease" style="font-size:18px; padding:6px 12px;">➖ 줄이기</button>
+      <button id="btnIncrease" style="font-size:18px; padding:6px 12px;">➕ 늘리기</button>
+    </div>
+  </div>
+
+  <!-- 마커 클러스터링 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+  </div>
+
+  <!-- 최근 50개 데이터만 표시 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+  </div>
+</div>
 
   <!-- 실시간 위치공유 -->
   <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
@@ -1661,36 +1730,36 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <div id="left-edge"></div>
     <div id="right-edge"></div>
 
- <!-- 사용자 정보 패널 -->
-<div id="user-panel">
-  <div class="panel-header">
-    <h3 id="user-panel-title">사용자 정보</h3>
-    <div class="panel-controls">
-      <button id="minimize-btn">━</button>
-      <button id="maximize-btn">⬜</button>
-      <button id="close-user-panel">✖ 닫기</button>
+    <!-- 사용자 정보 패널 -->
+    <div id="user-panel">
+      <div class="panel-header">
+        <h3 id="user-panel-title">사용자 정보</h3>
+        <div class="panel-controls">
+          <button id="minimize-btn">━</button>
+          <button id="maximize-btn">⬜</button>
+          <button id="close-user-panel">✖ 닫기</button>
+        </div>
+      </div>
+      <div class="panel-content">
+        <div id="path-select-container">
+          <label for="path-user-select">경로 보기 선택:</label>
+          <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+            <option value="all">전체</option>
+          </select>
+        </div>
+        <div id="user-content">
+          <table id="user-table">
+            <thead><tr id="user-table-header"></tr></thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="resize-handle left"></div>
+      <div class="resize-handle right"></div>
+      <div class="resize-handle top"></div>
+      <div class="resize-handle bottom"></div>
     </div>
   </div>
-  <div class="panel-content">
-    <div id="path-select-container">
-      <label for="path-user-select">경로 보기 선택:</label>
-      <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-        <option value="all">전체</option>
-      </select>
-    </div>
-    <div id="user-content">
-      <table id="user-table">
-        <thead><tr id="user-table-header"></tr></thead>
-        <tbody id="user-table-body"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="resize-handle left"></div>
-  <div class="resize-handle right"></div>
-  <div class="resize-handle top"></div>
-  <div class="resize-handle bottom"></div>
-</div>
-
 
   <!-- 지도 영역 -->
   <div id="map"></div>
@@ -1711,6 +1780,8 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   <!-- Google Maps API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&callback=initMap"></script>
+
 </body>
 </html>
+  
   
