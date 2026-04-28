@@ -724,63 +724,38 @@ window.setCustomInterval = function() {
 };
 
 
-// ---------------------- 관리자 모드 위치 추적 ----------------------
-let myMarker = null;       // 내 위치 마커
-let radarPolygon = null;   // 레이더 반경 폴리곤
+// ---------------------- 전역 변수 ----------------------
+let myMarker = null;
+let radarPolygon = null;
+let radarRadius = 50;
+let radarUnit = "m";
 
-let radarRadius = 50;      // 기본 반경 (50m)
-let radarUnit = "m";       // 기본 단위 (미터)
+// ---------------------- 레이더 관련 함수 ----------------------
+function convertToDegrees(value, unit) { ... }
 
-// 단위를 지도 좌표계에 맞게 변환
-function convertToDegrees(value, unit) {
-  if (unit === "m") return value / 111000;
-  if (unit === "km") return (value * 1000) / 111000;
-  return value / 111000;
-}
+function updateRadarPolygon(centerLatLng) { ... }
 
-// ✅ 레이더 갱신 함수
-function updateRadarPolygon(centerLatLng) {
-  if (!centerLatLng) {
-    if (!myMarker) return;
-    centerLatLng = myMarker.getPosition().toJSON();
-  }
-
-  const heading = 0; // 기본 방향
-  const angle = 90;  // 부채꼴 각도
-  const points = [];
-  const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
-
-  for (let a = -angle/2; a <= angle/2; a += 5) {
-    const rad = (heading + a) * Math.PI / 180;
-    const latOffset = radiusInDegrees * Math.cos(rad);
-    const lngOffset = radiusInDegrees * Math.sin(rad);
-    points.push({ lat: centerLatLng.lat + latOffset, lng: centerLatLng.lng + lngOffset });
-  }
-  points.unshift(centerLatLng);
-
-  if (radarPolygon) {
-    radarPolygon.setPath(points);
-    radarPolygon.setMap(map);
-  } else {
-    radarPolygon = new google.maps.Polygon({
-      paths: points,
-      strokeColor: "#00BFFF",
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: "#00BFFF",
-      fillOpacity: 0.25,
-      map: map
-    });
-  }
-}
-
-// ✅ 초기화 함수 (DOM 값 갱신 + 레이더 적용)
 function initRadarUI() {
   const radiusValue = document.getElementById("radiusValue");
   if (radiusValue) {
-    radiusValue.textContent = radarRadius + " " + radarUnit; // 기본값 표시
+    radiusValue.textContent = radarRadius + " " + radarUnit;
   }
-  updateRadarPolygon(); // 값 갱신 후 레이더도 즉시 적용
+  updateRadarPolygon();
+}
+
+// ---------------------- 데이터 로드 ----------------------
+async function loadData() {
+  const response = await fetch("/api/data");
+  allData = await response.json();
+
+  showMap(allData);              // 지도 표시
+  populatePathSelect(allData);   // 경로 선택 갱신
+
+  if (allData.length > 0) {
+    updateUserPanelContent("current"); // ✅ 패널 갱신
+  }
+
+  initRadarUI(); // ✅ 데이터 로드 후 레이더 초기화
 }
 
 // ---------------------- DOM 준비 후 이벤트 연결 ----------------------
@@ -790,62 +765,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const radiusUnitSelect = document.getElementById("radiusUnit");
   const radarToggle = document.getElementById("radarToggle");
 
-  // ✅ DOM 준비 후 초기화 실행
-  initRadarUI();
+  // ✅ 슬라이더/단위/토글 이벤트 연결
+  slider.addEventListener("input", (e) => { ... });
+  radiusUnitSelect.addEventListener("change", (e) => { ... });
+  radarToggle.addEventListener("change", (e) => { ... });
 
   // ✅ 위치 권한 요청 (사용자 위치 공유 창 뜨도록)
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
       (pos) => {
         const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-
         if (!myMarker) {
-          myMarker = new google.maps.Marker({
-            position: myPos,
-            map: map,
-            title: "내 위치",
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: "#FF0000",
-              fillOpacity: 1,
-              strokeColor: "#FFFFFF",
-              strokeWeight: 2,
-              scale: 10
-            }
-          });
+          myMarker = new google.maps.Marker({ position: myPos, map: map, title: "내 위치" });
         } else {
           myMarker.setPosition(myPos);
         }
-
-        updateRadarPolygon(); // 위치 갱신 시 레이더도 갱신
+        updateRadarPolygon();
       },
       (err) => console.error("위치 추적 실패:", err),
       { enableHighAccuracy: true }
     );
   }
-
-  // ✅ 반경 슬라이더 이벤트
-  slider.addEventListener("input", (e) => {
-    radarRadius = parseInt(e.target.value, 10);
-    radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon();
-  });
-
-  // ✅ 단위 변경 이벤트
-  radiusUnitSelect.addEventListener("change", (e) => {
-    radarUnit = e.target.value;
-    radiusValue.textContent = radarRadius + " " + radarUnit;
-    updateRadarPolygon();
-  });
-
-  // ✅ 레이더 표시/숨김 토글
-  radarToggle.addEventListener("change", (e) => {
-    if (!e.target.checked && radarPolygon) {
-      radarPolygon.setMap(null);
-    } else if (e.target.checked && radarPolygon) {
-      radarPolygon.setMap(map);
-    }
-  });
 });
 
 // ---------------------- 사용자 패널 클릭 이벤트 ----------------------
@@ -855,31 +795,17 @@ row.addEventListener("click", () => {
     const marker = new google.maps.Marker({
       position: { lat: user.lat, lng: user.lng },
       map,
-      title: `사용자: ${user.phone}`, // ✅ phone 값 표시
+      title: `사용자: ${user.phone}`,
       animation: google.maps.Animation.BOUNCE
     });
     markers.push(marker);
     map.setCenter({ lat: user.lat, lng: user.lng });
     map.setZoom(15);
 
-    // 클릭한 사용자 위치에서 레이더 반경 표시
     updateRadarPolygon({ lat: user.lat, lng: user.lng });
   }
 });
 
-// ---------------------- 데이터 로드 ----------------------
-async function loadData() {
-  const response = await fetch("/api/data");
-  allData = await response.json();
-  showMap(allData);
-  populatePathSelect(allData);
-
-  if (allData.length > 0) {
-    updateUserPanelContent("current"); // ✅ 사용자 패널 먼저 갱신
-  }
-
-  initRadarUI(); // ✅ 데이터 로드 후 레이더 초기화
-}
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
