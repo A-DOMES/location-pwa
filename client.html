@@ -742,6 +742,7 @@ function convertToDegrees(value, unit) {
   return value / 111000; // 기본 m 처리
 }
 
+// ✅ 내 위치 추적 (원본 흐름 유지)
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -803,6 +804,40 @@ if (navigator.geolocation) {
     { enableHighAccuracy: true }
   );
 }
+
+// ---------------------- 추가 기능 (패널/슬라이더) ----------------------
+// ✅ 데이터 로드 후 패널 갱신
+async function loadData() {
+  const response = await fetch("/api/data");
+  allData = await response.json();
+  showMap(allData);
+  populatePathSelect(allData);
+
+  if (allData.length > 0) {
+    updateUserPanelContent("current"); // 사용자 패널 갱신
+  }
+}
+
+// ✅ 슬라이더/단위 변경 이벤트 (레이더 반경 값만 갱신)
+document.addEventListener("DOMContentLoaded", () => {
+  const slider = document.getElementById("radiusSlider");
+  const radiusValue = document.getElementById("radiusValue");
+  const radiusUnitSelect = document.getElementById("radiusUnit");
+
+  if (radiusValue) {
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  }
+
+  slider.addEventListener("input", (e) => {
+    radarRadius = parseInt(e.target.value, 10);
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  });
+
+  radiusUnitSelect.addEventListener("change", (e) => {
+    radarUnit = e.target.value;
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  });
+});
 
 
     
@@ -1282,7 +1317,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
-
 <!-- 스타일 -->
 <style>
   
@@ -1318,9 +1352,39 @@ input:checked + .slider { background:#2196F3; }
 input:checked + .slider:before { transform:translateX(26px); }
 
 /* =========================== ✅ 레이더 설정 슬라이더 =========================== */
-#radar-settings { margin-top:10px; padding:8px; border-top:1px solid #ddd; }
-#radiusSlider { width:100%; margin-top:8px; height:6px; background:#ccc; }
-#radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
+#radar-settings {
+  margin-top: 10px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+}
+
+#radiusSlider {
+  width: 100%;
+  margin-top: 8px;
+  height: 6px;
+  background: #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#radiusSlider::-webkit-slider-thumb,
+#radiusSlider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #1976d2;   /* 파란색으로 강조 */
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* ✅ 반경 값 표시 */
+#radiusValue {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
 
 /* =========================== ✅ 위치 정보 박스 =========================== */
 #locationBox { position:absolute; top:6%; left:20%; transform:translateX(-50%); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
@@ -1575,23 +1639,34 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
         <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
       </div>
     </div>
-    <!-- 레이더 반경 설정 -->
-    <div class="dropdown-item" id="radar-settings">
-      <strong>레이더 반경 설정</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="radarToggle" checked>
-        <span class="slider"></span>
-      </label>
-      <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
-        <span id="radiusValue">50m</span>
-        <select id="radiusUnit">
-          <option value="m" selected>m</option>
-          <option value="km">km</option>
-        </select>
-      </div>
-    </div>
+<!-- 레이더 반경 설정 -->
+<div class="dropdown-item" id="radar-settings">
+  <strong>레이더 반경 설정</strong><br>
+  <!-- ✅ 레이더 표시 ON/OFF -->
+  <label class="switch">
+    <input type="checkbox" id="radarToggle" checked>
+    <span class="slider"></span>
+  </label>
+  <br>
+  <!-- ✅ 반경 슬라이더 + 값 표시 + 단위 선택 -->
+  <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+    <input 
+      type="range" 
+      id="radiusSlider" 
+      min="1" 
+      max="200000" 
+      step="10" 
+      value="50" 
+      style="flex:1;"
+    >
+    <span id="radiusValue">50m</span>
+    <select id="radiusUnit">
+      <option value="m" selected>m</option>
+      <option value="km">km</option>
+    </select>
+  </div>
+</div>
+
     <!-- 마커 클러스터링 옵션 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
@@ -1644,10 +1719,10 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
           </select>
         </div>
         <div id="user-content">
-          <table id="user-table">
-            <thead><tr id="user-table-header"></tr></thead>
-            <tbody id="user-table-body"></tbody>
-          </table>
+            <table id="user-table">
+              <thead id="user-table-header"></thead>
+              <tbody id="user-table-body"></tbody>
+            </table>
         </div>
       </div>
       <div class="resize-handle left"></div>
@@ -1662,7 +1737,7 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   <!-- 메시지 박스 -->
   <div id="message-box"></div>
-
+    
   <!-- ✅ 라이트/다크 스타일 JSON 정의 -->
   <script>
     const lightStyle = [...]; // 생략
