@@ -798,7 +798,7 @@ if (navigator.geolocation) {
       }
 
       // ✅ 방향 레이더 (부채꼴)
-      const angle = 90;   // 부채꼴 각도
+      const angle = 90;   // 부채꼄 각도
       const points = [];
 
       // ✅ 반경을 도 단위로 변환 (슬라이더/단위 반영)
@@ -833,6 +833,7 @@ if (navigator.geolocation) {
     { enableHighAccuracy: true }
   );
 }
+
 
 
     
@@ -1363,7 +1364,6 @@ input:checked + .slider:before { transform:translateX(26px); }
   cursor: pointer;
 }
 
-/* 슬라이더 thumb 스타일 */
 #radiusSlider::-webkit-slider-thumb,
 #radiusSlider::-moz-range-thumb {
   width: 16px;
@@ -1374,10 +1374,10 @@ input:checked + .slider:before { transform:translateX(26px); }
   border: none;
 }
 
-/* 반경 값 표시 */
+/* ✅ 반경 값 표시 */
 #radiusValue {
   display: inline-block;
-  margin-top: 6px;
+  margin-left: 8px;
   font-size: 14px;
   font-weight: bold;
   color: #333;
