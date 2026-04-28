@@ -1,8 +1,15 @@
 let map, myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
+let pathCoords = [];
+let pathPolyline;
+let poiMarkers = [];
+let compassMarkers = [];
+let directionsService = new google.maps.DirectionsService();
+let directionsRenderer = new google.maps.DirectionsRenderer();
+directionsRenderer.setMap(map);
 
-// ✅ POI별 커스텀 아이콘 매핑
+// ✅ POI 아이콘 정의
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -13,16 +20,59 @@ const poiIcons = {
   bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png"
 };
 
+// ---------------------- 지도 초기화 ----------------------
 function initMap() {
-  const defaultPos = { lat: 37.5665, lng: 126.9780 }; // 서울 시청 예시
+  // ✅ 원하는 기본 좌표 (순천시 기준)
+  const defaultPos = { lat: 34.95, lng: 127.49 };
+
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
-    zoom: 15,
-    mapTypeId: google.maps.MapTypeId.ROADMAP
+    zoom: 7,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null // 기본은 일반지도
   });
+
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+    });
+  }
+
+  // ✅ 일반지도 버튼
+  const defaultMapBtn = document.getElementById("defaultMapBtn");
+  if (defaultMapBtn) {
+    defaultMapBtn.addEventListener("click", () => {
+      map.setOptions({ styles: null });
+    });
+  }
+
+  // ✅ 거리 측정 이벤트
+  google.maps.event.addListener(map, 'click', (event) => {
+    if (!myMarker) return;
+    const clickedPos = event.latLng;
+    const myPos = myMarker.getPosition();
+    const distance = google.maps.geometry.spherical.computeDistanceBetween(myPos, clickedPos);
+    alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
+  });
+
+  // ✅ 나침반 표시
+  google.maps.event.addListenerOnce(map, 'idle', addCompass);
+
+  // ✅ 현재 위치 자동 반영
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      map.setCenter(myPos);
+      map.setZoom(15);
+    });
+  }
 }
 
-// ✅ 레이더 갱신
+window.initMap = initMap;
+
+// ---------------------- 레이더 ----------------------
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -54,17 +104,13 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-// ✅ 내 위치 추적 + 지도 회전 + 경로 기록
-let pathCoords = [];
-let pathPolyline;
-
+// ---------------------- 위치 추적 ----------------------
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0;
 
-      // 내 위치 마커
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
@@ -83,7 +129,7 @@ if (navigator.geolocation) {
         myMarker.setPosition(myPos);
       }
 
-      // ✅ 경로 기록 (서버 없이)
+      // 경로 기록
       pathCoords.push(myPos);
       if (pathPolyline) {
         pathPolyline.setPath(pathCoords);
@@ -102,11 +148,9 @@ if (navigator.geolocation) {
       drawMultipleCircles(myPos);
       showNearbyPlaces(myPos, radarRadiusMeters);
 
-      // 지도 방향 회전
       map.setHeading(heading);
       map.setTilt(45);
 
-      // 나침반 표시
       addCompass();
     },
     (err) => console.error("위치 추적 실패:", err),
@@ -114,7 +158,7 @@ if (navigator.geolocation) {
   );
 }
 
-// ✅ 다중 반경 표시
+// ---------------------- 원형 표시 ----------------------
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -130,14 +174,26 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-// ✅ POI 마커 관리
-let poiMarkers = [];
+// ---------------------- 주변 장소 ----------------------
 function clearPoiMarkers() {
   poiMarkers.forEach(m => m.setMap(null));
   poiMarkers = [];
 }
 
-// ✅ 반경 내 POI 표시 (중복 제거 + InfoWindow)
+function showRouteToDestination(destination) {
+  if (!myMarker) return;
+  const request = {
+    origin: myMarker.getPosition(),
+    destination: destination,
+    travelMode: google.maps.TravelMode.WALKING
+  };
+  directionsService.route(request, (result, status) => {
+    if (status === google.maps.DirectionsStatus.OK) {
+      directionsRenderer.setDirections(result);
+    }
+  });
+}
+
 function showNearbyPlaces(myPos, radiusMeters) {
   clearPoiMarkers();
   const service = new google.maps.places.PlacesService(map);
@@ -145,49 +201,34 @@ function showNearbyPlaces(myPos, radiusMeters) {
   const infowindow = new google.maps.InfoWindow();
 
   types.forEach(type => {
-    service.nearbySearch({
-      location: myPos,
-      radius: radiusMeters,
-      type: [type]
-    }, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK) {
-        results.forEach(place => {
-          const marker = new google.maps.Marker({
-            position: place.geometry.location,
-            map: map,
-            title: place.name,
-            icon: {
-              url: poiIcons[type],
-              scaledSize: new google.maps.Size(32, 32)
-            }
-          });
+    service.nearbySearch({ location: myPos, radius: radiusMeters, type: [type] },
+      (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          results.forEach(place => {
+            const marker = new google.maps.Marker({
+              position: place.geometry.location,
+              map: map,
+              title: place.name,
+              icon: { url: poiIcons[type], scaledSize: new google.maps.Size(32, 32) }
+            });
 
-          // InfoWindow 추가
-          marker.addListener("click", () => {
-            infowindow.setContent(
-              `<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}`
-            );
-            infowindow.open(map, marker);
-          });
+            marker.addListener("click", () => {
+              infowindow.setContent(`<b>${place.name}</b><br>${place.vicinity || "주소 정보 없음"}<br>(더블클릭하면 경로 안내)`);
+              infowindow.open(map, marker);
+            });
 
-          poiMarkers.push(marker);
-        });
-      }
-    });
+            marker.addListener("dblclick", () => {
+              showRouteToDestination(place.geometry.location);
+            });
+
+            poiMarkers.push(marker);
+          });
+        }
+      });
   });
 }
 
-// ✅ 거리 측정
-google.maps.event.addListener(map, 'click', (event) => {
-  if (!myMarker) return;
-  const clickedPos = event.latLng;
-  const myPos = myMarker.getPosition();
-  const distance = google.maps.geometry.spherical.computeDistanceBetween(myPos, clickedPos);
-  alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
-});
-
-// ✅ 나침반 표시 (중복 제거)
-let compassMarkers = [];
+// ---------------------- 나침반 ----------------------
 function clearCompass() {
   compassMarkers.forEach(m => m.setMap(null));
   compassMarkers = [];
@@ -215,5 +256,57 @@ function addCompass() {
   });
 }
 
-// ✅ initMap을 전역에 등록
+// ---------------------- 버튼 이벤트 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const btnConnection = document.getElementById("btn-connection");
+  const btnSettings = document.getElementById("btn-settings");
+  const connectionPanel = document.getElementById("connection-panel");
+  const settingsPanel = document.getElementById("settings-panel");
+
+  // 접속현황 버튼
+  if (btnConnection) {
+    btnConnection.onclick = () => {
+      settingsPanel.classList.remove("open");
+      connectionPanel.classList.toggle("open");
+    };
+  }
+
+  // 환경설정 버튼
+  if (btnSettings) {
+    btnSettings.onclick = () => {
+      connectionPanel.classList.remove("open");
+      settingsPanel.classList.toggle("open");
+    };
+  }
+});
+
+// ---------------------- 나침반 ----------------------
+function clearCompass() {
+  compassMarkers.forEach(m => m.setMap(null));
+  compassMarkers = [];
+}
+
+function addCompass() {
+  clearCompass();
+  const bounds = map.getBounds();
+  if (!bounds) return;
+  const center = bounds.getCenter();
+  const offset = 0.001;
+  const directions = [
+    { label: "N", pos: { lat: center.lat() + offset, lng: center.lng() } },
+    { label: "S", pos: { lat: center.lat() - offset, lng: center.lng() } },
+    { label: "E", pos: { lat: center.lat(), lng: center.lng() + offset } },
+    { label: "W", pos: { lat: center.lat(), lng: center.lng() - offset } }
+  ];
+  directions.forEach(d => {
+    const marker = new google.maps.Marker({
+      position: d.pos,
+      map: map,
+      label: d.label
+    });
+    compassMarkers.push(marker);
+  });
+}
+
+// ---------------------- Google Maps API callback 연결 ----------------------
 window.initMap = initMap;
