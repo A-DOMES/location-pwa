@@ -745,13 +745,46 @@ function convertToDegrees(value, unit) {
   return value / 111000; // 기본 m 처리
 }
 
+// ✅ 레이더 갱신 함수 (마커 위치 기준으로 다시 그림)
+function updateRadarPolygon(myPos, heading) {
+  const angle = 90;   // 부채꼴 각도
+  const points = [];
+
+  const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
+
+  for (let a = -angle/2; a <= angle/2; a += 5) {
+    const rad = (heading + a) * Math.PI / 180;
+    const latOffset = radiusInDegrees * Math.cos(rad);
+    const lngOffset = radiusInDegrees * Math.sin(rad);
+    points.push({
+      lat: myPos.lat + latOffset,
+      lng: myPos.lng + lngOffset
+    });
+  }
+  points.unshift(myPos);
+
+  if (radarPolygon) {
+    radarPolygon.setPath(points); // 기존 레이더 갱신
+  } else {
+    radarPolygon = new google.maps.Polygon({
+      paths: points,
+      strokeColor: "#00BFFF",
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: "#00BFFF",
+      fillOpacity: 0.25,
+      map: map
+    });
+  }
+}
+
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      const heading = pos.coords.heading || 0; // 방향 값 (북쪽 기준, 일부 기기만 지원)
+      const heading = pos.coords.heading || 0;
 
-      // ✅ 내 위치 마커 (빨간 원형)
+      // ✅ 내 위치 마커
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
@@ -767,40 +800,11 @@ if (navigator.geolocation) {
           }
         });
       } else {
-        myMarker.setPosition(myPos); // 마커 위치 갱신
+        myMarker.setPosition(myPos);
       }
 
-      // ✅ 방향 레이더 (부채꼴)
-      const angle = 90;   // 부채꼴 각도
-      const points = [];
-
-      // ✅ 반경을 도 단위로 변환 (기본값 50m)
-      const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
-
-      for (let a = -angle/2; a <= angle/2; a += 5) {
-        const rad = (heading + a) * Math.PI / 180;
-        const latOffset = radiusInDegrees * Math.cos(rad);
-        const lngOffset = radiusInDegrees * Math.sin(rad);
-        points.push({
-          lat: myPos.lat + latOffset,
-          lng: myPos.lng + lngOffset
-        });
-      }
-      points.unshift(myPos);
-
-      if (radarPolygon) {
-        radarPolygon.setPath(points); // 기존 레이더 갱신
-      } else {
-        radarPolygon = new google.maps.Polygon({
-          paths: points,
-          strokeColor: "#00BFFF",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#00BFFF",
-          fillOpacity: 0.25,
-          map: map
-        });
-      }
+      // ✅ 레이더 갱신 호출
+      updateRadarPolygon(myPos, heading);
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
@@ -813,27 +817,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const radiusValue = document.getElementById("radiusValue");
   const radiusUnitSelect = document.getElementById("radiusUnit");
 
-  // ✅ 초기 표시
   if (radiusValue) {
     radiusValue.textContent = radarRadius + " " + radarUnit;
   }
 
-  // ✅ 슬라이더로 반경 변경
+  // ✅ 슬라이더로 반경 변경 → 레이더도 갱신
   if (slider) {
     slider.addEventListener("input", (e) => {
       radarRadius = parseInt(e.target.value, 10);
       radiusValue.textContent = radarRadius + " " + radarUnit;
+
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0); // heading은 기본값 0
+      }
     });
   }
 
-  // ✅ 단위 변경 (m ↔ km)
+  // ✅ 단위 변경 (m ↔ km) → 레이더도 갱신
   if (radiusUnitSelect) {
     radiusUnitSelect.addEventListener("change", (e) => {
       radarUnit = e.target.value;
       radiusValue.textContent = radarRadius + " " + radarUnit;
+
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
     });
   }
 });
+
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
