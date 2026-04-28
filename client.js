@@ -1,15 +1,7 @@
 let map, myMarker, radarPolygon;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
-let pathCoords = [];
-let pathPolyline;
-let poiMarkers = [];
-let compassMarkers = [];
-let directionsService = new google.maps.DirectionsService();
-let directionsRenderer = new google.maps.DirectionsRenderer();
-directionsRenderer.setMap(map);
 
-// ✅ POI 아이콘 정의
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -20,14 +12,11 @@ const poiIcons = {
   bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png"
 };
 
-// ---------------------- 지도 초기화 ----------------------
 function initMap() {
-  // ✅ 원하는 기본 좌표 (순천시 기준)
-  const defaultPos = { lat: 34.95, lng: 127.49 };
-
+  const defaultPos = { lat: 37.5665, lng: 126.9780 };
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultPos,
-    zoom: 13,
+    zoom: 15,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     styles: null // 기본은 일반지도
   });
@@ -48,7 +37,7 @@ function initMap() {
     });
   }
 
-  // ✅ 거리 측정 이벤트
+  // ✅ 거리 측정 이벤트 등록
   google.maps.event.addListener(map, 'click', (event) => {
     if (!myMarker) return;
     const clickedPos = event.latLng;
@@ -57,22 +46,10 @@ function initMap() {
     alert("선택한 지점까지 거리: " + Math.round(distance) + "m");
   });
 
-  // ✅ 나침반 표시
+  // ✅ 지도 로딩 완료 후 나침반 표시
   google.maps.event.addListenerOnce(map, 'idle', addCompass);
-
-  // ✅ 현재 위치 자동 반영
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      map.setCenter(myPos);
-      map.setZoom(15);
-    });
-  }
 }
 
-window.initMap = initMap;
-
-// ---------------------- 레이더 ----------------------
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -104,7 +81,9 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-// ---------------------- 위치 추적 ----------------------
+let pathCoords = [];
+let pathPolyline;
+
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -158,7 +137,6 @@ if (navigator.geolocation) {
   );
 }
 
-// ---------------------- 원형 표시 ----------------------
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -174,11 +152,15 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-// ---------------------- 주변 장소 ----------------------
+let poiMarkers = [];
 function clearPoiMarkers() {
   poiMarkers.forEach(m => m.setMap(null));
   poiMarkers = [];
 }
+
+let directionsService = new google.maps.DirectionsService();
+let directionsRenderer = new google.maps.DirectionsRenderer();
+directionsRenderer.setMap(map);
 
 function showRouteToDestination(destination) {
   if (!myMarker) return;
@@ -217,6 +199,7 @@ function showNearbyPlaces(myPos, radiusMeters) {
               infowindow.open(map, marker);
             });
 
+            // ✅ 더블클릭 시 목적지 안내
             marker.addListener("dblclick", () => {
               showRouteToDestination(place.geometry.location);
             });
@@ -228,7 +211,7 @@ function showNearbyPlaces(myPos, radiusMeters) {
   });
 }
 
-// ---------------------- 나침반 ----------------------
+let compassMarkers = [];
 function clearCompass() {
   compassMarkers.forEach(m => m.setMap(null));
   compassMarkers = [];
@@ -256,57 +239,4 @@ function addCompass() {
   });
 }
 
-// ---------------------- 버튼 이벤트 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-
-  // 접속현황 버튼
-  if (btnConnection) {
-    btnConnection.onclick = () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    };
-  }
-
-  // 환경설정 버튼
-  if (btnSettings) {
-    btnSettings.onclick = () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    };
-  }
-});
-
-// ---------------------- 나침반 ----------------------
-function clearCompass() {
-  compassMarkers.forEach(m => m.setMap(null));
-  compassMarkers = [];
-}
-
-function addCompass() {
-  clearCompass();
-  const bounds = map.getBounds();
-  if (!bounds) return;
-  const center = bounds.getCenter();
-  const offset = 0.001;
-  const directions = [
-    { label: "N", pos: { lat: center.lat() + offset, lng: center.lng() } },
-    { label: "S", pos: { lat: center.lat() - offset, lng: center.lng() } },
-    { label: "E", pos: { lat: center.lat(), lng: center.lng() + offset } },
-    { label: "W", pos: { lat: center.lat(), lng: center.lng() - offset } }
-  ];
-  directions.forEach(d => {
-    const marker = new google.maps.Marker({
-      position: d.pos,
-      map: map,
-      label: d.label
-    });
-    compassMarkers.push(marker);
-  });
-}
-
-// ---------------------- Google Maps API callback 연결 ----------------------
 window.initMap = initMap;
