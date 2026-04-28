@@ -779,6 +779,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const radiusUnitSelect = document.getElementById("radiusUnit");
   const radarToggle = document.getElementById("radarToggle");
 
+  // ✅ 초기값 강제 세팅 (50m 기본 표시)
+  if (radiusValue) {
+    radiusValue.textContent = radarRadius + " " + radarUnit;
+  }
+
   slider.addEventListener("input", (e) => {
     radarRadius = parseInt(e.target.value, 10);
     radiusValue.textContent = radarRadius + " " + radarUnit;
