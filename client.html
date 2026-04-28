@@ -1088,6 +1088,27 @@ function makePanelDraggable(panelId) {
   });
 }
 
+// ---------------------- 네 면 리사이즈 기능 ----------------------
+function makeResizable(panelId) {
+  const panel = document.getElementById(panelId);
+  const handles = panel.querySelectorAll(".resize-handle");
+  let isResizing = false, currentHandle = null;
+
+  function getHandleType(handle) {
+    if (handle.classList.contains("left")) return "left";
+    if (handle.classList.contains("right")) return "right";
+    if (handle.classList.contains("top")) return "top";
+    return "bottom";
+  }
+
+  // ▶ PC 리사이즈 시작
+  handles.forEach(handle => {
+    handle.addEventListener("mousedown", () => {
+      isResizing = true; currentHandle = getHandleType(handle);
+      document.body.style.userSelect = "none";
+    });
+  });
+
   // ▶ PC 리사이즈 이동
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
@@ -1099,7 +1120,7 @@ function makePanelDraggable(panelId) {
       const newWidth = rect.right - e.clientX;
       if (newWidth > 200) {
         panel.style.width = newWidth + "px";
-        panel.style.left = e.clientX + "px"; // ✅ 왼쪽 기준점 갱신 → 오른쪽 고정
+        panel.style.left = e.clientX + "px"; // ✅ 왼쪽 기준점 갱신
       }
     } else if (currentHandle === "bottom") {
       const newHeight = e.clientY - rect.top;
@@ -1108,7 +1129,7 @@ function makePanelDraggable(panelId) {
       const newHeight = rect.bottom - e.clientY;
       if (newHeight > 100) {
         panel.style.height = newHeight + "px";
-        panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신 → 하단 고정
+        panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신
       }
     }
   });
@@ -1131,7 +1152,6 @@ function makePanelDraggable(panelId) {
     if (!isResizing) return;
     const t = e.touches[0];
     const rect = panel.getBoundingClientRect();
-
     if (currentHandle === "right") {
       const newWidth = t.clientX - rect.left;
       if (newWidth > 200) panel.style.width = newWidth + "px";
@@ -1139,7 +1159,7 @@ function makePanelDraggable(panelId) {
       const newWidth = rect.right - t.clientX;
       if (newWidth > 200) {
         panel.style.width = newWidth + "px";
-        panel.style.left = t.clientX + "px"; // ✅ 모바일에서도 왼쪽 기준점 갱신 → 오른쪽 고정
+        panel.style.left = t.clientX + "px"; // ✅ 모바일에서도 왼쪽 기준점 갱신
       }
     } else if (currentHandle === "bottom") {
       const newHeight = t.clientY - rect.top;
@@ -1148,7 +1168,7 @@ function makePanelDraggable(panelId) {
       const newHeight = rect.bottom - t.clientY;
       if (newHeight > 100) {
         panel.style.height = newHeight + "px";
-        panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신 → 하단 고정
+        panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신
       }
     }
   });
@@ -1158,6 +1178,7 @@ function makePanelDraggable(panelId) {
     isResizing = false;
     document.body.style.userSelect = "auto";
   });
+}
 
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
@@ -1262,7 +1283,6 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.right = "0";
       } else {
         // 데스크톱 기본: 오른쪽 패널 크기 선택
-        // ✅ 필요에 따라 600px 또는 1000px로 설정 가능
         const defaultWidth = window.innerWidth > 1400 ? "1000px" : "600px";
         panel.style.width = defaultWidth;
         panel.style.height = "calc(100% - 50px)";
