@@ -745,6 +745,37 @@ function convertToDegrees(value, unit) {
   return value / 111000; // 기본 m 처리
 }
 
+// ✅ 환경설정 UI (슬라이더) 이벤트 연결
+const slider = document.getElementById("radiusSlider");
+const radiusValue = document.getElementById("radiusValue");
+
+slider.addEventListener("input", (e) => {
+  radarRadius = parseInt(e.target.value, 10); // ✅ 반경 값 갱신
+  radarUnit = "m"; // 단위는 m 유지
+  radiusValue.textContent = radarRadius + "m";
+
+  // ✅ 기존 레이더를 즉시 갱신
+  if (radarPolygon && myMarker) {
+    const pos = myMarker.getPosition();
+    const heading = 0; // 필요시 현재 heading 값 가져오기
+    const angle = 90;
+    const points = [];
+
+    const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
+    for (let a = -angle/2; a <= angle/2; a += 5) {
+      const rad = (heading + a) * Math.PI / 180;
+      const latOffset = radiusInDegrees * Math.cos(rad);
+      const lngOffset = radiusInDegrees * Math.sin(rad);
+      points.push({
+        lat: pos.lat() + latOffset,
+        lng: pos.lng() + lngOffset
+      });
+    }
+    points.unshift({ lat: pos.lat(), lng: pos.lng() });
+    radarPolygon.setPath(points);
+  }
+}
+
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
@@ -774,7 +805,7 @@ if (navigator.geolocation) {
       const angle = 90;   // 부채꼴 각도
       const points = [];
 
-      // ✅ 반경을 도 단위로 변환 (기본값 50m)
+      // ✅ 반경을 도 단위로 변환 (기본값 50m → 슬라이더 값 반영)
       const radiusInDegrees = convertToDegrees(radarRadius, radarUnit);
 
       for (let a = -angle/2; a <= angle/2; a += 5) {
@@ -806,7 +837,6 @@ if (navigator.geolocation) {
     { enableHighAccuracy: true }
   );
 }
-
 
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
@@ -1321,9 +1351,40 @@ input:checked + .slider { background:#2196F3; }
 input:checked + .slider:before { transform:translateX(26px); }
 
 /* =========================== ✅ 레이더 설정 슬라이더 =========================== */
-#radar-settings { margin-top:10px; padding:8px; border-top:1px solid #ddd; }
-#radiusSlider { width:100%; margin-top:8px; height:6px; background:#ccc; }
-#radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
+#radar-settings {
+  margin-top: 10px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+}
+
+#radiusSlider {
+  width: 100%;
+  margin-top: 8px;
+  height: 6px;
+  background: #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 슬라이더 thumb 스타일 */
+#radiusSlider::-webkit-slider-thumb,
+#radiusSlider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #1976d2;   /* 파란색으로 강조 */
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* 반경 값 표시 */
+#radiusValue {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
 
 /* =========================== ✅ 위치 정보 박스 =========================== */
 #locationBox { position:absolute; top:6%; left:20%; transform:translateX(-50%); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
@@ -1527,7 +1588,7 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
 
   
 <body>
-  <!-- 상단바 -->
+  <!-- ✅ 상단바 -->
   <div id="top-bar">
     <div id="menu-buttons">
       <div id="btn-connection" class="menu-btn"><span class="icon">📡</span> 접속현황</div>
@@ -1536,11 +1597,13 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <div id="title">A-DOMES | 위치정보시스템</div>
   </div>
 
-  <!-- 접속현황 패널 -->
+  <!-- ✅ 접속현황 패널 -->
   <div id="connection-panel" class="dropdown-panel">
+    <!-- 현재 접속자 / 전체 사용자 / 경로 보기 -->
     <div class="dropdown-item" onclick="openUserPanel('current')">현재 접속자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('all')">전체 사용자 보기</div>
     <div class="dropdown-item" onclick="openUserPanel('paths')">위치 / 경로 보기</div>
+    <!-- 위치찾기 -->
     <div class="dropdown-item">
       <strong>위치찾기</strong><br>
       <div class="location-search">
@@ -1551,9 +1614,9 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     </div>
   </div>
 
-  <!-- 환경설정 패널 -->
+  <!-- ✅ 환경설정 패널 -->
   <div id="settings-panel" class="dropdown-panel">
-    <!-- 라이트/다크 모드 토글 -->
+    <!-- 라이트/다크 모드 -->
     <div class="dropdown-item">
       <strong>벡터지도 (라이트/다크)</strong><br>
       <label class="switch">
@@ -1564,21 +1627,21 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     <!-- 일반지도 버튼 -->
     <div class="dropdown-item">
       <strong>일반지도</strong><br>
-      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
+      <button id="defaultMapBtn">일반지도 변환</button>
     </div>
     <!-- 갱신 주기 설정 -->
     <div class="dropdown-item">
       <strong>갱신 주기 설정</strong><br>
-      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <input type="number" id="intervalValue" value="5" min="1">
+        <select id="intervalUnit">
           <option value="minutes">분</option>
           <option value="seconds">초</option>
         </select>
-        <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
+        <button onclick="setCustomInterval()">적용</button>
       </div>
     </div>
-    <!-- 레이더 반경 설정 -->
+    <!-- ✅ 레이더 반경 설정 -->
     <div class="dropdown-item" id="radar-settings">
       <strong>레이더 반경 설정</strong><br>
       <label class="switch">
@@ -1586,8 +1649,8 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
         <span class="slider"></span>
       </label>
       <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50" style="flex:1;">
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <input type="range" id="radiusSlider" min="1" max="200000" step="10" value="50">
         <span id="radiusValue">50m</span>
         <select id="radiusUnit">
           <option value="m" selected>m</option>
@@ -1595,18 +1658,15 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
         </select>
       </div>
     </div>
-    <!-- 마커 클러스터링 옵션 -->
+    <!-- 클러스터링 옵션 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
     </div>
-    <!-- 최근 50개 데이터만 표시 옵션 -->
+    <!-- 최근 50개 데이터만 표시 -->
     <div class="dropdown-item">
       <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
     </div>
   </div>
-
-  <!-- 실시간 위치공유 -->
-  <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
 
   <!-- ✅ 위치 정보 박스 -->
   <div id="locationBox">
@@ -1618,18 +1678,12 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   </div>
 
   <!-- ✅ 공유 팝업 -->
-  <div id="popupMessage" style="display:none; opacity:0;">
-    📍 현재 위치 링크가 복사되었습니다.<br>
-    원하는 앱에 붙여넣어 공유하세요.
-  </div>
+  <div id="popupMessage">📍 현재 위치 링크가 복사되었습니다.<br>원하는 앱에 붙여넣어 공유하세요.</div>
 
-  <!-- ✅ 사용자 패널 컨테이너 -->
+  <!-- ✅ 사용자 패널 -->
   <div class="panel-container">
-    <!-- 끝부분 이벤트 감지용 요소 -->
     <div id="left-edge"></div>
     <div id="right-edge"></div>
-
-    <!-- 사용자 정보 패널 -->
     <div id="user-panel">
       <div class="panel-header">
         <h3 id="user-panel-title">사용자 정보</h3>
@@ -1660,12 +1714,12 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
     </div>
   </div>
 
-  <!-- 지도 영역 -->
+  <!-- ✅ 지도 영역 -->
   <div id="map"></div>
 
-  <!-- 메시지 박스 -->
-  <div id="message-box"></div>
-
+  <!-- ✅ 메시지 박스 -->
+  <div id="message-box">
+    
   <!-- ✅ 라이트/다크 스타일 JSON 정의 -->
   <script>
     const lightStyle = [...]; // 생략
