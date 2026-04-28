@@ -860,39 +860,46 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-// ➕ 버튼
-if (btnIncrease) {
-  btnIncrease.addEventListener("click", () => {
-    radarRadiusMeters += 1;
-    if (radarRadiusMeters > 300000) radarRadiusMeters = 300000;
+  // ✅ ➕ 버튼 (미세조정: 1m씩 증가)
+  if (btnIncrease) {
+    btnIncrease.addEventListener("click", () => {
+      radarRadiusMeters += 1;
+      if (radarRadiusMeters > 300000) radarRadiusMeters = 300000;
+      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
 
-    slider.value = radarRadiusMeters;
-    slider.dispatchEvent(new Event("input")); // UI와 숫자 갱신 강제
-  });
-}
-
-// ➖ 버튼
-if (btnDecrease) {
-  btnDecrease.addEventListener("click", () => {
-    radarRadiusMeters -= 1;
-    if (radarRadiusMeters < 1) radarRadiusMeters = 1;
-
-    slider.value = radarRadiusMeters;
-    slider.dispatchEvent(new Event("input")); // UI와 숫자 갱신 강제
-  });
-}
-
+  // ✅ ➖ 버튼 (미세조정: 1m씩 감소)
+  if (btnDecrease) {
+    btnDecrease.addEventListener("click", () => {
+      radarRadiusMeters -= 1;
+      if (radarRadiusMeters < 1) radarRadiusMeters = 1;
+      slider.value = radarRadiusMeters; // ✅ 슬라이더 값도 갱신
+      updateDisplay();
+      if (myMarker) {
+        const pos = myMarker.getPosition().toJSON();
+        updateRadarPolygon(pos, 0);
+      }
+    });
+  }
 
   // ✅ 표시 업데이트 함수
-function updateDisplay() {
-  if (radiusUnit === "m") {
-    radiusValue.textContent = radarRadiusMeters + " m";
-  } else {
-    radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
+  function updateDisplay() {
+    if (radiusUnit === "m") {
+      radiusValue.textContent = radarRadiusMeters + " m";
+    } else {
+      radiusValue.textContent = (radarRadiusMeters / 1000).toFixed(1) + " km";
+    }
   }
-}
+
   updateDisplay();
-}); // ← 여기서 DOMContentLoaded 블록을 닫아야 함
+});
+
     
 /* ---------------------- 한국표준시 변환 ---------------------- */  
 function formatToKST(isoString) {
