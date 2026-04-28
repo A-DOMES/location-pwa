@@ -628,33 +628,6 @@ function getMapIdByDevice() {
 }
 
 
-function initMap() {
-  const mapId = getMapIdByDevice();
-
-  // ✅ 초기 중심 좌표 지정 (큰 그림용)
-  originalCenter = { lat: 36.5, lng: 127.5 };
-
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapId: mapId
-  });
-
-  // ✅ 우클릭 시 원래 위치로 복귀
-  google.maps.event.addListener(map, 'contextmenu', function() {
-    console.log("우클릭 이벤트 발생!");
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-
-  // ✅ 데이터 로딩 시작
-  loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분
-}
-
-window.initMap = initMap;
-
-
-
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
