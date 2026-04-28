@@ -1088,6 +1088,7 @@ function makePanelDraggable(panelId) {
   });
 }
 
+// ---------------------- 네 면 리사이즈 기능 ----------------------
 function makeResizable(panelId) {
   const panel = document.getElementById(panelId);
   const handles = panel.querySelectorAll(".resize-handle");
@@ -1114,20 +1115,35 @@ function makeResizable(panelId) {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
 
-    if (currentHandle === "left") {
-      const newWidth = rect.right - e.clientX;
-      if (newWidth > 200) {
-        panel.style.width = newWidth + "px";
-        panel.style.left = e.clientX + "px"; // ✅ 왼쪽 기준점 갱신
+    if (currentHandle === "right") {
+      const newWidth = e.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+
+    } else if (currentHandle === "left") {
+      if (panel.classList.contains("snap-left")) {
+        // ✅ 좌측 Snap 상태 → 왼쪽 고정, 오른쪽만 움직임
+        const newWidth = e.clientX - rect.left;
+        if (newWidth > 200) panel.style.width = newWidth + "px";
+      } else {
+        // 기본 상태 → 오른쪽 고정, 왼쪽 움직임
+        const newWidth = rect.right - e.clientX;
+        if (newWidth > 200) {
+          panel.style.width = newWidth + "px";
+          panel.style.left = e.clientX + "px";
+        }
       }
+
+    } else if (currentHandle === "bottom") {
+      const newHeight = e.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - e.clientY;
       if (newHeight > 100) {
         panel.style.height = newHeight + "px";
-        panel.style.top = e.clientY + "px"; // ✅ 위쪽 기준점 갱신
+        panel.style.top = e.clientY + "px";
       }
     }
-    // right, bottom은 기존 로직 유지
   });
 
   // ▶ PC 리사이즈 종료
@@ -1151,20 +1167,35 @@ function makeResizable(panelId) {
     const t = e.touches[0];
     const rect = panel.getBoundingClientRect();
 
-    if (currentHandle === "left") {
-      const newWidth = rect.right - t.clientX;
-      if (newWidth > 200) {
-        panel.style.width = newWidth + "px";
-        panel.style.left = t.clientX + "px"; // ✅ 모바일에서도 왼쪽 기준점 갱신
+    if (currentHandle === "right") {
+      const newWidth = t.clientX - rect.left;
+      if (newWidth > 200) panel.style.width = newWidth + "px";
+
+    } else if (currentHandle === "left") {
+      if (panel.classList.contains("snap-left")) {
+        // ✅ 좌측 Snap 상태 → 왼쪽 고정, 오른쪽만 움직임
+        const newWidth = t.clientX - rect.left;
+        if (newWidth > 200) panel.style.width = newWidth + "px";
+      } else {
+        // 기본 상태 → 오른쪽 고정, 왼쪽 움직임
+        const newWidth = rect.right - t.clientX;
+        if (newWidth > 200) {
+          panel.style.width = newWidth + "px";
+          panel.style.left = t.clientX + "px";
+        }
       }
+
+    } else if (currentHandle === "bottom") {
+      const newHeight = t.clientY - rect.top;
+      if (newHeight > 100) panel.style.height = newHeight + "px";
+
     } else if (currentHandle === "top") {
       const newHeight = rect.bottom - t.clientY;
       if (newHeight > 100) {
         panel.style.height = newHeight + "px";
-        panel.style.top = t.clientY + "px"; // ✅ 모바일에서도 위쪽 기준점 갱신
+        panel.style.top = t.clientY + "px";
       }
     }
-    // right, bottom은 기존 로직 유지
   });
 
   // ▶ 모바일 리사이즈 종료
@@ -1173,6 +1204,18 @@ function makeResizable(panelId) {
     document.body.style.userSelect = "auto";
   });
 }
+
+// ---------------------- 사용자 패널 초기화 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("user-panel");
+
+  // ▶ 드래그 + Snap 기능 적용
+  makePanelDraggable("user-panel");
+
+  // ▶ 네 면 리사이즈 기능 적용
+  makeResizable("user-panel");
+});
+
 
 // ---------------------- 사용자 패널 초기화 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
