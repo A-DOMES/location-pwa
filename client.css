@@ -242,3 +242,38 @@ body.dark-mode .menu-btn { background:#444; color:#fff; }
   #latInput, #lngInput { flex:1; min-width:100px; font-size:16px; }
   #location-check { flex:0; font-size:16px; padding:6px 12px; }
 }
+
+/* =========================== ✅ 4가지 지도 보기 추가  =========================== */
+/* 커스텀 지도 버튼 */
+#roadmapBtn, #satelliteBtn, #hybridBtn, #terrainBtn, #defaultMapBtn {
+  background: #fff;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 4px 2px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.2s;
+}
+#roadmapBtn:hover, #satelliteBtn:hover, #hybridBtn:hover, #terrainBtn:hover, #defaultMapBtn:hover {
+  background: #e3f2fd;
+  transform: scale(1.05);
+}
+
+/* 다크 모드 버튼 */
+body.dark-mode #roadmapBtn,
+body.dark-mode #satelliteBtn,
+body.dark-mode #hybridBtn,
+body.dark-mode #terrainBtn,
+body.dark-mode #defaultMapBtn {
+  background: #444;
+  border: 1px solid #888;
+  color: #f0f0f0;
+}
+body.dark-mode #roadmapBtn:hover,
+body.dark-mode #satelliteBtn:hover,
+body.dark-mode #hybridBtn:hover,
+body.dark-mode #terrainBtn:hover,
+body.dark-mode #defaultMapBtn:hover {
+  background: #555;
+}
