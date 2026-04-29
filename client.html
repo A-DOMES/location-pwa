@@ -1453,14 +1453,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- 4가지 지도 추가 -->
   <div class="dropdown-item">
-      <strong>지도 타입 전환</strong><br>
-      <button id="roadmapBtn">일반 지도</button>
-      <button id="satelliteBtn">위성 지도</button>
-      <button id="hybridBtn">혼합 지도</button>
-      <button id="terrainBtn">지형 지도</button>
-    </div>
+    <strong>지도 타입 전환</strong><br>
+    <button id="roadmapBtn">일반 지도</button>
+    <button id="satelliteBtn">위성 지도</button>
+    <button id="hybridBtn">혼합 지도</button>
+    <button id="terrainBtn">지형 지도</button>
   </div>
-  
+
   <!-- 갱신 주기 설정 -->
   <div class="dropdown-item">
     <strong>갱신 주기 설정</strong><br>
@@ -1490,7 +1489,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <option value="km">km</option>
       </select>
     </div>
-    <!-- ✅ 미세조정 버튼 추가 -->
     <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
       <button id="btnDecrease" style="font-size:18px; padding:6px 12px;">➖ 줄이기</button>
       <button id="btnIncrease" style="font-size:18px; padding:6px 12px;">➕ 늘리기</button>
@@ -1507,6 +1505,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
   </div>
 </div>
+
 
   <!-- 실시간 위치공유 -->
   <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
