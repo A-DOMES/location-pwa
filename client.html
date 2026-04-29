@@ -660,7 +660,12 @@ function initMap() {
     mapTypeControl: true,
     mapTypeControlOptions: {
       style: google.maps.MapTypeControlStyle.DEFAULT,
-      position: google.maps.ControlPosition.TOP_LEFT
+      position: google.maps.ControlPosition.TOP_LEFT,
+      // ✅ 표시할 지도 타입을 직접 지정해야 함
+      mapTypeIds: [
+        google.maps.MapTypeId.ROADMAP,
+        google.maps.MapTypeId.SATELLITE
+      ]
     }
   });
 
@@ -704,6 +709,7 @@ function initMap() {
 }
 
 window.initMap = initMap;
+    
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
