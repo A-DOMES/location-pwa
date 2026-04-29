@@ -632,9 +632,8 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
-    
 /* ---------------------- 지도 초기화  ---------------------- */
-/ 라이트 스타일 JSON
+// 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#000000" }] },
@@ -712,18 +711,14 @@ themeToggle.addEventListener("change", () => {
 
 // ✅ 일반 지도 버튼
 const defaultMapBtn = document.getElementById("defaultMapBtn");
-if (defaultMapBtn) {
-  defaultMapBtn.addEventListener("click", () => {
-    map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
-    map.setOptions({
-      styles: null,
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7
-    });
-    if (themeToggle) themeToggle.checked = false;
-    document.body.classList.remove("dark-mode");
+defaultMapBtn.addEventListener("click", () => {
+  map.setOptions({
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null
   });
-}
+  themeToggle.checked = false; // 토글 초기화
+});
+
 
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
@@ -742,36 +737,6 @@ window.setCustomInterval = function() {
   msgBox.style.display = "block";
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
-
-
-    
-/* ---------------------- 패널 데이터 갱신 ---------------------- */
-function loadData() {
-  fetch("/api/data") // ✅ 실제 API 엔드포인트로 교체 필요
-    .then(res => res.json())
-    .then(data => {
-      // 지도에 마커 표시
-      data.forEach(user => {
-        new google.maps.Marker({
-          position: { lat: user.lat, lng: user.lng },
-          map: map,
-          title: user.name
-        });
-      });
-
-      // 패널에 데이터 표시
-      const tbody = document.getElementById("user-table-body");
-      if (tbody) {
-        tbody.innerHTML = "";
-        data.forEach(user => {
-          const row = `<tr><td>${user.name}</td><td>${user.phone}</td></tr>`;
-          tbody.insertAdjacentHTML("beforeend", row);
-        });
-      }
-    })
-    .catch(err => console.error("데이터 로드 실패:", err));
-}
-
 
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
