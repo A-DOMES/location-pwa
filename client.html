@@ -708,11 +708,9 @@ themeToggle.addEventListener("change", () => {
 });
 
 // ✅ 일반 지도 버튼
-const defaultMapBtn = document.getElementById("defaultMapBtn");
 defaultMapBtn.addEventListener("click", () => {
   map.setOptions({
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null
+    mapTypeId: google.maps.MapTypeId.ROADMAP
   });
   themeToggle.checked = false; // 토글 초기화
 });
