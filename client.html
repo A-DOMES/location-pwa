@@ -651,14 +651,22 @@ const darkStyle = [
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-{
-  // 기본 지도 초기화
+  // ✅ 기본은 일반 지도
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
-    disableDefaultUI: false
+    styles: null
   });
+
+  // 우클릭 시 초기 위치로 복귀
+  google.maps.event.addListener(map, 'contextmenu', function() {
+    map.setOptions({ center: originalCenter, zoom: 7 });
+  });
+
+  // 데이터 로딩
+  loadData();
+  intervalId = setInterval(loadData, 300000);
 
   // ✅ 라이트/다크 모드 토글
   const themeToggle = document.getElementById("themeToggle");
@@ -676,7 +684,7 @@ function initMap() {
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
       map.setOptions({
         styles: null,
         center: originalCenter,
@@ -686,32 +694,9 @@ function initMap() {
       document.body.classList.remove("dark-mode");
     });
   }
-
-  // ✅ 커스텀 지도 타입 버튼
-  const roadmapBtn = document.getElementById("roadmapBtn");
-  const satelliteBtn = document.getElementById("satelliteBtn");
-  const hybridBtn = document.getElementById("hybridBtn");
-  const terrainBtn = document.getElementById("terrainBtn");
-
-  if (roadmapBtn) roadmapBtn.onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-  if (satelliteBtn) satelliteBtn.onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-  if (hybridBtn) hybridBtn.onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-  if (terrainBtn) terrainBtn.onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
-
-  // ✅ 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, "contextmenu", function () {
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-
-  // ✅ 데이터 로딩 (정의된 함수가 있어야 함)
-  if (typeof loadData === "function") {
-    loadData();
-    intervalId = setInterval(loadData, 300000);
-  }
 }
 
 window.initMap = initMap;
-    
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
@@ -1467,16 +1452,6 @@ document.addEventListener("DOMContentLoaded", () => {
     <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
   </div>
 
-   <!-- 4가지 지도 버튼 -->
-    <div class="dropdown-item">
-      <strong>지도 타입 전환</strong><br>
-      <button id="roadmapBtn">일반 지도</button>
-      <button id="satelliteBtn">위성 지도</button>
-      <button id="hybridBtn">혼합 지도</button>
-      <button id="terrainBtn">지형 지도</button>
-    </div>
-  </div>
-  
   <!-- 갱신 주기 설정 -->
   <div class="dropdown-item">
     <strong>갱신 주기 설정</strong><br>
