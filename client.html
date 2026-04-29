@@ -18,6 +18,30 @@
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
+
+    // 지도 기능 중심 변수
+  let myMarker;
+  let radarPolygon = null;
+  let radarRadiusMeters = 50;
+  let radarEnabled = true;
+  let pathCoords = [];
+  let pathPolyline;
+  let poiMarkers = [];
+  let compassMarkers = [];
+  let directionsService, directionsRenderer;
+
+  // ---------------------- POI 아이콘 정의 ----------------------
+  const poiIcons = {
+    cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
+    convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
+    restaurant: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
+    gas_station: "https://cdn-icons-png.flaticon.com/512/2933/2933914.png",
+    bank: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+    pharmacy: "https://cdn-icons-png.flaticon.com/512/2969/2969375.png",
+    bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png",
+    city_hall: "https://cdn-icons-png.flaticon.com/512/148/148947.png",
+    local_government_office: "https://cdn-icons-png.flaticon.com/512/148/148947.png"
+  }; 
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -1406,6 +1430,9 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 });
 
+
+
+    
 </script>
 </head>
  
@@ -1590,9 +1617,6 @@ document.addEventListener("DOMContentLoaded", () => {
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&libraries=places,geometry&callback=initMap">
 </script>
 
-  <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
-  <script src="client.js"></script>
-  
 </body>
 </html>
   
