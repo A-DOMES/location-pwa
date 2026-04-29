@@ -20,6 +20,7 @@
   let polylines = []; // 경로 Polyline 저장 배열
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
+  let originalZoom = 7; // 원래 자리 줌 레벨
   let marker, currentLat, currentLng;
     
   // ---------------------- 마커 제거 함수 ----------------------
@@ -632,7 +633,7 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
-/* ---------------------- 지도 초기화  ---------------------- */
+// ---------------------- 라이트/다크 벡터 스타일 ----------------------
 // 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
@@ -651,13 +652,15 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
+// ---------------------- 지도 초기화 ----------------------
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
+  originalZoom = 7;
 
   // ✅ 기본은 일반 지도
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
-    zoom: 7,
+    zoom: originalZoom,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     styles: null
   });
@@ -665,7 +668,7 @@ function initMap() {
   // ✅ 마우스 우클릭 시 원래 자리로 복귀
   google.maps.event.addListener(map, "rightclick", () => {
     map.setCenter(originalCenter);
-    map.setZoom(7);
+    map.setZoom(originalZoom);
   });
 
   // 데이터 로딩
@@ -692,7 +695,7 @@ function initMap() {
       map.setOptions({
         styles: null,
         center: originalCenter,
-        zoom: 7
+        zoom: originalZoom
       });
       if (themeToggle) themeToggle.checked = false;
       document.body.classList.remove("dark-mode");
@@ -702,7 +705,15 @@ function initMap() {
 
 window.initMap = initMap;
 
-/* ---------------------- 위치찾기 기능 ---------------------- */
+// ---------------------- 원래 자리 기억시키기 ----------------------
+window.rememberCurrentPosition = function() {
+  if (!map) return;
+  originalCenter = map.getCenter().toJSON(); // 현재 중심 좌표 저장
+  originalZoom = map.getZoom();              // 현재 줌 레벨 저장
+  alert("현재 위치를 원래 자리로 기억했습니다!");
+};
+
+// ---------------------- 위치찾기 기능 ----------------------
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
   const lng = parseFloat(document.getElementById("lngInput").value);
@@ -717,7 +728,6 @@ window.moveToLatLng = function() {
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
-  // 위치찾기 마커 표시
   new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
@@ -726,7 +736,7 @@ window.moveToLatLng = function() {
   });
 };
 
-/* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
+// ---------------------- 사용자 클릭 시 지도 이동 ----------------------
 window.moveToUser = function(lat, lng, phone) {
   if (!map) return;
   map.setCenter({ lat: lat, lng: lng });
