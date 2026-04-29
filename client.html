@@ -638,16 +638,39 @@ function getMapIdByDevice() {
 }
 
 
+
+ /* ---------------------- 지도와 벡터지도 관련 ---------------------- */   
+// ✅ 라이트 스타일 JSON
+const lightStyle = [
+  { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#000000" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#cccccc" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#aadaff" }] }
+];
+
+// ✅ 다크 스타일 JSON
+const darkStyle = [
+  { elementType: "geometry", stylers: [{ color: "#212121" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#383838" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
+];
+
+let map, originalCenter, intervalId;
+
 function initMap() {
   const mapId = getMapIdByDevice();
 
-  // ✅ 초기 중심 좌표 지정 (큰 그림용)
+  // ✅ 초기 중심 좌표 지정
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    mapId: mapId
+    mapId: mapId,
+    styles: lightStyle // 기본 라이트 스타일 적용
   });
 
   // ✅ 우클릭 시 원래 위치로 복귀
@@ -658,12 +681,40 @@ function initMap() {
 
   // ✅ 데이터 로딩 시작
   loadData();
-  intervalId = setInterval(loadData, 300000); // 기본 5분
+  intervalId = setInterval(loadData, 300000);
+
+  // ✅ 라이트/다크 모드 토글 이벤트 등록
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      document.body.classList.toggle("dark-mode", themeToggle.checked);
+      if (map.getMapTypeId() === "roadmap") {
+        if (themeToggle.checked) {
+          map.setOptions({ styles: darkStyle });
+        } else {
+          map.setOptions({ styles: lightStyle });
+        }
+      }
+    });
+  }
+
+  // ✅ 일반 지도 버튼 이벤트 등록
+  const defaultMapBtn = document.getElementById("defaultMapBtn");
+  if (defaultMapBtn) {
+    defaultMapBtn.addEventListener("click", () => {
+      map.setOptions({
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: null,
+        center: originalCenter,
+        zoom: 7
+      });
+      if (themeToggle) themeToggle.checked = false; // 토글 초기화
+      document.body.classList.remove("dark-mode");  // body 클래스도 초기화
+    });
+  }
 }
 
 window.initMap = initMap;
-
-
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
@@ -693,24 +744,6 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
-  
-/* ---------------------- 라이트/다크 모드 전환 ---------------------- */
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    // body 클래스 토글
-    document.body.classList.toggle("dark-mode", themeToggle.checked);
-
-    // ✅ 벡터 지도(roadmap)일 때만 스타일 적용
-    if (map.getMapTypeId() === "roadmap") {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });   // 다크 모드 스타일 적용
-      } else {
-        map.setOptions({ styles: lightStyle });  // 라이트 모드 스타일 적용
-      }
-    }
-  });
-}
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -728,7 +761,6 @@ window.setCustomInterval = function() {
   msgBox.style.display = "block";
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
-
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
