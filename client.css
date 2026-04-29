@@ -14,6 +14,11 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Aria
   width: 100%;
   height: 100vh;
   z-index: 0; /* ✅ 패널보다 뒤에 */
+  filter: brightness(1); /* 밝기 기본값 */
+}
+
+body.dark-mode #map {
+  filter: brightness(0.6); /* 어둡게 표시 */
 }
 
 /* =========================== ✅ 드롭다운 패널 =========================== */
