@@ -125,13 +125,17 @@ async function loadData(token = null) {
   }
 
   // ---------------------- 지도 초기화 ----------------------
-  window.onload = () => {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapTypeId: "roadmap",   // 기본 지도 타입
-      styles: null            // ✅ 스타일 적용하지 않음 → 일반지도
-    });
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 36.5, lng: 127.5 },
+    zoom: 7,
+    mapTypeId: "roadmap",
+    styles: null,
+    mapTypeControl: true, // ✅ 일반/위성 아이콘 표시
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.DEFAULT,
+      position: google.maps.ControlPosition.TOP_RIGHT
+    }
+  });
 
     // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
     const themeToggle = document.getElementById("themeToggle");
