@@ -658,7 +658,8 @@ function initMap() {
     zoom: 7,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     styles: null,
-    mapTypeControl: true,   // 지도 타입 컨트롤 켜기
+    disableDefaultUI: false,   // 기본 UI 전체 복원
+    mapTypeControl: true,      // 지도 타입 컨트롤 켜기
     mapTypeControlOptions: {
       style: google.maps.MapTypeControlStyle.DEFAULT,
       position: google.maps.ControlPosition.TOP_LEFT // 좌측 상단에 표시
