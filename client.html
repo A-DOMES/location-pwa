@@ -651,43 +651,29 @@ const darkStyle = [
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 기본은 일반 지도 + 좌측 상단 지도 타입 컨트롤 복원
+  // 기본 지도 초기화
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,   // 기본은 일반 지도
-    disableDefaultUI: false,                    // 기본 UI 전체 복원
-    mapTypeControl: true,                       // 지도 타입 컨트롤 켜기
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    disableDefaultUI: false,
+    mapTypeControl: true,
     mapTypeControlOptions: {
       style: google.maps.MapTypeControlStyle.DEFAULT,
       position: google.maps.ControlPosition.TOP_LEFT
     }
   });
-}
 
-// ✅ 필요할 때 벡터 스타일 덧씌우기
-function applyLightStyle() {
-  map.setOptions({ styles: lightStyle });
-}
-
-function applyDarkStyle() {
-  map.setOptions({ styles: darkStyle });
-}
-
-function resetDefaultStyle() {
-  map.setOptions({ styles: null }); // 기본 스타일로 되돌리기
-}
-
-
-
-  // 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, 'contextmenu', function() {
+  // ✅ 우클릭 시 초기 위치로 복귀
+  google.maps.event.addListener(map, "contextmenu", function () {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // 데이터 로딩
-  loadData();
-  intervalId = setInterval(loadData, 300000);
+  // ✅ 데이터 로딩 (정의된 함수가 있어야 함)
+  if (typeof loadData === "function") {
+    loadData();
+    intervalId = setInterval(loadData, 300000);
+  }
 
   // ✅ 라이트/다크 모드 토글
   const themeToggle = document.getElementById("themeToggle");
@@ -705,7 +691,7 @@ function resetDefaultStyle() {
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       map.setOptions({
         styles: null,
         center: originalCenter,
