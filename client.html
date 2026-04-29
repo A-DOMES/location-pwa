@@ -632,8 +632,9 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
+    
 /* ---------------------- 지도 초기화  ---------------------- */
-// 라이트 스타일 JSON
+/ 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#000000" }] },
@@ -651,8 +652,6 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
-let map, originalCenter, intervalId;
-
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
@@ -662,18 +661,16 @@ function initMap() {
     styles: lightStyle // ✅ 기본 라이트 스타일 적용
   });
 
-  // ✅ 우클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 데이터 로딩 시작
   loadData();
   intervalId = setInterval(loadData, 300000);
 }
 
 window.initMap = initMap;
-
+    
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -702,32 +699,32 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
-
-/* ---------------------- 라이트/다크 모드 토글 ---------------------- */
+  
+// ✅ 라이트/다크 모드 토글
 const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-  themeToggle.addEventListener("change", () => {
-    if (themeToggle.checked) {
-      map.setOptions({ styles: darkStyle }); // 다크 스타일 적용
-    } else {
-      map.setOptions({ styles: lightStyle }); // 라이트 스타일 적용
-    }
-  });
-}
+themeToggle.addEventListener("change", () => {
+  if (themeToggle.checked) {
+    map.setOptions({ styles: darkStyle }); // 다크 스타일 적용
+  } else {
+    map.setOptions({ styles: lightStyle }); // 라이트 스타일 적용
+  }
+});
 
-/* ---------------------- 일반 지도 버튼 ---------------------- */
+// ✅ 일반 지도 버튼
 const defaultMapBtn = document.getElementById("defaultMapBtn");
 if (defaultMapBtn) {
   defaultMapBtn.addEventListener("click", () => {
     map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
     map.setOptions({
       styles: null,
-      center: originalCenter,
+      center: { lat: 36.5, lng: 127.5 },
       zoom: 7
     });
-    if (themeToggle) themeToggle.checked = false; // 토글 초기화
+    if (themeToggle) themeToggle.checked = false;
+    document.body.classList.remove("dark-mode");
   });
 }
+
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -746,6 +743,8 @@ window.setCustomInterval = function() {
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
 
+
+    
 /* ---------------------- 패널 데이터 갱신 ---------------------- */
 function loadData() {
   fetch("/api/data") // ✅ 실제 API 엔드포인트로 교체 필요
