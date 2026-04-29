@@ -66,7 +66,8 @@ input:checked + .slider:before { transform:translateX(26px); }
   right: 0;                     /* 기본은 오른쪽에 붙음 */
   width: 600px;                 /* 기본 너비 */
   height: calc(100% - 50px);    /* 상단 50px 제외 전체 높이 */
-  background: #fff;             /* 배경색 흰색 */
+  background: rgba(255,255,255,0.5); /* 반투명 흰색 */
+  backdrop-filter: blur(6px);        /* 뒷배경 흐림 효과 */
   border-left: 1px solid #ccc;  /* 오른쪽 패널 구분선 */
   display: none;                /* 기본은 숨김 */
   z-index: 5000;                /* 최상위로 올림 */
