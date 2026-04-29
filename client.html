@@ -711,16 +711,21 @@ themeToggle.addEventListener("change", () => {
 
 // ✅ 일반 지도 버튼
 const defaultMapBtn = document.getElementById("defaultMapBtn");
-defaultMapBtn.addEventListener("click", () => {
-  map.setOptions({
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null
+if (defaultMapBtn) {
+  defaultMapBtn.addEventListener("click", () => {
+    map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
+    map.setOptions({
+      styles: null,
+      center: { lat: 36.5, lng: 127.5 },
+      zoom: 7
+    });
+    if (themeToggle) themeToggle.checked = false;
+    document.body.classList.remove("dark-mode");
   });
-  themeToggle.checked = false; // 토글 초기화
-});
+}
 
 
-
+    
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
   const value = parseInt(document.getElementById("intervalValue").value, 10);
