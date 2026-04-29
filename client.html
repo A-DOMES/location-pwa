@@ -629,6 +629,24 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
+/* ---------------------- 지도 초기화  ---------------------- */
+// 라이트 스타일 JSON
+const lightStyle = [
+  { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#000000" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#cccccc" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#aadaff" }] }
+];
+
+// 다크 스타일 JSON
+const darkStyle = [
+  { elementType: "geometry", stylers: [{ color: "#212121" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#383838" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
+];
 
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
@@ -636,7 +654,7 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    mapId: "abcd1234efgh5678" // ✅ 실제 발급받은 라이트 Map ID
+    styles: lightStyle // ✅ 기본 라이트 스타일 적용
   });
 
   google.maps.event.addListener(map, 'contextmenu', function() {
@@ -648,7 +666,7 @@ function initMap() {
 }
 
 window.initMap = initMap;
-
+    
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -682,11 +700,9 @@ window.moveToUser = function(lat, lng, phone) {
 const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("change", () => {
   if (themeToggle.checked) {
-    // 다크 벡터 지도
-    map.setOptions({ mapId: "ijkl9012mnop3456" }); // ✅ 실제 발급받은 다크 Map ID
+    map.setOptions({ styles: darkStyle }); // 다크 스타일 적용
   } else {
-    // 라이트 벡터 지도
-    map.setOptions({ mapId: "abcd1234efgh5678" }); // ✅ 실제 발급받은 라이트 Map ID
+    map.setOptions({ styles: lightStyle }); // 라이트 스타일 적용
   }
 });
 
@@ -695,8 +711,7 @@ const defaultMapBtn = document.getElementById("defaultMapBtn");
 defaultMapBtn.addEventListener("click", () => {
   map.setOptions({
     mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null,
-    mapId: null
+    styles: null
   });
   themeToggle.checked = false; // 토글 초기화
 });
