@@ -682,17 +682,24 @@ window.moveToUser = function(lat, lng, phone) {
 const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("change", () => {
   if (themeToggle.checked) {
-    document.body.classList.add("dark-mode");   // 다크 모드 적용
+    // 다크 벡터 지도
+    map.setOptions({ mapId: "YOUR_DARK_MAP_ID" });
   } else {
-    document.body.classList.remove("dark-mode"); // 라이트 모드 복귀
+    // 라이트 벡터 지도
+    map.setOptions({ mapId: "YOUR_LIGHT_MAP_ID" });
   }
 });
+
 
 // ✅ 일반 지도 버튼
 const defaultMapBtn = document.getElementById("defaultMapBtn");
 defaultMapBtn.addEventListener("click", () => {
-  document.body.classList.remove("dark-mode"); // 일반 지도 복귀
-  themeToggle.checked = false;                 // 토글 초기화
+  map.setOptions({
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null,
+    mapId: null
+  });
+  themeToggle.checked = false; // 토글 초기화
 });
 
 
