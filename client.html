@@ -1,10 +1,5 @@
-분리된 코드, client.html, client.js, client.css로 구분이 된 코드
-client.html 전체구조 완성본, 
-client.js 구성함,
-client.css 구성하기전 통합코드임..
-
-조금더 수정한 파일이긴하데 최소화버튼을누르면 바로 우측에 붙는 문제만 되면 해결되는 코드임..
-client.htmo 260429-1
+벡터지도는 거의 완성상태
+260429 client.html 오후12시백업, 
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -637,10 +632,8 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
-
-
- /* ---------------------- 지도와 벡터지도 관련 ---------------------- */   
-// ✅ 라이트 스타일 JSON
+/* ---------------------- 지도 초기화  ---------------------- */
+// 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#000000" }] },
@@ -649,7 +642,7 @@ const lightStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#aadaff" }] }
 ];
 
-// ✅ 다크 스타일 JSON
+// 다크 스타일 JSON
 const darkStyle = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
@@ -658,58 +651,25 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
-let map, originalCenter, intervalId;
-
 function initMap() {
-  // ✅ 초기 중심 좌표
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 지도 생성 (styles만 적용)
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    styles: lightStyle
+    styles: lightStyle // ✅ 기본 라이트 스타일 적용
   });
 
-  // ✅ 우클릭 시 원래 위치로 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
-    console.log("우클릭 이벤트 발생!");
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ✅ 데이터 로딩 시작
   loadData();
   intervalId = setInterval(loadData, 300000);
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      document.body.classList.toggle("dark-mode", themeToggle.checked);
-      if (map.getMapTypeId() === "roadmap") {
-        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-      }
-    });
-  }
-
-  // ✅ 일반 지도 버튼
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setOptions({
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        styles: null,
-        center: originalCenter,
-        zoom: 7
-      });
-      if (themeToggle) themeToggle.checked = false;
-      document.body.classList.remove("dark-mode");
-    });
-  }
 }
 
 window.initMap = initMap;
-
+    
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -738,6 +698,28 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
+  
+// ✅ 라이트/다크 모드 토글
+const themeToggle = document.getElementById("themeToggle");
+themeToggle.addEventListener("change", () => {
+  if (themeToggle.checked) {
+    map.setOptions({ styles: darkStyle }); // 다크 스타일 적용
+  } else {
+    map.setOptions({ styles: lightStyle }); // 라이트 스타일 적용
+  }
+});
+
+// ✅ 일반 지도 버튼
+const defaultMapBtn = document.getElementById("defaultMapBtn");
+defaultMapBtn.addEventListener("click", () => {
+  map.setOptions({
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null
+  });
+  themeToggle.checked = false; // 토글 초기화
+});
+
+
 
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -756,7 +738,6 @@ window.setCustomInterval = function() {
   setTimeout(() => { msgBox.style.display = "none"; }, 2000);
 };
 
-    
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
@@ -1556,7 +1537,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 
-  <!-- 지도 영역 -->
+   <!-- ✅ 지도 영역 -->
   <div id="map"></div>
 
   <!-- 메시지 박스 -->
@@ -1575,7 +1556,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
   <script src="client.js"></script>
-  
+
   <!-- Google Maps API -->
 <script async defer 
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&libraries=places,geometry&callback=initMap">
