@@ -662,9 +662,10 @@ function initMap() {
     styles: null
   });
 
-  // 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, 'contextmenu', function() {
-    map.setOptions({ center: originalCenter, zoom: 7 });
+  // ✅ 마우스 우클릭 시 원래 자리로 복귀
+  google.maps.event.addListener(map, "rightclick", () => {
+    map.setCenter(originalCenter);
+    map.setZoom(7);
   });
 
   // 데이터 로딩
