@@ -42,7 +42,7 @@ input:checked + .slider:before { transform:translateX(26px); }
 #radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
 
 /* =========================== ✅ 위치 정보 박스 =========================== */
-#locationBox { position:absolute; top:6%; left:40%; transform:translateX(-500, -500); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
+#locationBox { position:absolute; top:6%; left:40%; background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; text-align:center; }
 #locationBox.open { display:block; }
 .location-header { display:flex; justify-content:space-between; align-items:center; }
 .location-header button { background:none; border:none; font-size:18px; cursor:pointer; }
