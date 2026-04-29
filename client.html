@@ -62,24 +62,26 @@ async function loadData(token = null) {
     // ✅ 데이터 정상 수신 후 지도 표시
     showMap();
 
-    // ✅ 위치 정보 박스 갱신
-    if (allData.length > 0) {
-      const user = allData[0]; // 첫 번째 사용자 기준
-      const locationBox = document.getElementById("locationBox");
-      locationBox.innerHTML = `
-        현재 위치: <br>
-        위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-        경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-        주소: ${user.address || "-"} <br>
-        <button id="shareBtn">현재 위치 공유</button>
-      `;
+// ✅ 위치 정보 박스 갱신
+if (allData.length > 0) {
+  const user = allData[0]; // 첫 번째 사용자 기준
+  const locationBox = document.getElementById("locationBox");
+  locationBox.innerHTML = `
+    현재 위치: <br>
+    위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+    경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+    주소: ${user.address || "-"} <br>
+    <div class="btnBox">
+      <button id="shareBtn">현재 위치 공유</button>
+    </div>
+  `;
 
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl =
-            `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-          await navigator.clipboard.writeText(shareUrl);
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const shareUrl =
+        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+      await navigator.clipboard.writeText(shareUrl);
 
           // ✅ 공유 팝업 표시
           const popup = document.getElementById("popupMessage");
