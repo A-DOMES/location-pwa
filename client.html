@@ -17,7 +17,6 @@
   let polylines = []; // 경로 Polyline 저장 배열
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
-  let originalZoom = 7; // 원래 자리 줌 레벨
   let marker, currentLat, currentLng;
     
   // ---------------------- 마커 제거 함수 ----------------------
@@ -125,17 +124,13 @@ async function loadData(token = null) {
   }
 
   // ---------------------- 지도 초기화 ----------------------
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 36.5, lng: 127.5 },
-    zoom: 7,
-    mapTypeId: "roadmap",
-    styles: null,
-    mapTypeControl: true, // ✅ 일반/위성 아이콘 표시
-    mapTypeControlOptions: {
-      style: google.maps.MapTypeControlStyle.DEFAULT,
-      position: google.maps.ControlPosition.TOP_RIGHT
-    }
-  });
+  window.onload = () => {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 36.5, lng: 127.5 },
+      zoom: 7,
+      mapTypeId: "roadmap",   // 기본 지도 타입
+      styles: null            // ✅ 스타일 적용하지 않음 → 일반지도
+    });
 
     // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
     const themeToggle = document.getElementById("themeToggle");
@@ -634,7 +629,7 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
-// ---------------------- 라이트/다크 벡터 스타일 ----------------------
+/* ---------------------- 지도 초기화  ---------------------- */
 // 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
@@ -653,23 +648,20 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
-// ---------------------- 지도 초기화 ----------------------
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
-  originalZoom = 7;
 
   // ✅ 기본은 일반 지도
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
-    zoom: originalZoom,
+    zoom: 7,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     styles: null
   });
 
-  // ✅ 마우스 우클릭 시 원래 자리로 복귀
-  google.maps.event.addListener(map, "rightclick", () => {
-    map.setCenter(originalCenter);
-    map.setZoom(originalZoom);
+  // 우클릭 시 초기 위치로 복귀
+  google.maps.event.addListener(map, 'contextmenu', function() {
+    map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
   // 데이터 로딩
@@ -696,7 +688,7 @@ function initMap() {
       map.setOptions({
         styles: null,
         center: originalCenter,
-        zoom: originalZoom
+        zoom: 7
       });
       if (themeToggle) themeToggle.checked = false;
       document.body.classList.remove("dark-mode");
@@ -706,15 +698,7 @@ function initMap() {
 
 window.initMap = initMap;
 
-// ---------------------- 원래 자리 기억시키기 ----------------------
-window.rememberCurrentPosition = function() {
-  if (!map) return;
-  originalCenter = map.getCenter().toJSON(); // 현재 중심 좌표 저장
-  originalZoom = map.getZoom();              // 현재 줌 레벨 저장
-  alert("현재 위치를 원래 자리로 기억했습니다!");
-};
-
-// ---------------------- 위치찾기 기능 ----------------------
+/* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
   const lng = parseFloat(document.getElementById("lngInput").value);
@@ -729,6 +713,7 @@ window.moveToLatLng = function() {
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
+  // 위치찾기 마커 표시
   new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
@@ -737,7 +722,7 @@ window.moveToLatLng = function() {
   });
 };
 
-// ---------------------- 사용자 클릭 시 지도 이동 ----------------------
+/* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
 window.moveToUser = function(lat, lng, phone) {
   if (!map) return;
   map.setCenter({ lat: lat, lng: lng });
