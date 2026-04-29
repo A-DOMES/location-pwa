@@ -652,12 +652,17 @@ function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   // ✅ 기본은 일반 지도
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null
-  });
+map = new google.maps.Map(document.getElementById("map"), {
+  center: originalCenter,
+  zoom: 7,
+  mapTypeId: google.maps.MapTypeId.ROADMAP,
+  mapTypeControl: true,   // 지도 타입 컨트롤 표시
+  mapTypeControlOptions: {
+    style: google.maps.MapTypeControlStyle.DEFAULT,
+    position: google.maps.ControlPosition.TOP_LEFT // 원래 위치 복원
+  }
+});
+
 
   // 우클릭 시 초기 위치로 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
