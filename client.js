@@ -1,15 +1,15 @@
-let map, myMarker, radarPolygon;
+// ---------------------- 전역 변수 ----------------------
+let map, myMarker;
+let radarPolygon = null;
 let radarRadiusMeters = 50;
 let radarEnabled = true;
 let pathCoords = [];
 let pathPolyline;
 let poiMarkers = [];
 let compassMarkers = [];
-let directionsService = new google.maps.DirectionsService();
-let directionsRenderer = new google.maps.DirectionsRenderer();
-directionsRenderer.setMap(map);
+let directionsService, directionsRenderer;
 
-// ✅ POI 아이콘 정의
+// ✅ POI 아이콘 정의 (관공서 포함)
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -17,10 +17,12 @@ const poiIcons = {
   gas_station: "https://cdn-icons-png.flaticon.com/512/2933/2933914.png",
   bank: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
   pharmacy: "https://cdn-icons-png.flaticon.com/512/2969/2969375.png",
-  bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png"
+  bus_station: "https://cdn-icons-png.flaticon.com/512/61/61088.png",
+  city_hall: "https://cdn-icons-png.flaticon.com/512/148/148947.png",
+  local_government_office: "https://cdn-icons-png.flaticon.com/512/148/148947.png"
 };
 
-// ---------------------- 레이더 ----------------------
+// ---------------------- 부채꼴 레이더 ----------------------
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -53,57 +55,69 @@ function updateRadarPolygon(myPos, heading) {
 }
 
 // ---------------------- 위치 추적 ----------------------
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(
-    (pos) => {
-      const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      const heading = pos.coords.heading || 0;
+function startTracking() {
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const heading = pos.coords.heading || 0;
 
-      if (!myMarker) {
-        myMarker = new google.maps.Marker({
-          position: myPos,
-          map: map,
-          title: "내 위치",
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
+        if (!myMarker) {
+          myMarker = new google.maps.Marker({
+            position: myPos,
+            map: map,
+            title: "내 위치",
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: "#FF0000",
+              fillOpacity: 1,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 2,
+              scale: 10
+            }
+          });
+        } else {
+          myMarker.setPosition(myPos);
+        }
+
+        // 경로 기록
+        pathCoords.push(myPos);
+        if (pathPolyline) {
+          pathPolyline.setPath(pathCoords);
+        } else {
+          pathPolyline = new google.maps.Polyline({
+            path: pathCoords,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
             strokeWeight: 2,
-            scale: 10
+            map: map
+          });
+        }
+
+        // 이동 시 → 부채꼴 표시 / 멈춤 시 → 제거
+        if (pathCoords.length > 1) {
+          const prev = pathCoords[pathCoords.length - 2];
+          const dist = google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(prev.lat, prev.lng),
+            new google.maps.LatLng(myPos.lat, myPos.lng)
+          );
+          if (dist > 2) {
+            updateRadarPolygon(myPos, heading);
+          } else {
+            if (radarPolygon) radarPolygon.setMap(null);
           }
-        });
-      } else {
-        myMarker.setPosition(myPos);
-      }
+        }
 
-      // 경로 기록
-      pathCoords.push(myPos);
-      if (pathPolyline) {
-        pathPolyline.setPath(pathCoords);
-      } else {
-        pathPolyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#FF0000",
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-      }
-
-      updateRadarPolygon(myPos, heading);
-      drawMultipleCircles(myPos);
-      showNearbyPlaces(myPos, radarRadiusMeters);
-
-      map.setHeading(heading);
-      map.setTilt(45);
-
-      addCompass();
-    },
-    (err) => console.error("위치 추적 실패:", err),
-    { enableHighAccuracy: true }
-  );
+        // 원형 표시 + 주변 장소 + 나침반
+        drawMultipleCircles(myPos);
+        showNearbyPlaces(myPos, radarRadiusMeters);
+        addCompass();
+      },
+      (err) => console.error("위치 추적 실패:", err),
+      { enableHighAccuracy: true }
+    );
+  }
 }
 
 // ---------------------- 원형 표시 ----------------------
@@ -203,25 +217,3 @@ function addCompass() {
     compassMarkers.push(marker);
   });
 }
-
-// ---------------------- 버튼 이벤트 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const btnConnection = document.getElementById("btn-connection");
-  const btnSettings = document.getElementById("btn-settings");
-  const connectionPanel = document.getElementById("connection-panel");
-  const settingsPanel = document.getElementById("settings-panel");
-
-  if (btnConnection) {
-    btnConnection.onclick = () => {
-      settingsPanel.classList.remove("open");
-      connectionPanel.classList.toggle("open");
-    };
-  }
-
-  if (btnSettings) {
-    btnSettings.onclick = () => {
-      connectionPanel.classList.remove("open");
-      settingsPanel.classList.toggle("open");
-    };
-  }
-});
