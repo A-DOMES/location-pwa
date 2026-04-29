@@ -652,51 +652,50 @@ function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   // ✅ 기본은 일반 지도
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null
-  });
-
-  // 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, 'contextmenu', function() {
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-
-  // 데이터 로딩
-  loadData();
-  intervalId = setInterval(loadData, 300000);
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });
-      } else {
-        map.setOptions({ styles: lightStyle });
-      }
-    });
-  }
-
-  // ✅ 일반 지도 버튼
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
-      map.setOptions({
-        styles: null,
+      map = new google.maps.Map(document.getElementById("map"), {
         center: originalCenter,
-        zoom: 7
+        zoom: 7,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: false
       });
-      if (themeToggle) themeToggle.checked = false;
-      document.body.classList.remove("dark-mode");
-    });
-  }
-}
 
-window.initMap = initMap;
+      // 라이트/다크 모드 토글
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.addEventListener("change", () => {
+          if (themeToggle.checked) {
+            map.setOptions({ styles: darkStyle });
+            document.body.classList.add("dark-mode");
+          } else {
+            map.setOptions({ styles: lightStyle });
+            document.body.classList.remove("dark-mode");
+          }
+        });
+      }
+
+      // 일반 지도 버튼
+      const defaultMapBtn = document.getElementById("defaultMapBtn");
+      if (defaultMapBtn) {
+        defaultMapBtn.addEventListener("click", () => {
+          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+          map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
+          if (themeToggle) themeToggle.checked = false;
+          document.body.classList.remove("dark-mode");
+        });
+      }
+
+      // 커스텀 지도 타입 버튼
+      document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+      document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+
+      // 우클릭 시 초기 위치로 복귀
+      google.maps.event.addListener(map, "contextmenu", function () {
+        map.setOptions({ center: originalCenter, zoom: 7 });
+      });
+    }
+    window.initMap = initMap;
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
@@ -1452,6 +1451,16 @@ document.addEventListener("DOMContentLoaded", () => {
     <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
   </div>
 
+  <!-- 4가지 지도 추가 -->
+  <div class="dropdown-item">
+      <strong>지도 타입 전환</strong><br>
+      <button id="roadmapBtn">일반 지도</button>
+      <button id="satelliteBtn">위성 지도</button>
+      <button id="hybridBtn">혼합 지도</button>
+      <button id="terrainBtn">지형 지도</button>
+    </div>
+  </div>
+  
   <!-- 갱신 주기 설정 -->
   <div class="dropdown-item">
     <strong>갱신 주기 설정</strong><br>
