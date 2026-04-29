@@ -654,22 +654,53 @@ const darkStyle = [
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
+  // ✅ 기본은 일반 지도
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,
     zoom: 7,
-    styles: lightStyle // ✅ 기본 라이트 스타일 적용
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null
   });
 
+  // 우클릭 시 초기 위치로 복귀
   google.maps.event.addListener(map, 'contextmenu', function() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
+  // 데이터 로딩
   loadData();
   intervalId = setInterval(loadData, 300000);
+
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      if (themeToggle.checked) {
+        map.setOptions({ styles: darkStyle });
+      } else {
+        map.setOptions({ styles: lightStyle });
+      }
+    });
+  }
+
+  // ✅ 일반 지도 버튼
+  const defaultMapBtn = document.getElementById("defaultMapBtn");
+  if (defaultMapBtn) {
+    defaultMapBtn.addEventListener("click", () => {
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
+      map.setOptions({
+        styles: null,
+        center: originalCenter,
+        zoom: 7
+      });
+      if (themeToggle) themeToggle.checked = false;
+      document.body.classList.remove("dark-mode");
+    });
+  }
 }
 
 window.initMap = initMap;
-    
+
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
@@ -684,6 +715,14 @@ window.moveToLatLng = function() {
   }
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
+
+  // 위치찾기 마커 표시
+  new google.maps.Marker({
+    position: { lat: lat, lng: lng },
+    map: map,
+    title: "입력한 위치",
+    animation: google.maps.Animation.DROP
+  });
 };
 
 /* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
@@ -698,31 +737,7 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
-  
-// ✅ 라이트/다크 모드 토글
-const themeToggle = document.getElementById("themeToggle");
-themeToggle.addEventListener("change", () => {
-  if (themeToggle.checked) {
-    map.setOptions({ styles: darkStyle }); // 다크 스타일 적용
-  } else {
-    map.setOptions({ styles: lightStyle }); // 라이트 스타일 적용
-  }
-});
 
-// ✅ 일반 지도 버튼
-const defaultMapBtn = document.getElementById("defaultMapBtn");
-if (defaultMapBtn) {
-  defaultMapBtn.addEventListener("click", () => {
-    map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // ✅ 올바른 방식
-    map.setOptions({
-      styles: null,
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7
-    });
-    if (themeToggle) themeToggle.checked = false;
-    document.body.classList.remove("dark-mode");
-  });
-}
 
 
     
