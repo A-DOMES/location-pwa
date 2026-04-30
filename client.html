@@ -1,3 +1,6 @@
+client.html 현재 모든 기능은 정상작동 중
+현재 도로를 따라 경로지도 그리기를 수정한 파일 5단계로 수정함,
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -22,7 +25,7 @@ let currentLat, currentLng;
 
 let myMarker = null;       // 현재 사용자 위치 마커
 let radarPolygon = null;
-let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리
+let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리	
 
   
   // ✅ 내부 값은 항상 미터 단위로 저장
@@ -35,31 +38,17 @@ let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리
     markers = [];
   }
 
-/* ---------------------- 거리 계산 함수 ---------------------- */
-function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // 지구 반지름 (km)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-            Math.sin(dLng/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-/* ---------------------- 전체 경로 거리 계산 ---------------------- */
-function calculateTotalDistance(points) {
-  if (!points || points.length < 2) return 0;
-
-  let total = 0;
-  for (let i = 1; i < points.length; i++) {
-    total += calculateDistance(
-      points[i-1].lat, points[i-1].lng,
-      points[i].lat, points[i].lng
-    );
+  // ---------------------- 거리 계산 함수 ----------------------
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+              Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
-  return total.toFixed(2); // km 단위
-}
 
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
@@ -200,16 +189,17 @@ async function loadData(token = null) {
     });
   }
 
-// ---------------------- 지도 초기화 보조 ----------------------
-function clearMap() {
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-    markerCluster = null;
+  // ---------------------- 지도 초기화 보조 ----------------------
+  function clearMap() {
+    if (markerCluster) {
+      markerCluster.clearMarkers();
+      markerCluster = null;
+    }
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    polylines.forEach(p => p.setMap(null));
+    polylines = [];
   }
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-  polylines.forEach(p => p.setMap(null));
-  polylines = [];
 
 // ---------------------- 지도 표시 ----------------------
 function showMap() {
@@ -405,6 +395,7 @@ if (select) {
   });
 }
 
+
     // ✅ 버튼 이벤트
     btnConnection.onclick = () => {
       settingsPanel.classList.remove("open");
@@ -524,89 +515,42 @@ function updateLocationBox(user) {
   makeDraggable(locationBox);
 }
    
-/* ---------------------- path 배열 변환 ---------------------- */
+// ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
-  if (!Array.isArray(pathArray)) return [];
-
   const points = [];
-
-  pathArray.forEach(p => {
-    // 객체 형태 {lat, lng}
-    if (typeof p === "object" && p !== null && "lat" in p && "lng" in p) {
-      points.push({ lat: Number(p.lat), lng: Number(p.lng) });
+  for (let i = 0; i < pathArray.length; i += 2) {
+    const lat = parseFloat(pathArray[i]);
+    const lng = parseFloat(pathArray[i+1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      points.push({ lat, lng });
     }
-    // 문자열 "lat,lng"
-    else if (typeof p === "string") {
-      const parts = p.split(",");
-      if (parts.length === 2) {
-        const lat = parseFloat(parts[0].trim());
-        const lng = parseFloat(parts[1].trim());
-        if (!isNaN(lat) && !isNaN(lng)) {
-          points.push({ lat, lng });
-        }
-      }
-    }
-    // 배열 [lat, lng]
-    else if (Array.isArray(p) && p.length === 2) {
-      const lat = parseFloat(p[0]);
-      const lng = parseFloat(p[1]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        points.push({ lat, lng });
-      }
-    }
-  });
-
+  }
   return points;
 }
 
- 
-// ---------------------- 테이블 행 생성 ----------------------
-function createRow(user, distance, viewMode) {
-  const row = document.createElement("tr");
-  if (viewMode === "paths") {
-    row.innerHTML = `
-      <td>${user.phone || "-"}</td>
-      <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
-      <td>${user.time ? formatToKST(user.time) : "-"}</td>
-      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-      <td>${user.address || "-"}</td>
-      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-    `;
-  } else {
-    row.innerHTML = `
-      <td>${user.phone || "-"}</td>
-      <td>${user.status || "-"}</td>
-      <td>${user.time ? formatToKST(user.time) : "-"}</td>
-      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-      <td>${user.address || "-"}</td>
-      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-    `;
-  }
-  return row;
+// ---------------------- 지도 위의 값 초기화 ----------------------
+function clearMap() {
+  polylines.forEach(line => line.setMap(null));
+  polylines = [];
+  directionsRenderers.forEach(dr => dr.setMap(null));
+  directionsRenderers = [];
+  markers.forEach(m => m.setMap(null));
+  markers = [];
 }
-
-// ---------------------- 경로 표시 ----------------------
-function renderPath(user) {
-  const pathPoints = parsePathArray(user.path);
-  if (pathPoints.length > 1) {
-    const dr = drawPath(pathPoints, google.maps.TravelMode.DRIVING);
-    directionsRenderers.push(dr);
-    return calculateTotalDistance(pathPoints);
-  }
-  return 0;
-}
-
+    
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
+  // 항상 초기화
   clearMap();
 
   let users = [];
 
   if (viewMode === "current") {
+    // 최근 접속자만 표시
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -619,28 +563,21 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
       }
     });
     users = Object.values(latestByUser);
+
+    // 마커 표시
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "all") {
+    // 전체 사용자 표시
     users = allData;
+
+    // 마커 표시
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "paths") {
-    if (selectedPhone === "all") {
-      users = allData;
-      users.forEach(user => {
-        const distance = renderPath(user);
-        tbody.appendChild(createRow(user, distance, "paths"));
-      });
-    } else {
-      const user = allData.find(u => u.phone === selectedPhone);
-      if (user) {
-        const distance = renderPath(user);
-        tbody.appendChild(createRow(user, distance, "paths"));
-        map.setCenter({ lat: user.lat, lng: user.lng });
-        map.setZoom(13);
-      }
-    }
+    // 전체 사용자 패널 표시
+    users = allData;
+    // 지도는 비워둠, 사용자 클릭 이벤트에서 drawPath 호출
   }
 
   updateTableHeader(viewMode);
@@ -661,11 +598,12 @@ function addMarker(user) {
 function onUserClick(user) {
   clearMap();
   const pathPoints = parsePathArray(user.path);
-  const dr = drawPath(pathPoints, google.maps.TravelMode.DRIVING);
+  const dr = drawPath(pathPoints, 'DRIVING');
   directionsRenderers.push(dr);
   map.setCenter({ lat: user.lat, lng: user.lng });
 }
 
+    
 // ---------------------- 실제 도로 경로 그리기 ----------------------
 function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
   if (!map || !points || points.length < 2) return;
@@ -676,12 +614,17 @@ function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
     polylineOptions: { strokeOpacity: 1.0, strokeWeight: 5 }
   });
 
-  const origin = points[0];
-  const destination = points[points.length - 1];
+  const origin = points[0]; // 출발지
+  const destination = points[points.length - 1]; // 도착지
   const waypoints = points.slice(1, -1).map(p => ({ location: p }));
 
   directionsService.route(
-    { origin, destination, waypoints, travelMode },
+    {
+      origin: origin,
+      destination: destination,
+      waypoints: waypoints,
+      travelMode: travelMode // 반드시 enum 또는 문자열 상수
+    },
     (result, status) => {
       console.log("Directions API status:", status);
       if (status === "OK") {
@@ -695,6 +638,8 @@ function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
   return directionsRenderer;
 }
 
+
+    
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
@@ -729,7 +674,6 @@ function getMapIdByDevice() {
   if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
   return CONFIG.mapIds.fixed;
 }
-
 
 /* ---------------------- 지도 초기화  ---------------------- */
 // 라이트 스타일 JSON
@@ -1051,24 +995,22 @@ window.renderUserTable = function(users, viewMode = "current") {
   users.forEach(user => {
     const row = document.createElement("tr");
     row.style.cursor = "pointer"; // 손가락 모양 커서
-
+    
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 표시
-      const pathPoints = parsePathArray(user.path);
-      const distance = calculateTotalDistance(pathPoints);
+      // ✅ paths 모드: 이동거리 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
+        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
     } else {
-      // ✅ current / all 모드: 상태 표시
+      // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>상태: ${user.status || "-"}</td>
+        <td>${user.status || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
@@ -1096,45 +1038,34 @@ window.renderUserTable = function(users, viewMode = "current") {
   });
 };
 
-/* ---------------------- 전체 사용자 내역 패널 ---------------------- */
-function renderAllUsersPanel(viewMode = "all") {
+// ✅ 전체 사용자 내역을 패널에 출력하는 함수
+function renderAllUsersPanel() {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   allData.forEach(user => {
     const row = document.createElement("tr");
-    if (viewMode === "paths") {
-      const pathPoints = parsePathArray(user.path);
-      const distance = calculateTotalDistance(pathPoints);
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-        <td>${user.address || "-"}</td>
-      `;
-    } else {
-      row.innerHTML = `
-        <td>${user.phone || "-"}</td>
-        <td>상태: ${user.status || "-"}</td>
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${user.address || "-"}</td>
-        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-      `;
-    }
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>${user.status || "-"}</td>
+      <td>${user.time ? formatToKST(user.time) : "-"}</td>
+      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+    `;
     tbody.appendChild(row);
   });
 }
 
+    
 /* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 };
 
+  
 /* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
 const btnLocation = document.getElementById("location-check");
 if (btnLocation) {
@@ -1142,6 +1073,7 @@ if (btnLocation) {
 }
 
 // ---------------------- 최종 위치찾기 코드 정리 ----------------------
+// 위치찾기용 마커 저장 변수
 let locationMarker = null;
 
 window.moveToLatLng = function() {
@@ -1157,13 +1089,16 @@ window.moveToLatLng = function() {
     return;
   }
 
+  // 지도 중심 이동 + 확대
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
+  // 기존 마커 제거
   if (locationMarker) {
     locationMarker.setMap(null);
   }
 
+  // 새 마커 표시
   locationMarker = new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
@@ -1171,15 +1106,18 @@ window.moveToLatLng = function() {
     animation: google.maps.Animation.DROP
   });
 
+  // ✅ 메시지 박스 표시
   const msgBox = document.getElementById("message-box");
   msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
   msgBox.style.display = "block";
 
+  // 3초 후 자동 숨김
   setTimeout(() => {
     msgBox.style.display = "none";
   }, 3000);
 };
 
+// 버튼 이벤트 연결
 document.addEventListener("DOMContentLoaded", () => {
   const btnLocation = document.getElementById("location-check");
   if (btnLocation) {
@@ -1187,7 +1125,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-    
+
 // ---------------------- 드래그 기능 (locationBox) ----------------------
 function makeDraggable(element) {
   let offsetX = 0, offsetY = 0, isDown = false;
