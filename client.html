@@ -18,9 +18,17 @@
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
+
+  let myMarker = null;
+  let radarPolygon = null;
+  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
+  
+  // ✅ 내부 값은 항상 미터 단위로 저장
+  let radarRadiusMeters = 50; 
+  let radarUnit = "m"; // 표시 단위: m 또는 km
     
   // ---------------------- 추가 전역 변수 ----------------------
-  let radarPolygon = null;           // 레이더 영역 폴리곤
+
   let radarRadiusMeters = 50;        // 레이더 반경 (기본값 50m)
   let radarEnabled = true;           // 레이더 활성화 여부
   let pathCoords = [];               // 경로 좌표 배열
@@ -778,13 +786,6 @@ window.setCustomInterval = function() {
 // ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-let myMarker = null;
-let radarPolygon = null;
-let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-
-// ✅ 내부 값은 항상 미터 단위로 저장
-let radarRadiusMeters = 50; 
-let radarUnit = "m"; // 표시 단위: m 또는 km
 
 // ✅ 단위 변환 함수 (미터 → 도 단위)
 function convertToDegrees(meters) {
