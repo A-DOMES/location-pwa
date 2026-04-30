@@ -511,8 +511,6 @@ function updateLocationBox(user) {
   // ✅ 드래그 기능 적용
   makeDraggable(locationBox);
 }
-
-
    
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
@@ -527,23 +525,29 @@ function parsePathArray(pathArray) {
   return points;
 }
 
-
+// ---------------------- 지도 위의 값 초기화 ----------------------
+function clearMap() {
+  polylines.forEach(line => line.setMap(null));
+  polylines = [];
+  directionsRenderers.forEach(dr => dr.setMap(null));
+  directionsRenderers = [];
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+}
+    
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  // 지도 초기화: 기존 경로 지우기
-  polylines.forEach(line => line.setMap(null));
-  polylines = [];
-  directionsRenderers.forEach(dr => dr.setMap(null));
-  directionsRenderers = [];
+  // 항상 초기화
+  clearMap();
 
   let users = [];
 
   if (viewMode === "current") {
-    // 최근 접속자만 표시 → 지도에 경로 없음
+    // 최근 접속자만 표시
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -557,40 +561,46 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
     });
     users = Object.values(latestByUser);
 
-  } else if (viewMode === "all") {
-    // 전체 사용자 표시 → 직선 Polyline으로 경로 연결
-    users = allData;
-    users.forEach(user => {
-      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-      if (pathPoints.length > 1) {
-        for (let i = 0; i < pathPoints.length - 1; i++) {
-          const line = new google.maps.Polyline({
-            path: [pathPoints[i], pathPoints[i+1]],
-            map: map,
-            strokeColor: "#FF0000",
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-          });
-          polylines.push(line);
-        }
-      }
-    });
+    // 마커 표시
+    users.forEach(user => addMarker(user));
 
-  } else if (viewMode === "paths" && selectedPhone) {
-    // 특정 사용자 선택 → Directions API로 실제 도로 경로 표시
-    const user = allData.find(u => u.phone === selectedPhone);
-    if (user && user.path && user.path.length > 1) {
-      const pathPoints = parsePathArray(user.path);
-      const dr = drawPath(pathPoints, 'DRIVING');
-      directionsRenderers.push(dr);
-      users = [user];
-    }
+  } else if (viewMode === "all") {
+    // 전체 사용자 표시
+    users = allData;
+
+    // 마커 표시
+    users.forEach(user => addMarker(user));
+
+  } else if (viewMode === "paths") {
+    // 전체 사용자 패널 표시
+    users = allData;
+    // 지도는 비워둠, 사용자 클릭 이벤트에서 drawPath 호출
   }
 
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
 
+// ---------------------- 마커 표시 ----------------------
+function addMarker(user) {
+  const marker = new google.maps.Marker({
+    position: { lat: user.lat, lng: user.lng },
+    map: map,
+    title: user.phone
+  });
+  markers.push(marker);
+}
+
+// ---------------------- 특정 사용자 클릭 이벤트 ----------------------
+function onUserClick(user) {
+  clearMap();
+  const pathPoints = parsePathArray(user.path);
+  const dr = drawPath(pathPoints, 'DRIVING');
+  directionsRenderers.push(dr);
+  map.setCenter({ lat: user.lat, lng: user.lng });
+}
+
+    
 // ---------------------- 실제 도로 경로 그리기 ----------------------
 function drawPath(points, travelMode = 'DRIVING') {
   if (!map || !points || points.length < 2) return;
@@ -623,7 +633,6 @@ function drawPath(points, travelMode = 'DRIVING') {
 
   return directionsRenderer;
 }
-
 
     
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
