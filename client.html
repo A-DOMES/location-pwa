@@ -559,29 +559,54 @@ function parsePathArray(pathArray) {
   return points;
 }
 
-// ---------------------- 지도 위의 값 초기화 ----------------------
-function clearMap() {
-  polylines.forEach(line => line.setMap(null));
-  polylines = [];
-  directionsRenderers.forEach(dr => dr.setMap(null));
-  directionsRenderers = [];
-  markers.forEach(m => m.setMap(null));
-  markers = [];
+ 
+// ---------------------- 테이블 행 생성 ----------------------
+function createRow(user, distance, viewMode) {
+  const row = document.createElement("tr");
+  if (viewMode === "paths") {
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
+      <td>${user.time ? formatToKST(user.time) : "-"}</td>
+      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+    `;
+  } else {
+    row.innerHTML = `
+      <td>${user.phone || "-"}</td>
+      <td>${user.status || "-"}</td>
+      <td>${user.time ? formatToKST(user.time) : "-"}</td>
+      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+      <td>${user.address || "-"}</td>
+      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+    `;
+  }
+  return row;
 }
-    
+
+// ---------------------- 경로 표시 ----------------------
+function renderPath(user) {
+  const pathPoints = parsePathArray(user.path);
+  if (pathPoints.length > 1) {
+    const dr = drawPath(pathPoints, google.maps.TravelMode.DRIVING);
+    directionsRenderers.push(dr);
+    return calculateTotalDistance(pathPoints);
+  }
+  return 0;
+}
+
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  // 항상 초기화
   clearMap();
 
   let users = [];
 
   if (viewMode === "current") {
-    // 최근 접속자만 표시
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -597,25 +622,23 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "all") {
-    // 전체 사용자 표시
     users = allData;
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "paths") {
     if (selectedPhone === "all") {
-      // ✅ 전체 사용자 도로 경로 표시
       users = allData;
       users.forEach(user => {
-        const pathPoints = parsePathArray(user.path);
-        if (pathPoints.length > 1) {
-          drawPath(pathPoints, google.maps.TravelMode.DRIVING);
-        }
+        const distance = renderPath(user);
+        tbody.appendChild(createRow(user, distance, "paths"));
       });
     } else {
-      // ✅ 개별 사용자 도로 경로 표시
       const user = allData.find(u => u.phone === selectedPhone);
       if (user) {
-        onUserClick(user); // → clearMap + drawPath 호출
+        const distance = renderPath(user);
+        tbody.appendChild(createRow(user, distance, "paths"));
+        map.setCenter({ lat: user.lat, lng: user.lng });
+        map.setZoom(13);
       }
     }
   }
@@ -623,8 +646,6 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
-
-
 
 // ---------------------- 마커 표시 ----------------------
 function addMarker(user) {
@@ -640,16 +661,11 @@ function addMarker(user) {
 function onUserClick(user) {
   clearMap();
   const pathPoints = parsePathArray(user.path);
-
-  // travelMode는 반드시 enum을 사용해야 안전합니다
   const dr = drawPath(pathPoints, google.maps.TravelMode.DRIVING);
-
   directionsRenderers.push(dr);
   map.setCenter({ lat: user.lat, lng: user.lng });
 }
 
-
-    
 // ---------------------- 실제 도로 경로 그리기 ----------------------
 function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
   if (!map || !points || points.length < 2) return;
@@ -660,17 +676,12 @@ function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
     polylineOptions: { strokeOpacity: 1.0, strokeWeight: 5 }
   });
 
-  const origin = points[0]; // 출발지
-  const destination = points[points.length - 1]; // 도착지
+  const origin = points[0];
+  const destination = points[points.length - 1];
   const waypoints = points.slice(1, -1).map(p => ({ location: p }));
 
   directionsService.route(
-    {
-      origin: origin,
-      destination: destination,
-      waypoints: waypoints,
-      travelMode: travelMode // 반드시 enum 또는 문자열 상수
-    },
+    { origin, destination, waypoints, travelMode },
     (result, status) => {
       console.log("Directions API status:", status);
       if (status === "OK") {
@@ -684,8 +695,6 @@ function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
   return directionsRenderer;
 }
 
-
-    
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
@@ -720,6 +729,7 @@ function getMapIdByDevice() {
   if (/windows|macintosh|linux/.test(ua)) return CONFIG.mapIds.javascript;
   return CONFIG.mapIds.fixed;
 }
+
 
 /* ---------------------- 지도 초기화  ---------------------- */
 // 라이트 스타일 JSON
