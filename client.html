@@ -602,7 +602,7 @@ function onUserClick(user) {
 
     
 // ---------------------- 실제 도로 경로 그리기 ----------------------
-function drawPath(points, travelMode = 'DRIVING') {
+function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
   if (!map || !points || points.length < 2) return;
 
   const directionsService = new google.maps.DirectionsService();
@@ -620,9 +620,10 @@ function drawPath(points, travelMode = 'DRIVING') {
       origin: origin,
       destination: destination,
       waypoints: waypoints,
-      travelMode: travelMode
+      travelMode: travelMode // 반드시 enum 또는 문자열 상수
     },
     (result, status) => {
+      console.log("Directions API status:", status);
       if (status === "OK") {
         directionsRenderer.setDirections(result);
       } else {
@@ -633,6 +634,7 @@ function drawPath(points, travelMode = 'DRIVING') {
 
   return directionsRenderer;
 }
+
 
     
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
