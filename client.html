@@ -12,18 +12,18 @@
 
   <!-- 1. 사용자 코드 -->
   <script>
-  // ---------------------- 전역 변수 ----------------------
-  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-  let polylines = []; // 경로 Polyline 저장 배열
-  let directionsRenderers = [];
-  let geoWatchId = null;
-  let originalCenter;  // 초기 중심 좌표
-  let marker, currentLat, currentLng;
-  
-    
-  let myMarker = null;
-  let radarPolygon = null;
-  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
+// ---------------------- 전역 변수 ----------------------
+let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+let polylines = []; // 경로 Polyline 저장 배열
+let directionsRenderers = [];
+let geoWatchId = null;
+let originalCenter;  // 초기 중심 좌표
+let currentLat, currentLng;
+
+let myMarker = null;       // 현재 사용자 위치 마커
+let radarPolygon = null;
+let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리
+
   
   // ✅ 내부 값은 항상 미터 단위로 저장
   let radarRadiusMeters = 50; 
