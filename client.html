@@ -603,7 +603,7 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
 
   } else if (viewMode === "paths") {
     if (selectedPhone === "all") {
-      // ✅ 전체 사용자 도로 경로 표시
+      // ✅ 전체 사용자 경로 표시
       users = allData;
       users.forEach(user => {
         const pathPoints = parsePathArray(user.path);
@@ -612,10 +612,10 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
         }
       });
     } else {
-      // ✅ 개별 사용자 도로 경로 표시
+      // ✅ 개별 사용자 경로 표시
       const user = allData.find(u => u.phone === selectedPhone);
       if (user) {
-        onUserClick(user); // → clearMap + drawPath 호출
+        onUserClick(user); // 기존 함수 활용 → clearMap + drawPath
       }
     }
   }
@@ -623,6 +623,7 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 
 // ---------------------- 마커 표시 ----------------------
