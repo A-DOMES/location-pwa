@@ -18,6 +18,14 @@
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
+
+  let myMarker = null;
+  let radarPolygon = null;
+  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
+  
+  // ✅ 내부 값은 항상 미터 단위로 저장
+  let radarRadiusMeters = 50; 
+  let radarUnit = "m"; // 표시 단위: m 또는 km
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -760,14 +768,6 @@ window.setCustomInterval = function() {
 // ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
-let myMarker = null;
-let radarPolygon = null;
-let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-
-// ✅ 내부 값은 항상 미터 단위로 저장
-let radarRadiusMeters = 50; 
-let radarUnit = "m"; // 표시 단위: m 또는 km
-
 // ✅ 단위 변환 함수 (미터 → 도 단위)
 function convertToDegrees(meters) {
   return meters / 111000; // 1도 ≈ 111,000m
