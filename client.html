@@ -525,30 +525,38 @@ function drawPath(points, distanceKm) {
   if (!map || !points || points.length === 0) return;
 
   // ✅ 기존 경로 지우기
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines.forEach(line => line.setMap(null));
   polylines = [];
 
-  // 두께 계산 (최소 5, 최대 18)
-  let weight = Math.min(18, Math.max(5, Math.floor(distanceKm / 10) + 5));
+  // ✅ 구간별로 나눠서 거리 계산 후 색상 적용
+  for (let i = 1; i < points.length; i++) {
+    const start = new google.maps.LatLng(points[i-1].lat, points[i-1].lng);
+    const end = new google.maps.LatLng(points[i].lat, points[i].lng);
 
-  // 색상 단계
-  let color = "#0000FF"; // 0~20km → 파랑
-  if (distanceKm > 20) color = "#FFA500"; // 20~50km → 주황
-  if (distanceKm > 50) color = "#00FF00"; // 50~100km → 초록
-  if (distanceKm > 100) color = "#FF0000"; // 100km 이상 → 빨강
+    // 두 점 사이의 실제 거리 (미터 단위)
+    const distance = google.maps.geometry.spherical.computeDistanceBetween(start, end);
 
-  const pathLine = new google.maps.Polyline({
-    path: points,
-    geodesic: true,
-    strokeColor: color,
-    strokeOpacity: 1.0,
-    strokeWeight: weight
-  });
+    // ✅ 5단계 색상 구분 (걷기/차량 추정)
+    let color = "#0000FF";                                           // 기본- 0~300m → 파랑 (걷기)
+    if (distance > 300 && distance <= 800) color = "#00FF00";        // - 300~800m → 초록 (빠른 걷기/조깅)
+    else if (distance > 800 && distance <= 2000) color = "#FFFF00";  // - 800m~2km → 노랑 (자전거/저속 차량)
+    else if (distance > 2000 && distance <= 5000) color = "#FFA500"; // - 2~5km → 주황 (일반 차량 이동)
+    else if (distance > 5000) color = "#FF0000";                     // - 5km 이상 → 빨강 (고속 차량 이동)
 
-  pathLine.setMap(map);
-  polylines.push(pathLine);  // ← polylines에만 추가
+    // ✅ 구간별 Polyline 생성
+    const segment = new google.maps.Polyline({
+      path: [points[i-1], points[i]], // 두 점을 연결
+      geodesic: true,
+      strokeColor: color,             // 거리 기반 색상 적용
+      strokeOpacity: 1.0,
+      strokeWeight: 5,                // 선 두께 (고정값)
+      map: map
+    });
+
+    segment.setMap(map);
+    polylines.push(segment);
+  }
 }
-
     
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
