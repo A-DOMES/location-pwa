@@ -590,23 +590,30 @@ function updateUserPanelContent(viewMode = "current") {
     users = Object.values(latestByUser);
 
   } else if (viewMode === "all") {
-    // 전체 사용자 표시 → 지도에 경로 없음
-    users = allData;
-
-  } else if (viewMode === "paths") {
-    // 특정 사용자 → Directions API 적용
+    // 전체 사용자 표시 → 직선 Polyline으로 경로 연결
     users = allData;
     users.forEach(user => {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-      user.distance = 0;
       if (pathPoints.length > 1) {
-        for (let i = 1; i < pathPoints.length; i++) {
-          user.distance += calculateDistance(
-            pathPoints[i-1].lat, pathPoints[i-1].lng,
-            pathPoints[i].lat, pathPoints[i].lng
-          );
+        for (let i = 0; i < pathPoints.length - 1; i++) {
+          new google.maps.Polyline({
+            path: [pathPoints[i], pathPoints[i+1]],
+            map: map,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
         }
-        drawPath(pathPoints, user.distance, 'DRIVING');
+      }
+    });
+
+  } else if (viewMode === "paths") {
+    // 특정 사용자 선택 → Directions API로 실제 도로 경로 표시
+    users = allData;
+    users.forEach(user => {
+      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+      if (pathPoints.length > 1) {
+        drawPath(pathPoints, null, 'DRIVING'); // 실제 도로 경로
       }
     });
   }
@@ -615,7 +622,41 @@ function updateUserPanelContent(viewMode = "current") {
   renderUserTable(users, viewMode);
 }
 
+    
+// ---------------------- 실제 도로 경로 그리기 ----------------------    
+function drawUserPath(user) {
+  if (!map || !user.path || user.path.length < 2) return;
 
+  const directionsService = new google.maps.DirectionsService();
+  const directionsRenderer = new google.maps.DirectionsRenderer({
+    map: map,
+    polylineOptions: { strokeWeight: 5, strokeOpacity: 1.0 }
+  });
+
+  const origin = user.path[0]; // 시발점
+  const destination = user.path[user.path.length - 1]; // 종점
+  const waypoints = user.path.slice(1, -1).map(p => ({ location: p }));
+
+  directionsService.route(
+    {
+      origin: origin,
+      destination: destination,
+      waypoints: waypoints,
+      travelMode: 'DRIVING'
+    },
+    (result, status) => {
+      console.log("Directions API status:", status);
+      if (status === "OK") {
+        directionsRenderer.setDirections(result);
+      } else {
+        console.error("경로 요청 실패:", status);
+      }
+    }
+  );
+}
+
+
+    
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
