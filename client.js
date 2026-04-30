@@ -1,7 +1,12 @@
-/* ---------------------- 전역 변수 ---------------------- */
-let myMarker;  // 내 위치 마커
-
-
+  // ---------------------- 추가 전역 변수 ----------------------
+  let myMarker;  // 내 위치 마커
+  let radarRadiusMeters = 50;        // 레이더 반경 (기본값 50m)
+  let radarEnabled = true;           // 레이더 활성화 여부
+  let pathCoords = [];               // 경로 좌표 배열
+  let pathPolyline;                  // 경로 Polyline
+  let poiMarkers = [];               // 주변 장소 마커 배열
+  let compassMarkers = [];           // 나침반 마커 배열
+  let directionsService, directionsRenderer; // 길찾기 서비스/렌더러
 
 /* ---------------------- POI 아이콘 정의 ---------------------- */
 const poiIcons = {
