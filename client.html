@@ -1,3 +1,6 @@
+client.html 현재 모든 기능은 정상작동 중
+현재 직선경로지도 그리기를 수정한 파일 5단계로 수정함,
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -12,18 +15,16 @@
 
   <!-- 1. 사용자 코드 -->
   <script>
-// ---------------------- 전역 변수 ----------------------
-let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-let polylines = []; // 경로 Polyline 저장 배열
-let directionsRenderers = [];
-let geoWatchId = null;
-let originalCenter;  // 초기 중심 좌표
-let currentLat, currentLng;
+  // ---------------------- 전역 변수 ----------------------
+  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+  let polylines = []; // 경로 Polyline 저장 배열
+  let geoWatchId = null;
+  let originalCenter;  // 초기 중심 좌표
+  let currentLat, currentLng;
 
-let myMarker = null;       // 현재 사용자 위치 마커
-let radarPolygon = null;
-let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리	
-
+  let myMarker = null;
+  let radarPolygon = null;
+  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
   
   // ✅ 내부 값은 항상 미터 단위로 저장
   let radarRadiusMeters = 50; 
@@ -35,32 +36,27 @@ let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리
     markers = [];
   }
 
-/* ---------------------- 거리 계산 함수 ---------------------- */
-function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // 지구 반지름 (km)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-            Math.sin(dLng/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-/* ---------------------- 전체 경로 거리 계산 ---------------------- */
-function calculateTotalDistance(points) {
-  if (!points || points.length < 2) return 0;
-
-  let total = 0;
-  for (let i = 1; i < points.length; i++) {
-    total += calculateDistance(
-      points[i-1].lat, points[i-1].lng,
-      points[i].lat, points[i].lng
-    );
+  // ---------------------- 거리 계산 함수 ----------------------
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+              Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
-  return total.toFixed(2); // km 단위
-}
 
+  // ---------------------- 문자열 기반 색상 함수 ----------------------
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  }
 
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
@@ -356,47 +352,42 @@ function showMap() {
     const select = document.getElementById("path-user-select");
 
     // ✅ 드롭다운 선택 이벤트
-if (select) {
-  select.addEventListener("change", e => {
-    const selectedPhone = e.target.value;
-    const title = document.getElementById("user-panel-title");
+    if (select) {
+      select.addEventListener("change", e => {
+        const selectedPhone = e.target.value;
+        const title = document.getElementById("user-panel-title");
 
-    if (selectedPhone === "all") {
-      // 전체 사용자 → 지도에 경로 없음
-      updateUserPanelContent("all");
-      renderUserTable(allData, "all");
-
-    } else {
-      const user = allData.find(u => u.phone === selectedPhone);
-      if (user) {
-        const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
-        updateUserPanelContent(modeForTable);
-        renderUserTable([user], modeForTable);
-
-        if (modeForTable === "paths") {
-          // ✅ 위치/경로 보기 모드일 때만 지도에 경로 표시
-          const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-          if (pathPoints.length > 1) {
-            let distanceKm = 0;
-            for (let i = 1; i < pathPoints.length; i++) {
-              distanceKm += calculateDistance(
-                pathPoints[i-1].lat, pathPoints[i-1].lng,
-                pathPoints[i].lat, pathPoints[i].lng
-              );
-            }
-            drawPath(pathPoints, distanceKm, 'DRIVING');
-          }
+        if (selectedPhone === "all") {
+          updateUserPanelContent("all");
+          renderUserTable(allData, "all");
         } else {
-          // ✅ 다른 모드에서는 지도에 경로 없음, 위치만 이동
-          moveToUser(user.lat, user.lng, user.phone);
-        }
-      } else {
-        renderUserTable([], "current");
-      }
-    }
-  });
-}
+          const user = allData.find(u => u.phone === selectedPhone);
+          if (user) {
+            const modeForTable = (title && title.textContent === "위치/경로 보기") ? "paths" : "current";
+            updateUserPanelContent(modeForTable);
+            renderUserTable([user], modeForTable);
 
+            if (modeForTable === "paths") {
+              const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+              if (pathPoints.length > 0) {
+                let distanceKm = 0;
+                for (let i = 1; i < pathPoints.length; i++) {
+                  distanceKm += calculateDistance(
+                    pathPoints[i-1].lat, pathPoints[i-1].lng,
+                    pathPoints[i].lat, pathPoints[i].lng
+                  );
+                }
+                drawPath(pathPoints, distanceKm);
+              }
+            } else {
+              moveToUser(user.lat, user.lng, user.phone);
+            }
+          } else {
+            renderUserTable([], "current");
+          }
+        }
+      });
+    }
 
     // ✅ 버튼 이벤트
     btnConnection.onclick = () => {
@@ -516,66 +507,70 @@ function updateLocationBox(user) {
   // ✅ 드래그 기능 적용
   makeDraggable(locationBox);
 }
+
+
    
-/* ---------------------- path 배열 변환 ---------------------- */
+// ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
-  if (!Array.isArray(pathArray)) return [];
-
   const points = [];
-
-  pathArray.forEach(p => {
-    // 객체 형태 {lat, lng}
-    if (typeof p === "object" && p !== null && "lat" in p && "lng" in p) {
-      points.push({ lat: Number(p.lat), lng: Number(p.lng) });
+  for (let i = 0; i < pathArray.length; i += 2) {
+    const lat = parseFloat(pathArray[i]);
+    const lng = parseFloat(pathArray[i+1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      points.push({ lat, lng });
     }
-    // 문자열 "lat,lng"
-    else if (typeof p === "string") {
-      const parts = p.split(",");
-      if (parts.length === 2) {
-        const lat = parseFloat(parts[0].trim());
-        const lng = parseFloat(parts[1].trim());
-        if (!isNaN(lat) && !isNaN(lng)) {
-          points.push({ lat, lng });
-        }
-      }
-    }
-    // 배열 [lat, lng]
-    else if (Array.isArray(p) && p.length === 2) {
-      const lat = parseFloat(p[0]);
-      const lng = parseFloat(p[1]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        points.push({ lat, lng });
-      }
-    }
-  });
-
+  }
   return points;
 }
 
+// ---------------------- 경로 그리기 ----------------------
+function drawPath(points, distanceKm) {
+  if (!map || !points || points.length === 0) return;
 
-// ---------------------- 지도 위의 값 초기화 ----------------------
-function clearMap() {
+  // ✅ 기존 경로 지우기
   polylines.forEach(line => line.setMap(null));
   polylines = [];
-  directionsRenderers.forEach(dr => dr.setMap(null));
-  directionsRenderers = [];
-  markers.forEach(m => m.setMap(null));
-  markers = [];
+
+  // ✅ 구간별로 나눠서 거리 계산 후 색상 적용
+  for (let i = 1; i < points.length; i++) {
+    const start = new google.maps.LatLng(points[i-1].lat, points[i-1].lng);
+    const end = new google.maps.LatLng(points[i].lat, points[i].lng);
+
+    // 두 점 사이의 실제 거리 (미터 단위)
+    const distance = google.maps.geometry.spherical.computeDistanceBetween(start, end);
+
+    // ✅ 5단계 색상 구분 (걷기/차량 추정)
+    let color = "#0000FF";                                           // 기본- 0~300m → 파랑 (걷기)
+    if (distance > 300 && distance <= 800) color = "#00FF00";        // - 300~800m → 초록 (빠른 걷기/조깅)
+    else if (distance > 800 && distance <= 2000) color = "#FFFF00";  // - 800m~2km → 노랑 (자전거/저속 차량)
+    else if (distance > 2000 && distance <= 5000) color = "#FFA500"; // - 2~5km → 주황 (일반 차량 이동)
+    else if (distance > 5000) color = "#FF0000";                     // - 5km 이상 → 빨강 (고속 차량 이동)
+
+    // ✅ 구간별 Polyline 생성
+    const segment = new google.maps.Polyline({
+      path: [points[i-1], points[i]], // 두 점을 연결
+      geodesic: true,
+      strokeColor: color,             // 거리 기반 색상 적용
+      strokeOpacity: 1.0,
+      strokeWeight: 5,                // 선 두께 (고정값)
+      map: map
+    });
+
+    segment.setMap(map);
+    polylines.push(segment);
+  }
 }
     
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
-function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
+function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  // 항상 초기화
-  clearMap();
-
   let users = [];
 
   if (viewMode === "current") {
-    // 최근 접속자만 표시
+    // ✅ 최근 5분 이내 접속자만 추출
     const now = new Date();
     const latestByUser = {};
     allData.forEach(user => {
@@ -589,82 +584,35 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
     });
     users = Object.values(latestByUser);
 
-    // 마커 표시
-    users.forEach(user => addMarker(user));
-
   } else if (viewMode === "all") {
-    // 전체 사용자 표시
+    // ✅ 전체 사용자
     users = allData;
-
-    // 마커 표시
-    users.forEach(user => addMarker(user));
 
   } else if (viewMode === "paths") {
-    // 전체 사용자 패널 표시
+    // ✅ 전체 사용자 경로
     users = allData;
-    // 지도는 비워둠, 사용자 클릭 이벤트에서 drawPath 호출
+    users.forEach(user => {
+      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+      user.distance = 0;
+      if (pathPoints.length > 1) {
+        for (let i = 1; i < pathPoints.length; i++) {
+          user.distance += calculateDistance(
+            pathPoints[i-1].lat, pathPoints[i-1].lng,
+            pathPoints[i].lat, pathPoints[i].lng
+          );
+        }
+      }
+      if (pathPoints.length > 0) {
+        drawPath(pathPoints, user.distance);
+      }
+    });
   }
 
   updateTableHeader(viewMode);
-  renderUserTable(users, viewMode);
-}
-
-// ---------------------- 마커 표시 ----------------------
-function addMarker(user) {
-  const marker = new google.maps.Marker({
-    position: { lat: user.lat, lng: user.lng },
-    map: map,
-    title: user.phone
-  });
-  markers.push(marker);
-}
-
-// ---------------------- 특정 사용자 클릭 이벤트 ----------------------
-function onUserClick(user) {
-  clearMap();
-  const pathPoints = parsePathArray(user.path);
-  const dr = drawPath(pathPoints, 'DRIVING');
-  directionsRenderers.push(dr);
-  map.setCenter({ lat: user.lat, lng: user.lng });
-}
-
-    
-// ---------------------- 실제 도로 경로 그리기 ----------------------
-function drawPath(points, travelMode = google.maps.TravelMode.DRIVING) {
-  if (!map || !points || points.length < 2) return;
-
-  const directionsService = new google.maps.DirectionsService();
-  const directionsRenderer = new google.maps.DirectionsRenderer({
-    map: map,
-    polylineOptions: { strokeOpacity: 1.0, strokeWeight: 5 }
-  });
-
-  const origin = points[0]; // 출발지
-  const destination = points[points.length - 1]; // 도착지
-  const waypoints = points.slice(1, -1).map(p => ({ location: p }));
-
-  directionsService.route(
-    {
-      origin: origin,
-      destination: destination,
-      waypoints: waypoints,
-      travelMode: travelMode // 반드시 enum 또는 문자열 상수
-    },
-    (result, status) => {
-      console.log("Directions API status:", status);
-      if (status === "OK") {
-        directionsRenderer.setDirections(result);
-      } else {
-        console.error("Directions 요청 실패:", status);
-      }
-    }
-  );
-
-  return directionsRenderer;
+  renderUserTable(users, viewMode); // ✅ 항상 전체 목록 출력
 }
 
 
-    
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
