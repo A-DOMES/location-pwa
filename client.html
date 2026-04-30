@@ -514,16 +514,39 @@ function updateLocationBox(user) {
    
 // ---------------------- path 배열 변환 ----------------------
 function parsePathArray(pathArray) {
+  if (!Array.isArray(pathArray)) return [];
+
   const points = [];
-  for (let i = 0; i < pathArray.length; i += 2) {
-    const lat = parseFloat(pathArray[i]);
-    const lng = parseFloat(pathArray[i+1]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      points.push({ lat, lng });
+
+  pathArray.forEach(p => {
+    // 객체 형태 {lat, lng}
+    if (typeof p === "object" && p !== null && "lat" in p && "lng" in p) {
+      points.push({ lat: Number(p.lat), lng: Number(p.lng) });
     }
-  }
+    // 문자열 "lat,lng"
+    else if (typeof p === "string") {
+      const parts = p.split(",");
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0].trim());
+        const lng = parseFloat(parts[1].trim());
+        if (!isNaN(lat) && !isNaN(lng)) {
+          points.push({ lat, lng });
+        }
+      }
+    }
+    // 배열 [lat, lng]
+    else if (Array.isArray(p) && p.length === 2) {
+      const lat = parseFloat(p[0]);
+      const lng = parseFloat(p[1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        points.push({ lat, lng });
+      }
+    }
+  });
+
   return points;
 }
+
 
 // ---------------------- 지도 위의 값 초기화 ----------------------
 function clearMap() {
@@ -595,10 +618,14 @@ function addMarker(user) {
 function onUserClick(user) {
   clearMap();
   const pathPoints = parsePathArray(user.path);
-  const dr = drawPath(pathPoints, 'DRIVING');
+
+  // travelMode는 반드시 enum을 사용해야 안전합니다
+  const dr = drawPath(pathPoints, google.maps.TravelMode.DRIVING);
+
   directionsRenderers.push(dr);
   map.setCenter({ lat: user.lat, lng: user.lng });
 }
+
 
     
 // ---------------------- 실제 도로 경로 그리기 ----------------------
