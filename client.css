@@ -44,16 +44,15 @@ input:checked + .slider:before { transform:translateX(26px); }
 #radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
 
 /* =========================== ✅ 위치 정보 박스 =========================== */
-#locationBox { position:absolute; top:6%; left:40%; transform:translateX(-500px, -500px); background:#fff; padding:14px 18px; border:1px solid #ccc; border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; } /* ✅ resize:both 삭제 */
+#locationBox { position:absolute; top:6%; left:40%; transform:translateX(-500px, -500px); background:rgba(255,255,255,0.25); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:14px 18px; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:16px; color:#333; z-index:999; display:none; cursor:move; overflow:auto; }
 #locationBox.open { display:block; }
 .location-header { display:flex; justify-content:space-between; align-items:center; }
 .location-header button { background:none; border:none; font-size:18px; cursor:pointer; }
 .coord { display:flex; align-items:center; margin-top:8px; font-size:16px; }
 .coord svg { width:18px; height:18px; fill:#1976d2; margin-right:6px; vertical-align:middle; }
-.btnBox { text-align:center; margin-top:12px; } /* 버튼만 가운데 정렬 */
+.btnBox { text-align:center; margin-top:12px; }
 #shareBtn { margin-top:12px; padding:8px 14px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; font-size:16px; transition:background 0.3s; }
 #shareBtn:hover { background:#1565c0; }
-
 
 /* =========================== ✅ 공유 팝업 메시지 =========================== */
 #popupMessage { position:absolute; top:80px; left:50%; transform:translateX(-50%); background:#1976d2; color:white; padding:10px 16px; border-radius:6px; font-size:14px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.2); display:none; z-index:1000; opacity:0; transition:opacity 0.5s ease, top 0.5s ease; }
