@@ -200,17 +200,16 @@ async function loadData(token = null) {
     });
   }
 
-  // ---------------------- 지도 초기화 보조 ----------------------
-  function clearMap() {
-    if (markerCluster) {
-      markerCluster.clearMarkers();
-      markerCluster = null;
-    }
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-    polylines.forEach(p => p.setMap(null));
-    polylines = [];
+// ---------------------- 지도 초기화 보조 ----------------------
+function clearMap() {
+  if (markerCluster) {
+    markerCluster.clearMarkers();
+    markerCluster = null;
   }
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  polylines.forEach(p => p.setMap(null));
+  polylines = [];
 
 // ---------------------- 지도 표시 ----------------------
 function showMap() {
@@ -406,7 +405,6 @@ if (select) {
   });
 }
 
-
     // ✅ 버튼 이벤트
     btnConnection.onclick = () => {
       settingsPanel.classList.remove("open");
@@ -596,26 +594,36 @@ function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
       }
     });
     users = Object.values(latestByUser);
-
-    // 마커 표시
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "all") {
     // 전체 사용자 표시
     users = allData;
-
-    // 마커 표시
     users.forEach(user => addMarker(user));
 
   } else if (viewMode === "paths") {
-    // 전체 사용자 패널 표시
-    users = allData;
-    // 지도는 비워둠, 사용자 클릭 이벤트에서 drawPath 호출
+    if (selectedPhone === "all") {
+      // ✅ 전체 사용자 도로 경로 표시
+      users = allData;
+      users.forEach(user => {
+        const pathPoints = parsePathArray(user.path);
+        if (pathPoints.length > 1) {
+          drawPath(pathPoints, google.maps.TravelMode.DRIVING);
+        }
+      });
+    } else {
+      // ✅ 개별 사용자 도로 경로 표시
+      const user = allData.find(u => u.phone === selectedPhone);
+      if (user) {
+        onUserClick(user); // → clearMap + drawPath 호출
+      }
+    }
   }
 
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
+
 
 // ---------------------- 마커 표시 ----------------------
 function addMarker(user) {
