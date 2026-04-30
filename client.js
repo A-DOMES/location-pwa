@@ -1,15 +1,15 @@
-// ---------------------- 전역 변수 (client.js) ----------------------
-let myMarker;                      // 내 위치 마커
-let radarPolygon = null;           // 레이더 영역 폴리곤
-let radarRadiusMeters = 50;        // 레이더 반경 (기본값 50m)
-let radarEnabled = true;           // 레이더 활성화 여부
-let pathCoords = [];               // 경로 좌표 배열
-let pathPolyline;                  // 경로 Polyline
-let poiMarkers = [];               // POI 마커 배열
-let compassMarkers = [];           // 나침반 마커 배열
-let directionsService, directionsRenderer; // 길찾기 서비스/렌더러
+/* ---------------------- 전역 변수 ---------------------- */
+let myMarker;                      /* 내 위치 마커 */
+let radarPolygon = null;           /* 레이더 영역 폴리곤 */
+let radarRadiusMeters = 50;        /* 레이더 반경 (기본값 50m) */
+let radarEnabled = true;           /* 레이더 활성화 여부 */
+let pathCoords = [];               /* 경로 좌표 배열 */
+let pathPolyline;                  /* 경로 Polyline */
+let poiMarkers = [];               /* POI 마커 배열 */
+let compassMarkers = [];           /* 나침반 마커 배열 */
+let directionsService, directionsRenderer; /* 길찾기 서비스/렌더러 */
 
-// ✅ POI 아이콘 정의 (관공서 포함)
+/* ---------------------- POI 아이콘 정의 ---------------------- */
 const poiIcons = {
   cafe: "https://cdn-icons-png.flaticon.com/512/415/415733.png",
   convenience_store: "https://cdn-icons-png.flaticon.com/512/1076/1076327.png",
@@ -22,7 +22,7 @@ const poiIcons = {
   local_government_office: "https://cdn-icons-png.flaticon.com/512/148/148947.png"
 };
 
-// ---------------------- 부채꼴 레이더 ----------------------
+/* ---------------------- 부채꼴 레이더 ---------------------- */
 function updateRadarPolygon(myPos, heading) {
   if (!radarEnabled) {
     if (radarPolygon) radarPolygon.setMap(null);
@@ -54,7 +54,7 @@ function updateRadarPolygon(myPos, heading) {
   }
 }
 
-// ---------------------- 위치 추적 ----------------------
+/* ---------------------- 위치 추적 ---------------------- */
 function startTracking() {
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
@@ -80,7 +80,7 @@ function startTracking() {
           myMarker.setPosition(myPos);
         }
 
-        // 경로 기록
+        /* 경로 기록 */
         pathCoords.push(myPos);
         if (pathPolyline) {
           pathPolyline.setPath(pathCoords);
@@ -95,7 +95,7 @@ function startTracking() {
           });
         }
 
-        // 이동 시 → 부채꼴 표시 / 멈춤 시 → 제거
+        /* 이동 시 → 부채꼴 표시 / 멈춤 시 → 제거 */
         if (pathCoords.length > 1) {
           const prev = pathCoords[pathCoords.length - 2];
           const dist = google.maps.geometry.spherical.computeDistanceBetween(
@@ -109,7 +109,7 @@ function startTracking() {
           }
         }
 
-        // 원형 표시 + 주변 장소 + 나침반
+        /* 원형 표시 + 주변 장소 + 나침반 */
         drawMultipleCircles(myPos);
         showNearbyPlaces(myPos, radarRadiusMeters);
         addCompass();
@@ -120,7 +120,7 @@ function startTracking() {
   }
 }
 
-// ---------------------- 원형 표시 ----------------------
+/* ---------------------- 원형 표시 ---------------------- */
 function drawMultipleCircles(myPos) {
   [100, 500, 1000].forEach(r => {
     new google.maps.Circle({
@@ -136,7 +136,7 @@ function drawMultipleCircles(myPos) {
   });
 }
 
-// ---------------------- 주변 장소 ----------------------
+/* ---------------------- 주변 장소 ---------------------- */
 function clearPoiMarkers() {
   poiMarkers.forEach(m => m.setMap(null));
   poiMarkers = [];
@@ -190,7 +190,7 @@ function showNearbyPlaces(myPos, radiusMeters) {
   });
 }
 
-// ---------------------- 나침반 ----------------------
+/* ---------------------- 나침반 ---------------------- */
 function clearCompass() {
   compassMarkers.forEach(m => m.setMap(null));
   compassMarkers = [];
