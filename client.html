@@ -15,10 +15,12 @@
   // ---------------------- 전역 변수 ----------------------
   let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
   let polylines = []; // 경로 Polyline 저장 배열
+  let directionsRenderers = [];
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
-
+  
+    
   let myMarker = null;
   let radarPolygon = null;
   let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
@@ -565,12 +567,17 @@ function drawPath(points, distanceKm, travelMode = 'DRIVING') {
 }
 
     
-    
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
-function updateUserPanelContent(viewMode = "current") {
+function updateUserPanelContent(viewMode = "current", selectedPhone = null) {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
+
+  // 지도 초기화: 기존 경로 지우기
+  polylines.forEach(line => line.setMap(null));
+  polylines = [];
+  directionsRenderers.forEach(dr => dr.setMap(null));
+  directionsRenderers = [];
 
   let users = [];
 
@@ -596,45 +603,42 @@ function updateUserPanelContent(viewMode = "current") {
       const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
       if (pathPoints.length > 1) {
         for (let i = 0; i < pathPoints.length - 1; i++) {
-          new google.maps.Polyline({
+          const line = new google.maps.Polyline({
             path: [pathPoints[i], pathPoints[i+1]],
             map: map,
             strokeColor: "#FF0000",
             strokeOpacity: 1.0,
             strokeWeight: 2
           });
+          polylines.push(line);
         }
       }
     });
 
-  } else if (viewMode === "paths") {
+  } else if (viewMode === "paths" && selectedPhone) {
     // 특정 사용자 선택 → Directions API로 실제 도로 경로 표시
-    users = allData;
-    users.forEach(user => {
-      const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-      if (pathPoints.length > 1) {
-        drawPath(pathPoints, null, 'DRIVING'); // 실제 도로 경로
-      }
-    });
+    const user = allData.find(u => u.phone === selectedPhone);
+    if (user && user.path && user.path.length > 1) {
+      const dr = drawUserPath(user);
+      directionsRenderers.push(dr);
+    }
+    users = user ? [user] : [];
   }
 
   updateTableHeader(viewMode);
   renderUserTable(users, viewMode);
 }
 
-    
-// ---------------------- 실제 도로 경로 그리기 ----------------------    
+// ---------------------- 실제 도로 경로 그리기 ----------------------
 function drawUserPath(user) {
-  if (!map || !user.path || user.path.length < 2) return;
-
   const directionsService = new google.maps.DirectionsService();
   const directionsRenderer = new google.maps.DirectionsRenderer({
     map: map,
     polylineOptions: { strokeWeight: 5, strokeOpacity: 1.0 }
   });
 
-  const origin = user.path[0]; // 시발점
-  const destination = user.path[user.path.length - 1]; // 종점
+  const origin = user.path[0];
+  const destination = user.path[user.path.length - 1];
   const waypoints = user.path.slice(1, -1).map(p => ({ location: p }));
 
   directionsService.route(
@@ -645,7 +649,6 @@ function drawUserPath(user) {
       travelMode: 'DRIVING'
     },
     (result, status) => {
-      console.log("Directions API status:", status);
       if (status === "OK") {
         directionsRenderer.setDirections(result);
       } else {
@@ -653,6 +656,8 @@ function drawUserPath(user) {
       }
     }
   );
+
+  return directionsRenderer;
 }
 
 
