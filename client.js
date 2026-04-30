@@ -1,13 +1,13 @@
 /* ---------------------- 전역 변수 ---------------------- */
-let myMarker;                      /* 내 위치 마커 */
-let radarPolygon = null;           /* 레이더 영역 폴리곤 */
-let radarRadiusMeters = 50;        /* 레이더 반경 (기본값 50m) */
-let radarEnabled = true;           /* 레이더 활성화 여부 */
-let pathCoords = [];               /* 경로 좌표 배열 */
-let pathPolyline;                  /* 경로 Polyline */
-let poiMarkers = [];               /* POI 마커 배열 */
-let compassMarkers = [];           /* 나침반 마커 배열 */
-let directionsService, directionsRenderer; /* 길찾기 서비스/렌더러 */
+let myMarker;                      // 내 위치 마커
+let radarPolygon = null;           // 레이더 영역 폴리곤
+let radarRadiusMeters = 50;        // 레이더 반경 (기본값 50m)
+let radarEnabled = true;           // 레이더 활성화 여부
+let pathCoords = [];               // 경로 좌표 배열
+let pathPolyline;                  // 경로 Polyline
+let poiMarkers = [];               // POI 마커 배열
+let compassMarkers = [];           // 나침반 마커 배열
+
 
 /* ---------------------- POI 아이콘 정의 ---------------------- */
 const poiIcons = {
