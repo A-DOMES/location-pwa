@@ -1,3 +1,6 @@
+client.html 수정하기전 마지막 백업
+260430 한번더 백업함
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -18,16 +21,7 @@
   let geoWatchId = null;
   let originalCenter;  // 초기 중심 좌표
   let marker, currentLat, currentLng;
-
-  let myMarker = null;
-  let radarPolygon = null;
-  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-  
-  // ✅ 내부 값은 항상 미터 단위로 저장
-  let radarRadiusMeters = 50; 
-  let radarUnit = "m"; // 표시 단위: m 또는 km
     
- 
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
     markers.forEach(m => m.setMap(null));
@@ -660,59 +654,51 @@ const darkStyle = [
 function initMap() {
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 기본 지도 초기화
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    disableDefaultUI: false
-  });
+  // ✅ 기본은 일반 지도
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: originalCenter,
+        zoom: 7,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: false
+      });
 
-  // ✅ 길찾기 서비스 초기화
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
-
-  // ✅ 위치 추적 시작 (client.js 기능 호출)
-  startTracking();
-
-  // 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });
-        document.body.classList.add("dark-mode");
-      } else {
-        map.setOptions({ styles: lightStyle });
-        document.body.classList.remove("dark-mode");
+      // 라이트/다크 모드 토글
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.addEventListener("change", () => {
+          if (themeToggle.checked) {
+            map.setOptions({ styles: darkStyle });
+            document.body.classList.add("dark-mode");
+          } else {
+            map.setOptions({ styles: lightStyle });
+            document.body.classList.remove("dark-mode");
+          }
+        });
       }
-    });
-  }
 
-  // 일반 지도 버튼
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-      map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
-      if (themeToggle) themeToggle.checked = false;
-      document.body.classList.remove("dark-mode");
-    });
-  }
+      // 일반 지도 버튼
+      const defaultMapBtn = document.getElementById("defaultMapBtn");
+      if (defaultMapBtn) {
+        defaultMapBtn.addEventListener("click", () => {
+          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+          map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
+          if (themeToggle) themeToggle.checked = false;
+          document.body.classList.remove("dark-mode");
+        });
+      }
 
-  // 커스텀 지도 타입 버튼
-  document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-  document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-  document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-  document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+      // 커스텀 지도 타입 버튼
+      document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+      document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
-  // 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, "contextmenu", function () {
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-}
-window.initMap = initMap;
-
+      // 우클릭 시 초기 위치로 복귀
+      google.maps.event.addListener(map, "contextmenu", function () {
+        map.setOptions({ center: originalCenter, zoom: 7 });
+      });
+    }
+    window.initMap = initMap;
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
@@ -777,6 +763,13 @@ window.setCustomInterval = function() {
 // ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
 // ---------------------- 관리자 모드 위치 추적 ----------------------
+let myMarker = null;
+let radarPolygon = null;
+let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
+
+// ✅ 내부 값은 항상 미터 단위로 저장
+let radarRadiusMeters = 50; 
+let radarUnit = "m"; // 표시 단위: m 또는 km
 
 // ✅ 단위 변환 함수 (미터 → 도 단위)
 function convertToDegrees(meters) {
@@ -1417,7 +1410,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
-
 </head>
  
 <body>
@@ -1445,77 +1437,78 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 
-  <!-- 환경설정 패널 -->
-  <div id="settings-panel" class="dropdown-panel">
-    <!-- 라이트/다크 모드 토글 -->
-    <div class="dropdown-item">
-      <strong>벡터지도 (라이트/다크)</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
+<!-- 환경설정 패널 -->
+<div id="settings-panel" class="dropdown-panel">
+  <!-- 라이트/다크 모드 토글 -->
+  <div class="dropdown-item">
+    <strong>벡터지도 (라이트/다크)</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="themeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
 
-    <!-- 일반지도 버튼 -->
-    <div class="dropdown-item">
-      <strong>일반지도</strong><br>
-      <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
-    </div>
+  <!-- 일반지도 버튼 -->
+  <div class="dropdown-item">
+    <strong>일반지도</strong><br>
+    <button id="defaultMapBtn" style="font-size:18px; padding:8px 14px;">일반지도 변환</button>
+  </div>
 
-    <!-- 4가지 지도 추가 -->
-    <div class="dropdown-item">
-      <strong>지도 타입 전환</strong><br>
-      <button id="roadmapBtn">일반 지도</button>
-      <button id="satelliteBtn">위성 지도</button>
-      <button id="hybridBtn">혼합 지도</button>
-      <button id="terrainBtn">지형 지도</button>
-    </div>
+  <!-- 4가지 지도 추가 -->
+  <div class="dropdown-item">
+    <strong>지도 타입 전환</strong><br>
+    <button id="roadmapBtn">일반 지도</button>
+    <button id="satelliteBtn">위성 지도</button>
+    <button id="hybridBtn">혼합 지도</button>
+    <button id="terrainBtn">지형 지도</button>
+  </div>
 
-    <!-- 갱신 주기 설정 -->
-    <div class="dropdown-item">
-      <strong>갱신 주기 설정</strong><br>
-      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-        <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
-        <select id="intervalUnit" style="font-size:18px; padding:6px;">
-          <option value="minutes">분</option>
-          <option value="seconds">초</option>
-        </select>
-        <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
-      </div>
-    </div>
-
-    <!-- 레이더 반경 설정 -->
-    <div class="dropdown-item" id="radar-settings">
-      <strong>레이더 반경 설정</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="radarToggle" checked>
-        <span class="slider"></span>
-      </label>
-      <br>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <input type="range" id="radiusSlider" min="1" max="300000" step="1" value="50" style="flex:1;">
-        <span id="radiusValue">50m</span>
-        <select id="radiusUnit">
-          <option value="m" selected>m</option>
-          <option value="km">km</option>
-        </select>
-      </div>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <button id="btnDecrease" style="font-size:18px; padding:6px 12px;">➖ 줄이기</button>
-        <button id="btnIncrease" style="font-size:18px; padding:6px 12px;">➕ 늘리기</button>
-      </div>
-    </div>
-
-    <!-- 마커 클러스터링 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
-    </div>
-
-    <!-- 최근 50개 데이터만 표시 옵션 -->
-    <div class="dropdown-item">
-      <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+  <!-- 갱신 주기 설정 -->
+  <div class="dropdown-item">
+    <strong>갱신 주기 설정</strong><br>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
+      <select id="intervalUnit" style="font-size:18px; padding:6px;">
+        <option value="minutes">분</option>
+        <option value="seconds">초</option>
+      </select>
+      <button onclick="setCustomInterval()" style="font-size:18px; padding:6px 12px;">적용</button>
     </div>
   </div>
+
+  <!-- 레이더 반경 설정 -->
+  <div class="dropdown-item" id="radar-settings">
+    <strong>레이더 반경 설정</strong><br>
+    <label class="switch">
+      <input type="checkbox" id="radarToggle" checked>
+      <span class="slider"></span>
+    </label>
+    <br>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <input type="range" id="radiusSlider" min="1" max="300000" step="1" value="50" style="flex:1;">
+      <span id="radiusValue">50m</span>
+      <select id="radiusUnit">
+        <option value="m" selected>m</option>
+        <option value="km">km</option>
+      </select>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+      <button id="btnDecrease" style="font-size:18px; padding:6px 12px;">➖ 줄이기</button>
+      <button id="btnIncrease" style="font-size:18px; padding:6px 12px;">➕ 늘리기</button>
+    </div>
+  </div>
+
+  <!-- 마커 클러스터링 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="clusterOption" checked> 마커 클러스터링</label>
+  </div>
+
+  <!-- 최근 50개 데이터만 표시 옵션 -->
+  <div class="dropdown-item">
+    <label><input type="checkbox" id="limitOption" checked> 최근 50개 데이터만 표시</label>
+  </div>
+</div>
+
 
   <!-- 실시간 위치공유 -->
   <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
@@ -1533,6 +1526,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button id="shareBtn">현재 위치 공유</button>
     </div>
   </div>
+
 
   <!-- ✅ 공유 팝업 -->
   <div id="popupMessage" style="display:none; opacity:0;">
@@ -1577,13 +1571,12 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 
-  <!-- ✅ 지도 영역 -->
+   <!-- ✅ 지도 영역 -->
   <div id="map"></div>
 
-  <!-- 메시지 박스 -->
+  <!-- ✅ 메시지 박스 -->
   <div id="message-box"></div>
 
-  
   <!-- MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
@@ -1591,10 +1584,10 @@ document.addEventListener("DOMContentLoaded", () => {
 <script async defer 
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&libraries=places,geometry&callback=initMap">
 </script>
-  
+
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
-  <script src="client.js"></script>   
-    
+  <script src="client.js"></script>
+  
 </body>
 </html>
   
