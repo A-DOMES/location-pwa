@@ -61,7 +61,6 @@ function calculateTotalDistance(points) {
   return total.toFixed(2); // km 단위
 }
 
-
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
     let hash = 0;
@@ -1040,7 +1039,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       const distance = calculateTotalDistance(pathPoints);
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>${distance > 0 ? distance + " km" : "-"}</td>
+        <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
@@ -1050,7 +1049,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       // ✅ current / all 모드: 상태 표시
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
+        <td>상태: ${user.status || "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
@@ -1079,21 +1078,34 @@ window.renderUserTable = function(users, viewMode = "current") {
 };
 
 /* ---------------------- 전체 사용자 내역 패널 ---------------------- */
-function renderAllUsersPanel() {
+function renderAllUsersPanel(viewMode = "all") {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
   tbody.innerHTML = "";
 
   allData.forEach(user => {
     const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${user.phone || "-"}</td>
-      <td>${user.status || "-"}</td>
-      <td>${user.time ? formatToKST(user.time) : "-"}</td>
-      <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-      <td>${user.address || "-"}</td>
-      <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
-    `;
+    if (viewMode === "paths") {
+      const pathPoints = parsePathArray(user.path);
+      const distance = calculateTotalDistance(pathPoints);
+      row.innerHTML = `
+        <td>${user.phone || "-"}</td>
+        <td>이동거리: ${distance > 0 ? distance + " km" : "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+        <td>${user.address || "-"}</td>
+      `;
+    } else {
+      row.innerHTML = `
+        <td>${user.phone || "-"}</td>
+        <td>상태: ${user.status || "-"}</td>
+        <td>${user.time ? formatToKST(user.time) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.address || "-"}</td>
+        <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
+      `;
+    }
     tbody.appendChild(row);
   });
 }
