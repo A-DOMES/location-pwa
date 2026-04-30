@@ -1,6 +1,3 @@
-client.html 현재 모든 기능은 정상작동 중
-현재 도로를 따라 경로지도 그리기를 수정한 파일 5단계로 수정함,
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -38,27 +35,32 @@ let radarEnabled = true;   // ✅ 레이더 on/off 상태 관리
     markers = [];
   }
 
-  // ---------------------- 거리 계산 함수 ----------------------
-  function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371; // 지구 반지름 (km)
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 +
-              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-              Math.sin(dLng/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
+/* ---------------------- 거리 계산 함수 ---------------------- */
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // 지구 반지름 (km)
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+            Math.sin(dLng/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 
-  // ---------------------- 문자열 기반 색상 함수 ----------------------
-  function stringToColor(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-    return "#" + "00000".substring(0, 6 - c.length) + c;
+/* ---------------------- 전체 경로 거리 계산 ---------------------- */
+function calculateTotalDistance(points) {
+  if (!points || points.length < 2) return 0;
+
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += calculateDistance(
+      points[i-1].lat, points[i-1].lng,
+      points[i].lat, points[i].lng
+    );
   }
+  return total.toFixed(2); // km 단위
+}
+
 
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
@@ -515,18 +517,41 @@ function updateLocationBox(user) {
   makeDraggable(locationBox);
 }
    
-// ---------------------- path 배열 변환 ----------------------
+/* ---------------------- path 배열 변환 ---------------------- */
 function parsePathArray(pathArray) {
+  if (!Array.isArray(pathArray)) return [];
+
   const points = [];
-  for (let i = 0; i < pathArray.length; i += 2) {
-    const lat = parseFloat(pathArray[i]);
-    const lng = parseFloat(pathArray[i+1]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      points.push({ lat, lng });
+
+  pathArray.forEach(p => {
+    // 객체 형태 {lat, lng}
+    if (typeof p === "object" && p !== null && "lat" in p && "lng" in p) {
+      points.push({ lat: Number(p.lat), lng: Number(p.lng) });
     }
-  }
+    // 문자열 "lat,lng"
+    else if (typeof p === "string") {
+      const parts = p.split(",");
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0].trim());
+        const lng = parseFloat(parts[1].trim());
+        if (!isNaN(lat) && !isNaN(lng)) {
+          points.push({ lat, lng });
+        }
+      }
+    }
+    // 배열 [lat, lng]
+    else if (Array.isArray(p) && p.length === 2) {
+      const lat = parseFloat(p[0]);
+      const lng = parseFloat(p[1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        points.push({ lat, lng });
+      }
+    }
+  });
+
   return points;
 }
+
 
 // ---------------------- 지도 위의 값 초기화 ----------------------
 function clearMap() {
