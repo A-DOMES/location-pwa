@@ -4,26 +4,11 @@ let map, mode = "current", markers = [], polylines = [], markerCluster, interval
 let previousCoords = {}; // 이전 상태 저장용
 
 /* ---------------------- 데이터 로딩 ---------------------- */
-/async function loadData() {
-/  const response = await fetch("https://script.google.com/macros/s/AKfycby8lOBbOD_aewjEZbJmZ7XjGTLYyNhByQJdfG2C-62st5wXW-UyZgLFU9p5RIQVGPeB/exec");
-/  allData = await response.json();
-/  showMap();
-/}
-
-/* ---------------------- 데이터 로딩 ---------------------- */
-function loadData() {
-  const callbackName = "handleLoadDataResponse";
-  window[callbackName] = function(result) {
-    console.log("데이터 응답:", result);
-    allData = result;   // GAS에서 JSON 배열을 반환한다고 가정
-    showMap();
-  };
-
-  const script = document.createElement("script");
-  script.src = `${CONFIG.ADMIN_URL}?mode=getData&callback=${callbackName}`;
-  document.body.appendChild(script);
+async function loadData() {
+  const response = await fetch("https://script.google.com/macros/s/AKfycby8lOBbOD_aewjEZbJmZ7XjGTLYyNhByQJdfG2C-62st5wXW-UyZgLFU9p5RIQVGPeB/exec");
+  allData = await response.json();
+  showMap();
 }
-
 
 /* ---------------------- 지도 초기화 ---------------------- */
 function clearMap() {
