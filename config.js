@@ -2,10 +2,10 @@
 
 // ✅ 사용자 서버 URL
 const CONFIG = {
-  USER_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/user",
+  USER_URL: "https://script.google.com/macros/s/AKfycbyMq5B-du_-Ac7Jagtq-TuK9rZuUKUkQF6FsOTsDli-66UeaAX0syTuioq6YLO0MFNY/exec",
 
   // ✅ 관리자 서버 URL
-  ADMIN_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/admin"
+  ADMIN_URL: "https://script.google.com/macros/s/AKfycbwIzDhgf40OiEVf-vRAsCtO-Yyf-0F70wOtwwOL3vVFzLw3Scb5Ur216Bq8C4hco7l5eQ/exec"
 }; // ⚠️ 마지막에 세미콜론 꼭 필요
 
 
