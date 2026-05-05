@@ -1,7 +1,7 @@
 // config.js
 
-// ✅ 사용자 서버 URL
-const CONFIG = {
+  // ✅ 사용자 서버 URL
+  const CONFIG = {
   USER_URL: "https://script.google.com/macros/s/AKfycbyDHm4Weai8vQD-atOD-hLlQ7HbZDApNv6SLl3m2GCfvtqqoxJdWhbEYRR5dtEnetzwuQ/exec",
 
   // ✅ 관리자 서버 URL
