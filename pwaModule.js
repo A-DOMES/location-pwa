@@ -5,7 +5,7 @@ let previousCoords = {}; // 이전 상태 저장용
 
 /* ---------------------- 데이터 로딩 ---------------------- */
 async function loadData() {
-  const response = await fetch("https://bold-butterfly-f459.mailsock9.workers.dev/admin");
+  const response = await fetch("https://script.google.com/macros/s/AKfycbwIzDhgf40OiEVf-vRAsCtO-Yyf-0F70wOtwwOL3vVFzLw3Scb5Ur216Bq8C4hco7l5eQ/exec");
   allData = await response.json();
   showMap();
 }
