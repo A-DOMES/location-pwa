@@ -5,8 +5,8 @@ const CONFIG = {
   USER_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/user",
 
   // ✅ 관리자 서버 URL
-  ADMIN_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/admin",
-};
+  ADMIN_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/admin"
+}; // ⚠️ 마지막에 세미콜론 꼭 필요
 
 
   // ✅ client.html (조회용 페이지)
