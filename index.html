@@ -1,231 +1,230 @@
-  <!DOCTYPE html>
-  <html> 
-  <head>
-    <meta charset="UTF-8">
-    <title>관리자 로그인</title>
-    <!-- 📌 폰트 로딩 -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+KR&display=swap" rel="stylesheet">
-    <!-- 📌 Font Awesome 아이콘 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-        font-family: 'Noto Sans KR', 'Roboto', sans-serif;
-      }
+<!DOCTYPE html>
+<html> 
+<head>
+  <meta charset="UTF-8">
+  <title>관리자 로그인</title>
+  <!-- 📌 폰트 로딩 -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <!-- 📌 Font Awesome 아이콘 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+    }
 
-      .input-group {
-        margin-top: 50px; /* 🔧 여기 값을 늘리면 아이디/비밀번호 그룹 전체가 아래로 내려감 */
-      }
-      
-      .login-box {
-        background: #fff;
-        padding: 50px 40px;
-        border-radius: 20px;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-        text-align: center;
-        width: 100%;
-        max-width: 420px;
-        animation: fadeIn 1s ease-in-out;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .login-box h2 {
-        margin-bottom: 30px;
-        color: #2c3e50;
-        font-size: 28px;
-        font-weight: 600;
-      }
-      .login-box label {
-        display: block;
-        text-align: left;
-        font-size: 16px;
-        font-weight: 500;
-        color: #2c3e50;
-        margin-top: 20px;
-      }
-      .login-box label i {
-        margin-right: 8px;
-        vertical-align: middle;
-      }
-      .user-icon {
-        color: #3498db; /* 파란색 사용자 아이콘 */
-      }
-      .lock-icon {
-        color: #27ae60; /* 초록색 자물쇠 아이콘 */
-      }
-      .login-box input {
-        width: 100%;
-        margin-top: 8px;
-        padding: 16px;
-        font-size: 16px;
-        border: 1.5px solid #bdc3c7;
-        border-radius: 10px;
-        transition: border-color 0.3s, box-shadow 0.3s;
-        box-sizing: border-box;
-      }
-      .login-box input:focus {
-        border-color: #2980b9;
-        box-shadow: 0 0 8px rgba(41, 128, 185, 0.3);
-        outline: none;
-      }
-      .login-box button {
-        width: 100%;
-        padding: 16px;
-        margin-top: 50px; /* 🔧 로그인 버튼 위치 미세조정 가능 */
-        background: linear-gradient(to right, #3498db, #2980b9);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        font-size: 18px;
-        font-weight: 500;
-        transition: transform 0.2s, background 0.3s;
-      }
-      .login-box button:hover {
-        background: linear-gradient(to right, #2980b9, #1f6391);
-        transform: scale(1.03);
-      }
-  
-      /* 📌 로그인 성공 모달 */
-      .modal {
-        display: none;
-        position: fixed;
-        z-index: 999;
-        left: 0; top: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.3);
-      }
-      .modal-content {
-        background: #fff;
-        margin: 12% auto;
-        padding: 30px;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 400px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      }
-      .modal-content h2 {
-        font-size: 24px;
-        margin-bottom: 15px;
-        color: #2c3e50;
-      }
-      .modal-content p {
-        font-size: 18px;
-        color: #555;
-      }
-    </style>
+    .input-group {
+      margin-top: 50px; /* 🔧 여기 값을 늘리면 아이디/비밀번호 그룹 전체가 아래로 내려감 */
+    }
+    
+    .login-box {
+      background: #fff;
+      padding: 50px 40px;
+      border-radius: 20px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-box h2 {
+      margin-bottom: 30px;
+      color: #2c3e50;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .login-box label {
+      display: block;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 500;
+      color: #2c3e50;
+      margin-top: 20px;
+    }
+    .login-box label i {
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .user-icon {
+      color: #3498db; /* 파란색 사용자 아이콘 */
+    }
+    .lock-icon {
+      color: #27ae60; /* 초록색 자물쇠 아이콘 */
+    }
+    .login-box input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 16px;
+      font-size: 16px;
+      border: 1.5px solid #bdc3c7;
+      border-radius: 10px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      box-sizing: border-box;
+    }
+    .login-box input:focus {
+      border-color: #2980b9;
+      box-shadow: 0 0 8px rgba(41, 128, 185, 0.3);
+      outline: none;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 50px; /* 🔧 로그인 버튼 위치 미세조정 가능 */
+      background: linear-gradient(to right, #3498db, #2980b9);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 500;
+      transition: transform 0.2s, background 0.3s;
+    }
+    .login-box button:hover {
+      background: linear-gradient(to right, #2980b9, #1f6391);
+      transform: scale(1.03);
+    }
 
-      <!-- PWA 매니페스트 연결 -->
+    /* 📌 로그인 성공 모달 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.3);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 12% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .modal-content h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+    .modal-content p {
+      font-size: 18px;
+      color: #555;
+    }
+  </style>
+
+  <!-- PWA 매니페스트 연결 -->
   <link rel="manifest" href="/location-pwa/manifest.json">
   <meta name="theme-color" content="#2196F3">  
-  </head>
+</head>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/location-pwa/sw.js')
-        .then(reg => console.log('Service Worker registered:', reg))
-        .catch(err => console.error('Service Worker registration failed:', err));
-    }
-  </script>
+<!-- ✅ 서비스 워커 등록 -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/location-pwa/sw.js')
+      .then(reg => console.log('Service Worker registered:', reg))
+      .catch(err => console.error('Service Worker registration failed:', err));
+  }
+</script>
     
-  <body>
-    <!-- 📌 로그인 박스 -->
-    <div class="login-box">
-      <h2>📍 A-DOMES | 관리자 로그인</h2>
-  
-      <!-- ✅ 아이디 입력 -->
-      <div class="input-group">
+<body>
+  <!-- 📌 로그인 박스 -->
+  <div class="login-box">
+    <h2>📍 A-DOMES | 관리자 로그인</h2>
+
+    <!-- ✅ 아이디 입력 -->
+    <div class="input-group">
       <label for="id"><i class="fa fa-user user-icon"></i> 아이디</label>
       <input type="text" id="id" placeholder="아이디를 입력하세요">
-  
+
       <!-- ✅ 비밀번호 입력 -->
       <label for="pw"><i class="fa fa-lock lock-icon"></i> 비밀번호</label>
       <input type="password" id="pw" placeholder="비밀번호를 입력하세요">
-      </div>
-  
-      <!-- ✅ 로그인 버튼 (회원가입 버튼 없음) -->
-      <button onclick="login()">로그인</button>
-    </div>
-  
-    <!-- 📌 로그인 성공 모달 -->
-    <div id="loginModal" class="modal">
-      <div class="modal-content">
-        <h2>✅ 로그인 성공!</h2>
-        <p>잠시 후 이동합니다...</p>
-      </div>
     </div>
 
- 
+    <!-- ✅ 로그인 버튼 (회원가입 버튼 없음) -->
+    <button onclick="login()">로그인</button>
+  </div>
 
-<!-- config.js 먼저 불러오기 -->
-<script src="config.js"></script>
+  <!-- 📌 로그인 성공 모달 -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2>✅ 로그인 성공!</h2>
+      <p>잠시 후 이동합니다...</p>
+    </div>
+  </div>
 
-<script>
-  const USER_API_URL = CONFIG.USER_URL; // 사용자 서버 URL
+  <!-- config.js 먼저 불러오기 -->
+  <script src="config.js"></script>
 
-  function login() {
-    const id = document.getElementById("id").value.trim();
-    const pw = document.getElementById("pw").value.trim();
+  <script>
+    const USER_API_URL = CONFIG.USER_URL; // 사용자 서버 URL
 
-    if (!id || !pw) {
-      alert("⚠️ 아이디와 비밀번호를 입력하세요.");
-      return;
+    function login() {
+      const id = document.getElementById("id").value.trim();
+      const pw = document.getElementById("pw").value.trim();
+
+      if (!id || !pw) {
+        alert("⚠️ 아이디와 비밀번호를 입력하세요.");
+        return;
+      }
+
+      const modal = document.getElementById("loginModal");
+      modal.style.display = "block";
+      modal.querySelector("h2").innerText = "🔑 사용자 서버에 로그인 중입니다...";
+      modal.querySelector("p").innerText = "잠시만 기다려주세요.";
+
+      // ✅ JSONP 방식: script 태그를 동적으로 생성
+      const callbackName = "handleLoginResponse";
+      window[callbackName] = function(result) {
+        console.log("로그인 응답:", result); // ✅ 응답 전체 확인
+        if (result.result === "success") {
+          modal.querySelector("h2").innerText = "✅ 로그인 성공!";
+          modal.querySelector("p").innerText = "잠시 후 이동합니다...";
+      
+          // ✅ 로그인 정보 저장
+          sessionStorage.setItem("loggedIn", "true");
+          sessionStorage.setItem("role", result.role);
+          sessionStorage.setItem("userId", id);
+          sessionStorage.setItem("token", result.token);
+
+          // ✅ 닉네임도 저장 (admin.html에서 자동 입력용)
+          if (result.nickname && result.nickname !== "undefined") {
+            localStorage.setItem("nickname", result.nickname);
+          }
+      
+          setTimeout(() => {
+            if (result.role === "AD") {
+              window.location.href = "admin.html";
+            } else if (result.role === "RU") {
+              window.location.href = "user.html";
+            }
+          }, 1500);
+        } else if (result.result === "blocked") {
+          modal.style.display = "none";
+          alert("🚫 계정이 비활성화되었습니다.");
+        } else {
+          modal.style.display = "none";
+          alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
+        }
+      };
+
+      const script = document.createElement("script");
+      script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
+      document.body.appendChild(script);
     }
 
-    const modal = document.getElementById("loginModal");
-    modal.style.display = "block";
-    modal.querySelector("h2").innerText = "🔑 사용자 서버에 로그인 중입니다...";
-    modal.querySelector("p").innerText = "잠시만 기다려주세요.";
-
-    // ✅ JSONP 방식: script 태그를 동적으로 생성
-    const callbackName = "handleLoginResponse";
-    window[callbackName] = function(result) {
-      console.log("로그인 응답:", result); // ✅ 응답 전체 확인
-      if (result.result === "success") {
-        modal.querySelector("h2").innerText = "✅ 로그인 성공!";
-        modal.querySelector("p").innerText = "잠시 후 이동합니다...";
-    
-        // ✅ 로그인 정보 저장
-        sessionStorage.setItem("loggedIn", "true");
-        sessionStorage.setItem("role", result.role);
-        sessionStorage.setItem("userId", id);
-        sessionStorage.setItem("token", result.token);
-
-        // ✅ 닉네임도 저장 (admin.html에서 자동 입력용)
-        if (result.nickname && result.nickname !== "undefined") {
-          localStorage.setItem("nickname", result.nickname);
-        }
-    
-        setTimeout(() => {
-          if (result.role === "AD") {
-            window.location.href = "admin.html";
-          } else if (result.role === "RU") {
-            window.location.href = "user.html";
-          }
-        }, 1500);
-      } else if (result.result === "blocked") {
-        modal.style.display = "none";
-        alert("🚫 계정이 비활성화되었습니다.");
-      } else {
-        modal.style.display = "none";
-        alert("❌ 로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.");
-      }
-    };
-
-    const script = document.createElement("script");
-    script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
-    document.body.appendChild(script);
-  }
-
-  window.login = login;
-</script>
+    window.login = login;
+  
 
    <!-- ✅ 서비스 워커 등록 -->
   <script>
