@@ -1,12 +1,12 @@
 // config.js
 
-  // ✅ 사용자 서버 URL
-  const CONFIG = {
-    USER_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/user",
-  
-    // ✅ 관리자 서버 URL
-    ADMIN_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/admin",
-  };
+// ✅ 사용자 서버 URL
+const CONFIG = {
+  USER_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/user",
+
+  // ✅ 관리자 서버 URL
+  ADMIN_URL: "https://bold-butterfly-f459.mailsock9.workers.dev/admin",
+};
 
 
   // ✅ client.html (조회용 페이지)
