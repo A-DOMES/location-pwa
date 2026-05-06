@@ -12,120 +12,89 @@
   <link rel="manifest" href="/location-pwa/manifest.json">
   <meta name="theme-color" content="#2196F3">  
   
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-      font-family: 'Noto Sans KR', 'Roboto', sans-serif;
-    }
+<style>
+/* ---------------------- 기본 페이지 스타일 ---------------------- */
+body, html { margin:0; padding:0; height:100%; width:100%; }
 
-    .input-group {
-      margin-top: 50px; /* 🔧 여기 값을 늘리면 아이디/비밀번호 그룹 전체가 아래로 내려감 */
-    }
-    
-    .login-box {
-      background: #fff;
-      padding: 50px 40px;
-      border-radius: 20px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 100%;
-      max-width: 420px;
-      animation: fadeIn 1s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .login-box h2 {
-      margin-bottom: 30px;
-      color: #2c3e50;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .login-box label {
-      display: block;
-      text-align: left;
-      font-size: 16px;
-      font-weight: 500;
-      color: #2c3e50;
-      margin-top: 20px;
-    }
-    .login-box label i {
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-    .user-icon {
-      color: #3498db; /* 파란색 사용자 아이콘 */
-    }
-    .lock-icon {
-      color: #27ae60; /* 초록색 자물쇠 아이콘 */
-    }
-    .login-box input {
-      width: 100%;
-      margin-top: 8px;
-      padding: 16px;
-      font-size: 16px;
-      border: 1.5px solid #bdc3c7;
-      border-radius: 10px;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      box-sizing: border-box;
-    }
-    .login-box input:focus {
-      border-color: #2980b9;
-      box-shadow: 0 0 8px rgba(41, 128, 185, 0.3);
-      outline: none;
-    }
-    .login-box button {
-      width: 100%;
-      padding: 16px;
-      margin-top: 50px; /* 🔧 로그인 버튼 위치 미세조정 가능 */
-      background: linear-gradient(to right, #3498db, #2980b9);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: 500;
-      transition: transform 0.2s, background 0.3s;
-    }
-    .login-box button:hover {
-      background: linear-gradient(to right, #2980b9, #1f6391);
-      transform: scale(1.03);
-    }
+body {
+  display:flex; justify-content:center; align-items:center;
+  height:100vh; width:100vw;
+  background:linear-gradient(135deg,#74ebd5,#ACB6E5);
+  font-family:'Noto Sans KR','Roboto',sans-serif;
+}
 
-    /* 📌 로그인 성공 모달 */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.3);
-    }
-    .modal-content {
-      background: #fff;
-      margin: 12% auto;
-      padding: 30px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    .modal-content h2 {
-      font-size: 24px;
-      margin-bottom: 15px;
-      color: #2c3e50;
-    }
-    .modal-content p {
-      font-size: 18px;
-      color: #555;
-    }
-  </style>
+/* ---------------------- 로그인 박스 ---------------------- */
+.login-box {
+  background:#fff; padding:40px; border-radius:20px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.2);
+  text-align:center; animation:fadeIn 1s ease-in-out;
+}
+
+/* PC 화면: 로그인 박스는 가운데 적당한 크기로 */
+@media (min-width:768px) {
+  .login-box { width:100%; max-width:420px; height:auto; }
+}
+
+/* 모바일 화면: 로그인 박스는 전체 화면 차지 */
+@media (max-width:767px) {
+  .login-box { width:100vw; height:100vh; border-radius:0; }
+}
+
+/* ---------------------- 페이드 인 애니메이션 ---------------------- */
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* ---------------------- 로그인 박스 제목 ---------------------- */
+.login-box h2 { margin-bottom:20px; color:#2c3e50; font-size:28px; font-weight:600; }
+
+/* ---------------------- 입력 및 버튼 그룹 ---------------------- */
+.input-group { margin-top:40px; width:90%; }
+.button-group { margin-top:40px; width:90%; }
+
+/* ---------------------- 입력 라벨 ---------------------- */
+.login-box label { display:block; text-align:left; font-size:16px; font-weight:500; color:#2c3e50; margin-top:25px; }
+.login-box label i { margin-right:8px; vertical-align:middle; }
+
+/* ---------------------- 입력창 ---------------------- */
+.login-box input {
+  width:100%; margin-top:8px; padding:20px; font-size:18px;
+  border:1.5px solid #bdc3c7; border-radius:10px;
+  transition:border-color .3s, box-shadow .3s; box-sizing:border-box;
+}
+.login-box input:focus { border-color:#2980b9; box-shadow:0 0 8px rgba(41,128,185,.3); outline:none; }
+
+/* ---------------------- 버튼 ---------------------- */
+.login-btn,.signup-btn {
+  width:100%; padding:18px; border:none; border-radius:12px;
+  cursor:pointer; font-size:18px; font-weight:500; color:#fff;
+  transition:transform .2s, background .3s;
+}
+.login-btn { margin-bottom:15px; background:linear-gradient(to right,#3498db,#2980b9); }
+.login-btn:hover { background:linear-gradient(to right,#2980b9,#1f6391); transform:scale(1.03); }
+.signup-btn { background:linear-gradient(to right,#2ecc71,#27ae60); }
+.signup-btn:hover { background:linear-gradient(to right,#27ae60,#1e8449); transform:scale(1.03); }
+
+/* ---------------------- 모달 ---------------------- */
+.modal {
+  display:none; position:fixed; z-index:999;
+  left:0; top:0; width:100%; height:100%;
+  background-color:rgba(0,0,0,.3);
+}
+
+/* 모달창: 화면 중앙에 작은 박스로 표시 (PC/모바일 공통) */
+.modal-content {
+  position:relative; top:50%; transform:translateY(-50%);
+  background:#fff; padding:30px; border-radius:12px;
+  width:90%; max-width:400px; text-align:center;
+  box-shadow:0 4px 15px rgba(0,0,0,.3);
+  margin:0 auto;
+}
+.modal-content h2 { font-size:24px; margin-bottom:15px; color:#2c3e50; }
+.modal-content p { font-size:18px; color:#555; }
+
+</style>
 
 </head>   
 <body>
