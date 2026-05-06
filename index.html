@@ -141,25 +141,22 @@
   <div class="login-box">
     <h2>📍 A-DOMES | 관리자 로그인</h2>
 
-    <!-- ✅ 아이디 입력 -->
     <div class="input-group">
       <label for="id"><i class="fa fa-user user-icon"></i> 아이디</label>
       <input type="text" id="id" placeholder="아이디를 입력하세요">
 
-      <!-- ✅ 비밀번호 입력 -->
       <label for="pw"><i class="fa fa-lock lock-icon"></i> 비밀번호</label>
       <input type="password" id="pw" placeholder="비밀번호를 입력하세요">
     </div>
 
-    <!-- ✅ 로그인 버튼 (회원가입 버튼 없음) -->
     <button onclick="login()">로그인</button>
   </div>
 
-  <!-- 📌 로그인 성공 모달 -->
+  <!-- 📌 로그인 모달 -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
-      <h2>✅ 로그인 성공!</h2>
-      <p>잠시 후 이동합니다...</p>
+      <h2>🔑 서버에 로그인 중입니다...</h2>
+      <p>잠시만 기다려주세요.</p>
     </div>
   </div>
 
@@ -167,7 +164,7 @@
   <script src="config.js"></script>
 
   <script>
-    const USER_API_URL = CONFIG.USER_URL; // 사용자 서버 URL
+    const USER_API_URL = CONFIG.USER_URL;
 
     function login() {
       const id = document.getElementById("id").value.trim();
@@ -180,32 +177,26 @@
 
       const modal = document.getElementById("loginModal");
       modal.style.display = "block";
-      modal.querySelector("h2").innerText = "🔑 사용자 서버에 로그인 중입니다...";
+      modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
       modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-      // ✅ JSONP 방식: script 태그를 동적으로 생성
       const callbackName = "handleLoginResponse";
       window[callbackName] = function(result) {
-        console.log("로그인 응답:", result); // ✅ 응답 전체 확인
+        console.log("로그인 응답:", result);
         if (result.result === "success") {
           modal.querySelector("h2").innerText = "✅ 로그인 성공!";
           modal.querySelector("p").innerText = "잠시 후 이동합니다...";
-      
-          // ✅ 로그인 정보 저장
+
           sessionStorage.setItem("loggedIn", "true");
           sessionStorage.setItem("role", result.role);
           sessionStorage.setItem("userId", id);
           sessionStorage.setItem("token", result.token);
+          localStorage.setItem("nickname", result.nickname);
 
-          // ✅ 닉네임도 저장 (admin.html에서 자동 입력용)
-          if (result.nickname && result.nickname !== "undefined") {
-            localStorage.setItem("nickname", result.nickname);
-          }
-      
           setTimeout(() => {
             if (result.role === "AD") {
               window.location.href = "admin.html";
-            } else if (result.role === "RU") {
+            } else {
               window.location.href = "user.html";
             }
           }, 1500);
@@ -224,15 +215,15 @@
     }
 
     window.login = login;
-  
+  </script>
 
-   <!-- ✅ 서비스 워커 등록 -->
+  <!-- ✅ 최신 서비스 워커 등록 -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/location-pwa/sw.js')
+      navigator.serviceWorker.register('/location-app/service-worker.js')
         .then(reg => console.log('Service Worker registered:', reg))
         .catch(err => console.error('Service Worker registration failed:', err));
     }
-  </script>   
+  </script>
 </body>
 </html>
