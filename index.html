@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>관리자 로그인</title>
-  <!-- 📌 모바일 대응을 위한 뷰포트 태그 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 📌 모바일 대응을 위한 뷰포트 태그 (사용자용 수정) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- 📌 폰트 로딩 -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+KR&display=swap" rel="stylesheet">
@@ -18,9 +18,9 @@
 
 <style>  
 /* ---------------------- 기본 페이지 ---------------------- */
-body { display:flex; justify-content:center; align-items:center;
-       height:100vh; background:linear-gradient(135deg,#74ebd5,#ACB6E5);
-       font-family:'Noto Sans KR','Roboto',sans-serif; }
+html, body { height:100%; margin:0; padding:0; }
+.login-box { min-height:100%; }
+
 
 /* ---------------------- 로그인 박스 ---------------------- */
 .login-box { background:#fff; padding:50px 40px; border-radius:20px;
