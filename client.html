@@ -960,24 +960,23 @@ function formatToKST(isoString) {
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
-    
+    row.style.cursor = "pointer";
+
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
     } else {
-      // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -988,10 +987,10 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 마커 하나만 표시
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        clearMarkers(); // 이전 마커 제거
+        clearMarkers();
         const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map,
@@ -1008,7 +1007,7 @@ window.renderUserTable = function(users, viewMode = "current") {
   });
 };
 
-// ✅ 전체 사용자 내역을 패널에 출력하는 함수
+/* ---------------------- 전체 사용자 패널 렌더링 ---------------------- */
 function renderAllUsersPanel() {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
@@ -1028,22 +1027,14 @@ function renderAllUsersPanel() {
   });
 }
 
-    
-/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
+/* ---------------------- 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
-  map.setCenter({ lat: lat, lng: lng });
+  if (!map) return;
+  map.setCenter({ lat, lng });
   map.setZoom(15);
 };
 
-  
-/* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
-const btnLocation = document.getElementById("location-check");
-if (btnLocation) {
-  btnLocation.addEventListener("click", moveToLatLng);
-}
-
-// ---------------------- 최종 위치찾기 코드 정리 ----------------------
-// 위치찾기용 마커 저장 변수
+/* ---------------------- 위치찾기 버튼 이벤트 ---------------------- */
 let locationMarker = null;
 
 window.moveToLatLng = function() {
@@ -1059,40 +1050,28 @@ window.moveToLatLng = function() {
     return;
   }
 
-  // 지도 중심 이동 + 확대
-  map.setCenter({ lat: lat, lng: lng });
+  map.setCenter({ lat, lng });
   map.setZoom(15);
 
-  // 기존 마커 제거
-  if (locationMarker) {
-    locationMarker.setMap(null);
-  }
+  if (locationMarker) locationMarker.setMap(null);
 
-  // 새 마커 표시
   locationMarker = new google.maps.Marker({
-    position: { lat: lat, lng: lng },
-    map: map,
+    position: { lat, lng },
+    map,
     title: "입력한 위치",
     animation: google.maps.Animation.DROP
   });
 
-  // ✅ 메시지 박스 표시
   const msgBox = document.getElementById("message-box");
   msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
   msgBox.style.display = "block";
 
-  // 3초 후 자동 숨김
-  setTimeout(() => {
-    msgBox.style.display = "none";
-  }, 3000);
+  setTimeout(() => { msgBox.style.display = "none"; }, 3000);
 };
 
-// 버튼 이벤트 연결
 document.addEventListener("DOMContentLoaded", () => {
   const btnLocation = document.getElementById("location-check");
-  if (btnLocation) {
-    btnLocation.addEventListener("click", moveToLatLng);
-  }
+  if (btnLocation) btnLocation.addEventListener("click", moveToLatLng);
 });
 
 
@@ -1515,7 +1494,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 
 
-  <!-- 실시간 위치공유 -->
+<!-- 실시간 위치공유 -->
 <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
 
 <!-- ✅ 좌표 창 -->
@@ -1524,7 +1503,6 @@ document.addEventListener("DOMContentLoaded", () => {
     <h3>📍 현 재 좌 표</h3>
     <button id="closeBtn">×</button>
   </div>
-
   <div id="locationContent">
     <div id="loadingMessage">위치 정보를 가져오는 중...</div>
     <span id="latBox"></span>
@@ -1533,7 +1511,6 @@ document.addEventListener("DOMContentLoaded", () => {
     <small id="timeBox"></small>
     <div id="addressBox"></div>
   </div>
-
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
 
@@ -1555,50 +1532,43 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- ✅ 알림음 -->
 <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
 
-  
+<!-- ✅ 사용자 패널 컨테이너 -->
+<div class="panel-container">
+  <div id="left-edge"></div>
+  <div id="right-edge"></div>
 
-  <!-- ✅ 사용자 패널 컨테이너 -->
-  <div class="panel-container">
-    <!-- 끝부분 이벤트 감지용 요소 -->
-    <div id="left-edge"></div>
-    <div id="right-edge"></div>
-
-    <!-- 사용자 정보 패널 -->
-    <div id="user-panel">
-      <div class="panel-header">
-        <h3 id="user-panel-title">사용자 정보</h3>
-        <div class="panel-controls">
-          <button id="minimize-btn">━</button>
-          <button id="maximize-btn">⬜</button>
-          <button id="close-user-panel">✖ 닫기</button>
-        </div>
+  <div id="user-panel">
+    <div class="panel-header">
+      <h3 id="user-panel-title">사용자 정보</h3>
+      <div class="panel-controls">
+        <button id="minimize-btn">━</button>
+        <button id="maximize-btn">⬜</button>
+        <button id="close-user-panel">✖ 닫기</button>
       </div>
-      <div class="panel-content">
-        <div id="path-select-container">
-          <label for="path-user-select">경로 보기 선택:</label>
-          <select id="path-user-select" onchange="updateUserPanelContent('paths')">
-            <option value="all">전체</option>
-          </select>
-        </div>
-        <div id="user-content">
-          <table id="user-table">
-            <thead><tr id="user-table-header"></tr></thead>
-            <tbody id="user-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="resize-handle left"></div>
-      <div class="resize-handle right"></div>
-      <div class="resize-handle top"></div>
-      <div class="resize-handle bottom"></div>
     </div>
+    <div class="panel-content">
+      <div id="path-select-container">
+        <label for="path-user-select">경로 보기 선택:</label>
+        <select id="path-user-select" onchange="updateUserPanelContent('paths')">
+          <option value="all">전체</option>
+        </select>
+      </div>
+      <div id="user-content">
+        <table id="user-table">
+          <thead><tr id="user-table-header"></tr></thead>
+          <tbody id="user-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="resize-handle left"></div>
+    <div class="resize-handle right"></div>
+    <div class="resize-handle top"></div>
+    <div class="resize-handle bottom"></div>
   </div>
+</div>
 
-   <!-- ✅ 지도 영역 -->
-  <div id="map"></div>
-
-  <!-- ✅ 메시지 박스 -->
-  <div id="message-box"></div>
+<!-- ✅ 메시지 박스 -->
+<div id="message-box"></div>
 
   <!-- MarkerClusterer 라이브러리 -->
   <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
