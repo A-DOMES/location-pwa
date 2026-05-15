@@ -35,8 +35,8 @@ input:checked + .slider:before { transform:translateX(26px); }
 #radiusSlider::-webkit-slider-thumb, #radiusSlider::-moz-range-thumb { width:14px; height:14px; background:#666; cursor:pointer; }
 
 /* ---------------------- 좌표창 박스 ---------------------- */
-#locationBox { position:absolute; top:80px; left:50%; transform:translateX(-50%); width:260px; background:rgba(255,255,255,0.25); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:15px 20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.25); font-size:16px; color:#333; text-align:left; z-index:9999; border:2px solid #1976d2; transition:transform 0.3s ease, background 0.3s ease; }
-#locationBox:hover { transform:scale(1.02); background:rgba(255,255,255,0.35); }
+#locationBox { position:absolute; top:80px; left:50%; transform:translateX(-50%); width:260px; background:rgba(255,255,255,0.25); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:15px 20px; border-radius:16px; border:2px solid #1976d2; box-shadow:0 4px 12px rgba(0,0,0,0.25); font-size:16px; color:#333; text-align:left; z-index:9999; transition:transform 0.3s ease, background 0.3s ease; }
+#locationBox:hover { transform:translateX(-50%) translateY(-5px); background:rgba(255,255,255,0.35); box-shadow:0 6px 16px rgba(0,0,0,0.25); }
 
 /* ---------------------- 좌표창 헤더 ---------------------- */
 #locationHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:10px 14px; background:rgba(25,118,210,0.1); border-radius:8px; border:1px solid #1976d2; }
