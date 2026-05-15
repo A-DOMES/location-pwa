@@ -55,60 +55,59 @@
     return "#" + "00000".substring(0, 6 - c.length) + c;
   }
 
-// ---------------------- 데이터 로딩 ----------------------
-async function loadData(token = null) {
-  try {
-    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-    if (token) url += "&token=" + encodeURIComponent(token);
-
-    const response = await fetch(url);
-    allData = await response.json();
-
-    // 드롭다운 갱신
-    populatePathSelect();
-
-    // ✅ 데이터 정상 수신 후 지도 표시
-    showMap();
-
-    // ✅ 위치 정보 박스 갱신
-        if (allData.length > 0) {
-          const user = allData[0]; // 첫 번째 사용자 기준
-          const locationBox = document.getElementById("locationBox");
-          locationBox.innerHTML = `
-            현재 위치: <br>
-            위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-            경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-            주소: ${user.address || "-"} <br>
-            <button id="shareBtn">현재 위치 공유</button>
-          `;
-    
-          const shareBtn = document.getElementById("shareBtn");
-          if (shareBtn) {
-            shareBtn.onclick = async () => {
-              const shareUrl =
-                `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-              await navigator.clipboard.writeText(shareUrl);
-
-          // ✅ 공유 팝업 표시
-          const popup = document.getElementById("popupMessage");
-          popup.style.display = "block";
-          popup.style.opacity = "1";
-          setTimeout(() => {
-            popup.style.opacity = "0";
-            setTimeout(() => { popup.style.display = "none"; }, 2000);
-          }, 3000);
-        };
+  // ---------------------- 데이터 로딩 ----------------------
+  async function loadData(token = null) {
+    try {
+      let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+      if (token) url += "&token=" + encodeURIComponent(token);
+  
+      const response = await fetch(url);
+      allData = await response.json();
+  
+      // 드롭다운 갱신
+      populatePathSelect();
+  
+      // ✅ 데이터 정상 수신 후 지도 표시
+      showMap();
+  
+      // ✅ 위치 정보 박스 갱신
+      if (allData.length > 0) {
+        const user = allData[0]; // 첫 번째 사용자 기준
+  
+        // 로딩 메시지 숨기기
+        document.getElementById("loadingMessage").style.display = "none";
+  
+        // 값 업데이트
+        document.getElementById("latBox").textContent = user.lat ? user.lat.toFixed(6) : "-";
+        document.getElementById("lngBox").textContent = user.lng ? user.lng.toFixed(6) : "-";
+        document.getElementById("timeBox").textContent = user.time ? formatToKST(user.time) : "-";
+        document.getElementById("addressBox").textContent = user.address || "-";
+  
+        // 공유 버튼 이벤트 연결
+        const shareBtn = document.getElementById("shareBtn");
+        if (shareBtn) {
+          shareBtn.onclick = async () => {
+            const shareUrl = `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+            await navigator.clipboard.writeText(shareUrl);
+  
+            // ✅ 공유 팝업 표시
+            const popup = document.getElementById("popupMessage");
+            popup.style.display = "block";
+            popup.style.opacity = "1";
+            setTimeout(() => {
+              popup.style.opacity = "0";
+              setTimeout(() => { popup.style.display = "none"; }, 2000);
+            }, 3000);
+          };
+        }
+      } else {
+        document.getElementById("loadingMessage").textContent = "❌ 위치 데이터를 불러올 수 없습니다.";
       }
-    } else {
-      document.getElementById("locationBox").innerHTML =
-        "❌ 위치 데이터를 불러올 수 없습니다.";
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+      showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
     }
-  } catch (err) {
-    console.error("데이터 로드 실패:", err);
-    showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
-}
-
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -960,23 +959,24 @@ function formatToKST(isoString) {
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
-  if (!tbody) return;
   tbody.innerHTML = "";
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer";
-
+    row.style.cursor = "pointer"; // 손가락 모양 커서
+    
     if (viewMode === "paths") {
+      // ✅ paths 모드: 이동거리 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
     } else {
+      // ✅ current / all 모드: 상태 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.status || "-"}</td>
@@ -987,10 +987,10 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 마커 하나만 표시
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        clearMarkers();
+        clearMarkers(); // 이전 마커 제거
         const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map,
@@ -1007,7 +1007,7 @@ window.renderUserTable = function(users, viewMode = "current") {
   });
 };
 
-/* ---------------------- 전체 사용자 패널 렌더링 ---------------------- */
+// ✅ 전체 사용자 내역을 패널에 출력하는 함수
 function renderAllUsersPanel() {
   const tbody = document.getElementById("user-table-body");
   if (!tbody) return;
@@ -1027,14 +1027,22 @@ function renderAllUsersPanel() {
   });
 }
 
-/* ---------------------- 특정 사용자 위치로 이동 ---------------------- */
+    
+/* ---------------------- 지도에서 특정 사용자 위치로 이동 ---------------------- */
 window.focusOnUser = function(lat, lng) {
-  if (!map) return;
-  map.setCenter({ lat, lng });
+  map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 };
 
-/* ---------------------- 위치찾기 버튼 이벤트 ---------------------- */
+  
+/* ---------------------- 위치찾기 버튼 이벤트 연결 ---------------------- */
+const btnLocation = document.getElementById("location-check");
+if (btnLocation) {
+  btnLocation.addEventListener("click", moveToLatLng);
+}
+
+// ---------------------- 최종 위치찾기 코드 정리 ----------------------
+// 위치찾기용 마커 저장 변수
 let locationMarker = null;
 
 window.moveToLatLng = function() {
@@ -1050,28 +1058,40 @@ window.moveToLatLng = function() {
     return;
   }
 
-  map.setCenter({ lat, lng });
+  // 지도 중심 이동 + 확대
+  map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
-  if (locationMarker) locationMarker.setMap(null);
+  // 기존 마커 제거
+  if (locationMarker) {
+    locationMarker.setMap(null);
+  }
 
+  // 새 마커 표시
   locationMarker = new google.maps.Marker({
-    position: { lat, lng },
-    map,
+    position: { lat: lat, lng: lng },
+    map: map,
     title: "입력한 위치",
     animation: google.maps.Animation.DROP
   });
 
+  // ✅ 메시지 박스 표시
   const msgBox = document.getElementById("message-box");
   msgBox.textContent = `위치가 (${lat.toFixed(5)}, ${lng.toFixed(5)}) 로 이동했습니다.`;
   msgBox.style.display = "block";
 
-  setTimeout(() => { msgBox.style.display = "none"; }, 3000);
+  // 3초 후 자동 숨김
+  setTimeout(() => {
+    msgBox.style.display = "none";
+  }, 3000);
 };
 
+// 버튼 이벤트 연결
 document.addEventListener("DOMContentLoaded", () => {
   const btnLocation = document.getElementById("location-check");
-  if (btnLocation) btnLocation.addEventListener("click", moveToLatLng);
+  if (btnLocation) {
+    btnLocation.addEventListener("click", moveToLatLng);
+  }
 });
 
 
