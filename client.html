@@ -1516,28 +1516,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   <!-- 실시간 위치공유 -->
-  <header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
+<header>📍 A-DOMES | 관리자 위치 공유 시스템</header>
 
-  <!-- ✅ 위치 정보 박스 -->
-  <div id="locationBox">
-    위치 정보를 가져오는 중...
-    <div class="resize-handle left"></div>
-    <div class="resize-handle right"></div>
-    <div class="resize-handle top"></div>
-    <div class="resize-handle bottom"></div>
+<!-- ✅ 좌표 창 -->
+<div id="locationBox">
+  <div id="locationHeader">
+    <h3>📍 현 재 좌 표</h3>
+    <button id="closeBtn">×</button>
+  </div>
+
+  <div id="locationContent">
+    <div id="loadingMessage">위치 정보를 가져오는 중...</div>
+    <span id="latBox"></span>
+    <span id="lngBox"></span>
+    <small id="directionBox"></small>
+    <small id="timeBox"></small>
+    <div id="addressBox"></div>
+  </div>
+
+  <button id="shareBtn">📌 현재 위치 공유</button>
+</div>
+
+<!-- ✅ 좌표창 다시 열기 버튼 -->
+<div id="reopenBtn">현재 좌표 열기</div>
+
+<!-- ✅ 지도 영역 -->
+<div id="map"></div>
+
+<!-- ✅ 좌표 표시 영역 -->
+<div id="locationDisplay"></div>
+
+<!-- ✅ 공유 팝업 -->
+<div id="popupMessage" style="display:none; opacity:0;">
+  📍 현재 위치 링크가 복사되었습니다.<br>
+  원하는 앱에 붙여넣어 공유하세요.
+</div>
+
+<!-- ✅ 알림음 -->
+<audio id="notifySound" src="notify.mp3" preload="auto"></audio>
+
   
-    <!-- 버튼을 감싸는 박스 -->
-    <div class="btnBox">
-      <button id="shareBtn">현재 위치 공유</button>
-    </div>
-  </div>
-
-
-  <!-- ✅ 공유 팝업 -->
-  <div id="popupMessage" style="display:none; opacity:0;">
-    📍 현재 위치 링크가 복사되었습니다.<br>
-    원하는 앱에 붙여넣어 공유하세요.
-  </div>
 
   <!-- ✅ 사용자 패널 컨테이너 -->
   <div class="panel-container">
