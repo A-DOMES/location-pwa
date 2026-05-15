@@ -70,18 +70,13 @@ async function loadData(token = null) {
     if (allData.length > 0) {
       const user = allData[0];
 
-      // 로딩 메시지 숨기기
-      document.getElementById("loadingMessage").style.display = "none";
-
-      // ✅ phone + 현재위치 표시
-      document.getElementById("phoneBox").textContent = user.phone || "알 수 없음";
-
-      // ✅ 값만 갱신
-      document.getElementById("phone").textContent = user.phone || "알 수 없음";
-      document.getElementById("latBox").textContent = user.lat ? user.lat.toFixed(6) : "-";
-      document.getElementById("lngBox").textContent = user.lng ? user.lng.toFixed(6) : "-";
-      document.getElementById("timeBox").textContent = user.time ? formatToKST(user.time) : "-";
-      document.getElementById("addressBox").textContent = user.address || "-";
+      // ✅ 기존 locationBox 안의 텍스트만 갱신
+      const locationBox = document.getElementById("locationBox");
+      locationBox.firstChild.textContent =
+        `${user.phone || "알 수 없음"} 현재위치\n` +
+        `위도: ${user.lat ? user.lat.toFixed(6) : "-"}\n` +
+        `경도: ${user.lng ? user.lng.toFixed(6) : "-"}\n` +
+        `주소: ${user.address || "-"}`;
 
       // 공유 버튼 이벤트 연결
       const shareBtn = document.getElementById("shareBtn");
@@ -91,16 +86,13 @@ async function loadData(token = null) {
           await navigator.clipboard.writeText(shareUrl);
 
           const popup = document.getElementById("popupMessage");
-          popup.style.display = "block";
-          popup.style.opacity = "1";
-          setTimeout(() => {
-            popup.style.opacity = "0";
-            setTimeout(() => { popup.style.display = "none"; }, 2000);
-          }, 3000);
+          popup.classList.add("show");
+          setTimeout(() => popup.classList.remove("show"), 3000);
         };
       }
     } else {
-      document.getElementById("loadingMessage").textContent = "❌ 위치 데이터를 불러올 수 없습니다.";
+      document.getElementById("locationBox").firstChild.textContent =
+        "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
     console.error("데이터 로드 실패:", err);
