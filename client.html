@@ -64,32 +64,31 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
-    // 드롭다운 갱신
     populatePathSelect();
-
-    // ✅ 데이터 정상 수신 후 지도 표시
     showMap();
 
-    // ✅ 위치 정보 박스 갱신
-        if (allData.length > 0) {
-          const user = allData[0]; // 첫 번째 사용자 기준
-          const locationBox = document.getElementById("locationBox");
-          locationBox.innerHTML = `
-            현재 위치: <br>
-            위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-            경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-            주소: ${user.address || "-"} <br>
-            <button id="shareBtn">현재 위치 공유</button>
-          `;
-    
-          const shareBtn = document.getElementById("shareBtn");
-          if (shareBtn) {
-            shareBtn.onclick = async () => {
-              const shareUrl =
-                `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-              await navigator.clipboard.writeText(shareUrl);
+    if (allData.length > 0) {
+      const user = allData[0];
 
-          // ✅ 공유 팝업 표시
+      // 로딩 메시지 숨기기
+      document.getElementById("loadingMessage").style.display = "none";
+
+      // ✅ phone + 현재위치 표시
+      document.getElementById("phoneBox").textContent = user.phone || "알 수 없음";
+
+      // ✅ 값만 갱신
+      document.getElementById("latBox").textContent = user.lat ? user.lat.toFixed(6) : "-";
+      document.getElementById("lngBox").textContent = user.lng ? user.lng.toFixed(6) : "-";
+      document.getElementById("timeBox").textContent = user.time ? formatToKST(user.time) : "-";
+      document.getElementById("addressBox").textContent = user.address || "-";
+
+      // 공유 버튼 이벤트 연결
+      const shareBtn = document.getElementById("shareBtn");
+      if (shareBtn) {
+        shareBtn.onclick = async () => {
+          const shareUrl = `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+          await navigator.clipboard.writeText(shareUrl);
+
           const popup = document.getElementById("popupMessage");
           popup.style.display = "block";
           popup.style.opacity = "1";
@@ -100,14 +99,14 @@ async function loadData(token = null) {
         };
       }
     } else {
-      document.getElementById("locationBox").innerHTML =
-        "❌ 위치 데이터를 불러올 수 없습니다.";
+      document.getElementById("loadingMessage").textContent = "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
     console.error("데이터 로드 실패:", err);
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
+
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -1525,14 +1524,18 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
   <div id="locationContent">
     <div id="loadingMessage">위치 정보를 가져오는 중...</div>
-    <span id="latBox"></span>
-    <span id="lngBox"></span>
-    <small id="directionBox"></small>
-    <small id="timeBox"></small>
-    <div id="addressBox"></div>
+
+    <!-- ✅ phone 값 + 현재위치 -->
+    <div>📱 <span id="phoneBox">-</span> 현재위치</div>
+
+    <div>🌐 위도: <span id="latBox">-</span></div>
+    <div>🌐 경도: <span id="lngBox">-</span></div>
+    <div>🕒 시간: <span id="timeBox">-</span></div>
+    <div>🏠 주소: <span id="addressBox">-</span></div>
   </div>
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
+
 
 <!-- ✅ 좌표창 다시 열기 버튼 -->
 <div id="reopenBtn">현재 좌표 열기</div>
