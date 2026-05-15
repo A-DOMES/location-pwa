@@ -1,3 +1,5 @@
+관리자 cllent.html 원본코드 수정1
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -64,34 +66,43 @@ async function loadData(token = null) {
     const response = await fetch(url);
     allData = await response.json();
 
+    // 드롭다운 갱신
     populatePathSelect();
+
+    // ✅ 데이터 정상 수신 후 지도 표시
     showMap();
 
-    if (allData.length > 0) {
-      const user = allData[0];
+    // ✅ 위치 정보 박스 갱신
+        if (allData.length > 0) {
+          const user = allData[0]; // 첫 번째 사용자 기준
+          const locationBox = document.getElementById("locationBox");
+          locationBox.innerHTML = `
+            현재 위치: <br>
+            위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+            경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+            주소: ${user.address || "-"} <br>
+            <button id="shareBtn">현재 위치 공유</button>
+          `;
+    
+          const shareBtn = document.getElementById("shareBtn");
+          if (shareBtn) {
+            shareBtn.onclick = async () => {
+              const shareUrl =
+                `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+              await navigator.clipboard.writeText(shareUrl);
 
-      // ✅ 기존 locationBox 안의 텍스트만 갱신
-      const locationBox = document.getElementById("locationBox");
-      locationBox.firstChild.textContent =
-        `${user.phone || "알 수 없음"} 현재위치\n` +
-        `위도: ${user.lat ? user.lat.toFixed(6) : "-"}\n` +
-        `경도: ${user.lng ? user.lng.toFixed(6) : "-"}\n` +
-        `주소: ${user.address || "-"}`;
-
-      // 공유 버튼 이벤트 연결
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl = `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-          await navigator.clipboard.writeText(shareUrl);
-
+          // ✅ 공유 팝업 표시
           const popup = document.getElementById("popupMessage");
-          popup.classList.add("show");
-          setTimeout(() => popup.classList.remove("show"), 3000);
+          popup.style.display = "block";
+          popup.style.opacity = "1";
+          setTimeout(() => {
+            popup.style.opacity = "0";
+            setTimeout(() => { popup.style.display = "none"; }, 2000);
+          }, 3000);
         };
       }
     } else {
-      document.getElementById("locationBox").firstChild.textContent =
+      document.getElementById("locationBox").innerHTML =
         "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
@@ -1517,14 +1528,11 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
   <div id="locationContent">
     <div id="loadingMessage">위치 정보를 가져오는 중...</div>
-
-    <!-- ✅ phone 값 + 현재위치 -->
-    <div>📱 <span id="phoneBox">-</span> 현재위치</div>
-
-    <div>🌐 위도: <span id="latBox">-</span></div>
-    <div>🌐 경도: <span id="lngBox">-</span></div>
-    <div>🕒 시간: <span id="timeBox">-</span></div>
-    <div>🏠 주소: <span id="addressBox">-</span></div>
+    <span id="latBox"></span>
+    <span id="lngBox"></span>
+    <small id="directionBox"></small>
+    <small id="timeBox"></small>
+    <div id="addressBox"></div>
   </div>
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
