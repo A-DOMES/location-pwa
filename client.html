@@ -71,24 +71,23 @@ async function loadData(token = null) {
     showMap();
 
     // ✅ 위치 정보 박스 갱신
-    if (allData.length > 0) {
-      const user = allData[0]; // 첫 번째 사용자 기준
-
-      // 로딩 메시지 숨기기
-      document.getElementById("loadingMessage").style.display = "none";
-
-      // 값 업데이트 (구조는 유지)
-      document.getElementById("latBox").textContent = user.lat ? user.lat.toFixed(6) : "-";
-      document.getElementById("lngBox").textContent = user.lng ? user.lng.toFixed(6) : "-";
-      document.getElementById("timeBox").textContent = user.time ? formatToKST(user.time) : "-";
-      document.getElementById("addressBox").textContent = user.address || "-";
-
-      // 공유 버튼 이벤트 연결
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl = `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-          await navigator.clipboard.writeText(shareUrl);
+        if (allData.length > 0) {
+          const user = allData[0]; // 첫 번째 사용자 기준
+          const locationBox = document.getElementById("locationBox");
+          locationBox.innerHTML = `
+            현재 위치: <br>
+            위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+            경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+            주소: ${user.address || "-"} <br>
+            <button id="shareBtn">현재 위치 공유</button>
+          `;
+    
+          const shareBtn = document.getElementById("shareBtn");
+          if (shareBtn) {
+            shareBtn.onclick = async () => {
+              const shareUrl =
+                `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+              await navigator.clipboard.writeText(shareUrl);
 
           // ✅ 공유 팝업 표시
           const popup = document.getElementById("popupMessage");
@@ -101,14 +100,14 @@ async function loadData(token = null) {
         };
       }
     } else {
-      document.getElementById("loadingMessage").textContent = "❌ 위치 데이터를 불러올 수 없습니다.";
+      document.getElementById("locationBox").innerHTML =
+        "❌ 위치 데이터를 불러올 수 없습니다.";
     }
   } catch (err) {
     console.error("데이터 로드 실패:", err);
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
