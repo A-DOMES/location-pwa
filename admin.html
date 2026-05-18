@@ -7,127 +7,33 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 18px;
-      background-color: #f0f4f8;
-      margin: 0;
-      color: #333;
-    }
-    .main-card {
-      border: 2px solid #1976d2;
-      border-radius: 12px;
-      background: #fff;
-      max-width: 900px;
-      width: 100%;
-      padding: 20px;
-      margin: 20px auto;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-    header {
-      background-color: #1976d2;
-      padding: 10px;
-      text-align: center;
-      border-radius: 8px;
-      margin-bottom: 14px;
-    }
-    header h2 {
-      font-size: 28px;
-      margin: 0;
-      font-weight: bold;
-      color: #fff;
-    }
-    .info-box {
-      border: 2px solid #1976d2;
-      border-radius: 10px;
-      background-color: #e3f2fd;
-      padding: 16px;
-      margin: 16px 0;
-      font-size: 20px;
-      line-height: 1.5;
-    }
-    .info-box h3 {
-      margin: 2px 0;
-      color: #1565c0;
-      font-size: 20px;
-    }
-    .warning {
-      display: block;
-      margin-top: 4px;
-      font-size: 18px;
-      color: #d32f2f;
-      font-weight: bold;
-      white-space: nowrap;
-    }
+    body { font-family: Arial, sans-serif; font-size: 18px; background:#f0f4f8; margin:0; color:#333;
+           display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:12px; }
+    .main-card { border:2px solid #1976d2; border-radius:12px; background:#fff; max-width:900px; width:100%;
+                 padding:20px; box-shadow:0 6px 16px rgba(0,0,0,0.15); }
+    header { background:#1976d2; padding:10px; text-align:center; border-radius:8px; margin-bottom:14px; }
+    header h2 { font-size:28px; margin:0; font-weight:bold; color:#fff; }
+    .info-box { border:2px solid #1976d2; border-radius:10px; background:#e3f2fd; padding:16px; margin:16px 0;
+                font-size:20px; line-height:1.5; }
+    .info-box h3 { margin:2px 0; color:#1565c0; font-size:20px; }
+    .warning { display:block; margin-top:4px; font-size:18px; color:#d32f2f; font-weight:bold; white-space:nowrap; }
 
-    /* 입력창 + 지도 버튼 그룹 */
-    .input-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    /* 텍스트박스: 현재 크기 유지 + 우측으로 살짝 이동 */
-    input[type="text"] {
-      margin-left: 16px;   /* 좌측에서 살짝 띄워서 우측으로 이동한 효과 */
-      /* 필요에 따라 15px, 20px 등으로 조정 가능 */
-      height: 40px;
-      font-size: 18px;
-      padding: 8px;
-      border: 2px solid #1976d2;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    .map-btn {
-      width: 90px;
-      height: 90px;
-      cursor: pointer;
-    }
-    .map-btn.hidden {
-      display: none;
-      pointer-events: none;
-    }
+    .input-group { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    input[type="text"] { margin-left:16px; height:40px; font-size:18px; padding:8px; border:2px solid #1976d2;
+                         border-radius:6px; box-sizing:border-box}
 
-    /* 위치 전송 / 해제 버튼 */
-    #sendBtn, #stopBtn {
-      width: 100%;
-      height: 50px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: white;
-      margin-bottom: 6px;
-    }
-    #sendBtn {
-      background: linear-gradient(to bottom, #42a5f5, #1976d2);
-    }
-    #stopBtn {
-      background: linear-gradient(to bottom, #ef5350, #f44336);
-      margin-top: 4px;   /* 해제 버튼을 조금 더 아래로 */
-    }
+    .map-btn { width:90px; height:90px; cursor:pointer; }
+    
+    #sendBtn, #stopBtn { width:100%; height:50px; font-size:18px; border:none; border-radius:8px; cursor:pointer;
+                         color:white; margin-bottom:6px; }
+    #sendBtn { background:linear-gradient(to bottom,#42a5f5,#1976d2); }
+    #stopBtn { background:linear-gradient(to bottom,#ef5350,#f44336); margin-top:4px; }
 
-    /* 모달창 */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.4);
-    }
-    .modal-content {
-      background-color: #fefefe;
-      margin: 15% auto;
-      padding: 20px;
-      border: 2px solid #2196F3;
-      border-radius: 10px;
-      width: 80%;
-      max-width: 400px;
-      text-align: center;
-      font-size: 18px;
-      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-    }
+    .modal { position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:1000; }
+    .modal-content { background:#fefefe; padding:20px; border:2px solid #2196F3; border-radius:10px; width:80%;
+                     max-width:400px; text-align:center; font-size:18px;
+                     background:linear-gradient(135deg,#e3f2fd,#bbdefb); box-shadow:0 6px 16px rgba(0,0,0,0.2);
+                     margin:50% auto; }
   </style>
 </head>
 
@@ -136,16 +42,19 @@
   <header><h2>A-DOMES | 관리자 화면</h2></header>
 
   <!-- 입력창 + 버튼 -->
-  <form id="locationForm" method="POST">
-    <div class="input-group">
-      <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden; pointer-events:none;">
-        <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-      </a>
-      <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
-    </div>
-    <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-    <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-  </form>
+  <section class="info-box">
+    <form id="locationForm" method="POST">
+      <div class="input-group">
+        <!-- ✅ 처음엔 숨김 -->
+        <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden;">
+          <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+        </a>
+        <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
+      </div>
+      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+    </form>
+  </section>
 
   <!-- 앱 목적/주의사항 -->
   <section class="info-box">
