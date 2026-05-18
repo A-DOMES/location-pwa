@@ -39,10 +39,11 @@ input:checked + .slider:before { transform:translateX(26px); }
 #locationBox:hover { transform:translateX(-50%) translateY(-5px); background:rgba(255,255,255,0.35); box-shadow:0 6px 16px rgba(0,0,0,0.25); }
 
 /* ---------------------- 좌표창 헤더 ---------------------- */
-#locationHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:10px 14px; background:rgba(25,118,210,0.1); border-radius:8px; border:1px solid #1976d2; }
-#locationHeader h3 { font-size:18px; font-weight:bold; color:#1976d2; margin:0; } /* 📍 아이콘 포함 글씨 크기 줄임 */
-#closeBtn { background:white; border:2px solid #1976d2; border-radius:50%; width:24px; height:24px; font-size:14px; font-weight:bold; cursor:pointer; color:#1976d2; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform 0.2s ease, background 0.3s ease; } /* × 아이콘 크기 줄임 */
+#locationHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:10px 14px; background:rgba(25,118,210,0.1); border-radius:8px; border:1px solid #1976d2; position:relative; } 
+#locationHeader h3 { font-size:18px; font-weight:bold; color:#1976d2; margin:0; } 
+#closeBtn { position:absolute; top:8px; right:8px; background:white; border:2px solid #1976d2; border-radius:50%; width:24px; height:24px; font-size:14px; font-weight:bold; cursor:pointer; color:#1976d2; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform 0.2s ease, background 0.3s ease; } 
 #closeBtn:hover { background:#f0f4f8; transform:scale(1.1); }
+
 
 /* ---------------------- 좌표창 내용 ---------------------- */
 #locationContent { font-family:'Segoe UI',Arial,sans-serif; color:#333; text-align:left; }
