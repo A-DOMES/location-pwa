@@ -44,7 +44,6 @@ input:checked + .slider:before { transform:translateX(26px); }
 #closeBtn { position:absolute; top:8px; right:8px; background:white; border:2px solid #1976d2; border-radius:50%; width:24px; height:24px; font-size:14px; font-weight:bold; cursor:pointer; color:#1976d2; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform 0.2s ease, background 0.3s ease; } 
 #closeBtn:hover { background:#f0f4f8; transform:scale(1.1); }
 
-
 /* ---------------------- 좌표창 내용 ---------------------- */
 #locationContent { font-family:'Segoe UI',Arial,sans-serif; color:#333; text-align:left; }
 #latBox, #lngBox { display:block; font-size:16px; font-weight:bold; color:#d32f2f; margin-top:5px; } /* 위도/경도 글씨 크기 줄임 */
