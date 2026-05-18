@@ -60,33 +60,26 @@
       white-space: nowrap;
     }
 
-    /* 텍스트박스 */
+    /* 입력창 + 지도 버튼 그룹 */
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    /* 텍스트박스: 현재 크기 유지 + 우측으로 살짝 이동 */
     input[type="text"] {
-      width: 400px;
-      height: 30px;
-      font-size: 20px;
+      margin-left: 16px;
+      height: 40px;
+      font-size: 18px;
       padding: 8px;
-      margin-left: 140px;
-      margin-bottom: 5px;
       border: 2px solid #1976d2;
       border-radius: 6px;
-      display: block;
+      box-sizing: border-box;
     }
-
-    /* 버튼 그룹 */
-    .button-group {
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
-      margin-left: 1px;
-      margin-top: 10px;
-      gap: 40px;
-    }
-
-    /* 지도 버튼 */
     .map-btn {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       cursor: pointer;
     }
     .map-btn.hidden {
@@ -96,16 +89,22 @@
 
     /* 위치 전송 / 해제 버튼 */
     #sendBtn, #stopBtn {
-      width: 200px;
+      width: 100%;
       height: 50px;
-      font-size: 20px;
+      font-size: 18px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       color: white;
+      margin-bottom: 6px;
     }
-    #sendBtn { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
-    #stopBtn { background: linear-gradient(to bottom, #ef5350, #f44336); }
+    #sendBtn {
+      background: linear-gradient(to bottom, #42a5f5, #1976d2);
+    }
+    #stopBtn {
+      background: linear-gradient(to bottom, #ef5350, #f44336);
+      margin-top: 4px;   /* 해제 버튼을 조금 더 아래로 */
+    }
 
     /* 모달창 */
     .modal {
@@ -137,15 +136,14 @@
 
   <!-- 입력창 + 버튼 -->
   <form id="locationForm" method="POST">
-    <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
-    <div class="button-group">
-      <!-- ✅ 처음엔 숨김 -->
+    <div class="input-group">
       <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden; pointer-events:none;">
         <img src="btn-current.png" alt="지도 버튼" class="map-btn">
       </a>
-      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+      <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
     </div>
+    <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+    <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
   </form>
 
   <!-- 앱 목적/주의사항 -->
