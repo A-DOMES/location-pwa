@@ -52,27 +52,30 @@
     }
     .info-box h3 {
       margin-top: 2px;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
       color: #1565c0;
       font-size: 20px;
     }
+    .info-box p {
+      margin-top: 2px;
+      margin-bottom: 8px;
+    }
     .warning {
       display: block;
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: 18px;
       color: #d32f2f;
       font-weight: bold;
       white-space: nowrap;
     }
 
-    /* 입력창 + 버튼 그룹 */
+    /* 입력창 + 지도 버튼 그룹 */
     .input-group {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 12px;
     }
-
     /* 텍스트박스: 사용자용과 동일하게 */
     input[type="text"] {
       margin-left: 16px;
@@ -84,8 +87,7 @@
       box-sizing: border-box;
       flex: 1;
     }
-
-    /* 지도 버튼: 초기에는 숨김, 성공 시 JS로 표시 */
+    /* 지도 버튼: 초기 숨김, 성공 시 표시 */
     .map-btn {
       width: 90px;
       height: 90px;
@@ -152,40 +154,43 @@
 </head>
 
 <body>
-  <div class="main-card">
-    <header>
-      <h2>A-DOMES | 관리자 화면</h2>
-    </header>
+<div class="main-card">
+  <header>
+    <h2>A-DOMES | 관리자 화면</h2>
+  </header>
 
-    <!-- 버튼 영역 (상단) -->
-    <section class="info-box">
-      <form id="locationForm" method="POST">
-        <div class="input-group">
-          <!-- ✅ 처음엔 숨김, 위치전송 성공 시 나타남 -->
-          <a href="client.html" target="_blank" id="mapBtn">
-            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-          </a>
-          <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
-        </div>
-        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-        <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-      </form>
-    </section>
+  <!-- 입력창 + 버튼 (상단) -->
+  <section class="info-box">
+    <form id="locationForm" method="POST">
+      <div class="input-group">
+        <a href="client.html" target="_blank" id="mapBtn">
+          <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+        </a>
+        <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
+      </div>
+      <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+      <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
+    </form>
+  </section>
 
-    <!-- 앱 목적/주의사항 (아래로 이동) -->
-    <section class="info-box">
-      <h3>앱 목적(관리자)</h3>
-      <p>이 앱은 현장의 위치 정보를 기록하고 관리자가 회원들의 위치를 확인하기 위해 만들어졌습니다.</p>
+  <!-- 앱 목적 + 주의사항 (아래로 이동) -->
+  <section class="info-box">
+    <h3>앱 목적(관리자)</h3>
+    <p>
+      이 앱은 현장의 위치 정보를 기록하고 관리자가 회원들의 위치를 확인하기 위해 만들어졌습니다.
+    </p>
 
-      <h3>사용 방법(주의사항)</h3>
-      <p>
-        입력란의 값은 고유 식별자입니다.<br>
-        위치 전송 버튼을 누르면 현재 위치가 서버에 기록되며 자동 추적됩니다.<br>
-        화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
-      </p>
-      <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
-    </section>
-  </div>
+    <h3>사용 방법(주의사항)</h3>
+    <p>
+      입력란의 값은 고유 식별자입니다.<br>
+      위치 전송 버튼을 누르면 현재 위치가 서버에 기록되며 자동 추적됩니다.<br>
+      화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
+    </p>
+    <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
+  </section>
+
+  <div id="map"></div>
+</div>
 
 
 <!-- ✅ CONFIG 불러오기 -->
