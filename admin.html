@@ -6,35 +6,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
 
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 18px; background:#f0f4f8; margin:0; color:#333;
-           display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:12px; }
-    .main-card { border:2px solid #1976d2; border-radius:12px; background:#fff; max-width:900px; width:100%;
-                 padding:20px; box-shadow:0 6px 16px rgba(0,0,0,0.15); }
-    header { background:#1976d2; padding:10px; text-align:center; border-radius:8px; margin-bottom:14px; }
-    header h2 { font-size:28px; margin:0; font-weight:bold; color:#fff; }
-    .info-box { border:2px solid #1976d2; border-radius:10px; background:#e3f2fd; padding:16px; margin:16px 0;
-                font-size:20px; line-height:1.5; }
-    .info-box h3 { margin:2px 0; color:#1565c0; font-size:20px; }
-    .warning { display:block; margin-top:4px; font-size:18px; color:#d32f2f; font-weight:bold; white-space:nowrap; }
-
-    .input-group { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-    input[type="text"] { width: 180px; margin-left:16px; height:40px; font-size:18px; padding:8px; border:2px solid #1976d2;
-                         border-radius:6px; box-sizing:border-box}
-
-    .map-btn { width:90px; height:90px; cursor:pointer; }
+<style>
+/* 전체 body 기본 스타일 (PC용) */
+    body {
+      font-family: Arial, sans-serif;   /* 글꼴 */
+      font-size: 18px;                  /* 기본 글자 크기 */
+      background-color: #f0f4f8;        /* 배경색 */
+      margin: 0;
+      color: #333;                      /* 글자색 */
+      display: flex;                    /* 중앙 정렬을 위한 flex */
+      justify-content: center;          /* 가로 중앙 */
+      align-items: center;              /* ✅ PC에서는 세로 중앙 */
+      min-height: 100vh;                /* 화면 전체 높이 */
+      padding: 12px;                    /* 여백 */
+    }
     
-    #sendBtn, #stopBtn { width:100%; height:50px; font-size:18px; border:none; border-radius:8px; cursor:pointer;
-                         color:white; margin-bottom:6px; }
-    #sendBtn { background:linear-gradient(to bottom,#42a5f5,#1976d2); }
-    #stopBtn { background:linear-gradient(to bottom,#ef5350,#f44336); margin-top:4px; }
+    /* 메인 카드 영역 */
+    .main-card {
+      border: 2px solid #1976d2;
+      border-radius: 12px;
+      background: #fff;
+      max-width: 520px;   /* ✅ PC에서는 널찍하게 */
+      width: 100%;         /* ✅ 화면 폭의 80% */
+      padding: 20px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
 
-    .modal { position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:1000; }
-    .modal-content { background:#fefefe; padding:20px; border:2px solid #2196F3; border-radius:10px; width:80%;
-                     max-width:400px; text-align:center; font-size:18px;
-                     background:linear-gradient(135deg,#e3f2fd,#bbdefb); box-shadow:0 6px 16px rgba(0,0,0,0.2);
-                     margin:50% auto; }
-  </style>
+  /* 헤더 영역 */
+  header {
+    background-color: #1976d2;        /* 파란색 배경 */
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+
+  header h2 {
+    font-size: 24px;
+    margin: 0;
+    font-weight: bold;
+    color: #fff;                      /* 흰색 글자 */
+  }
+
+  /* 정보 박스 */
+  .info-box {
+    border: 2px solid #1976d2;
+    border-radius: 10px;
+    background-color: #e3f2fd;        /* 연한 파란색 배경 */
+    padding: 14px;
+    margin: 14px 0;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  .info-box h3 {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    color: #1565c0;                   /* 진한 파란색 글자 */
+    font-size: 18px;
+  }
+
+  .info-box p {
+    margin-top: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* 설명 텍스트 */
+  .desc {
+    display: block;
+    margin-top: 6px;
+    font-size: 15px;
+  }
+
+  /* 경고 텍스트 */
+  .warning {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+    color: #d32f2f;                   /* 빨간색 글자 */
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  /* 입력창 + 지도 버튼 그룹 */
+  .input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* 입력창 스타일 */
+  input[type="text"] {
+    margin-left: 50px;                /* 좌측 여백 (PC용) */
+    width: 350px;                     /* 입력창 폭 */
+    height: 40px;
+    font-size: 18px;
+    padding: 8px;
+    border: 2px solid #1976d2;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+
+  /* 지도 버튼 */
+  .map-btn {
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+  }
+
+  /* 위치 전송 / 해제 버튼 */
+  #sendBtn, #stopBtn {
+    margin-left: 0;
+    margin-right: auto;
+    width: 480px;                     /* 입력창과 폭 맞춤 */
+    height: 50px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  #sendBtn {
+    background: linear-gradient(to bottom, #42a5f5, #1976d2); /* 파란색 그라데이션 */
+  }
+
+  #stopBtn {
+    background: linear-gradient(to bottom, #ef5350, #f44336); /* 빨간색 그라데이션 */
+    margin-top: 4px;
+  }
+
+  /* 모달창 전체 영역 (기본: PC용) */
+  .modal {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.4); /* 반투명 배경 */
+    z-index: 1000;
+    display: flex;
+    justify-content: center;           /* 가로 중앙 */
+    align-items: center;               /* ✅ PC에서는 화면 중앙 */
+  }
+
+  /* 모달창 내용 (PC용) */
+  .modal-content {
+    background-color: #fefefe;
+    padding: 14px;
+    border: 2px solid #2196F3;
+    border-radius: 10px;
+    width: 80%;                        /* ✅ PC에서는 크게 */
+    max-width: 700px;                  /* ✅ 폭 제한 넓게 */
+    text-align: center;
+    font-size: 18px;                   /* ✅ 글자도 크게 */
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb); /* 파란색 그라데이션 */
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    margin: 0 auto;
+  }
+
+  /* 모바일 대응 */
+  @media (max-width:767px) {
+    header h2 { font-size: 22px; }
+    .info-box { font-size: 15px; }
+    .map-btn { width: 60px; height: 60px; }
+
+    input[type="text"] {
+      font-size: 14px;
+      height: 32px;
+      width: 100%;       /* 모바일에서는 꽉 채움 */
+      max-width: none;
+      margin-left: 20px; /* 모바일에서는 좌측 여백 줄임 */
+      margin-right: 0;
+    }
+
+    #sendBtn, #stopBtn {
+      font-size: 14px;
+      height: 42px;
+      width: 100%;       /* 모바일에서는 버튼도 꽉 채움 */
+      max-width: none;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .warning { font-size: 14px; }
+
+    .modal {
+      align-items: flex-start;         /* ✅ 모바일에서는 위쪽 기준 */
+    }
+
+    .modal-content {
+      margin-top: 100px;               /* ✅ 모바일에서는 위에서 100px 내려옴 */
+      width: 90%;                      /* 모바일에서는 폭 더 넓게 */
+      max-width: 340px;
+      font-size: 14px;                 /* 모바일에서는 글자 작게 */
+    }
+  }
+</style>
 </head>
 
 <body>
