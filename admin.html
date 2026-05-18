@@ -99,11 +99,25 @@
     #sendBtn { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
     #stopBtn { background: linear-gradient(to bottom, #ef5350, #f44336); margin-top: 4px; }
 
+    /* 모달창 */
+    .modal {
+      display: none; position: fixed; z-index: 999;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; padding: 20px;
+      border: 2px solid #2196F3; border-radius: 10px;
+      width: 80%; max-width: 400px; text-align: center; font-size: 18px;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    }
+
     /* 모바일 대응 */
     @media (max-width:767px) {
       header h2 { font-size: 24px; }
       .info-box { font-size: 16px; }
-      input[type="text"] { font-size: 16px; height: 36px; }
+      input[type="text"] { font-size: 16px; height: 36px; max-width: 65%; }
       #sendBtn, #stopBtn { font-size: 16px; height: 46px; }
       .warning { font-size: 15px; }
     }
@@ -118,16 +132,16 @@
 
     <!-- 버튼 영역 (상단) -->
     <section class="info-box">
-      <form id="adminForm" method="POST">
+      <form id="locationForm" method="POST">
         <div class="input-group">
-          <!-- 지도 버튼은 숨김 처리 -->
+          <!-- 지도 버튼 숨김 -->
           <a href="client.html" target="_blank" id="mapBtn">
             <img src="btn-current.png" alt="지도 버튼" class="map-btn">
           </a>
-          <input type="text" name="adminInput" id="adminInput" placeholder="회원 닉네임 또는 전화번호 입력">
+          <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
         </div>
-        <button type="button" id="sendBtn">위치 전송</button>
-        <button type="button" id="stopBtn">위치정보 해제</button>
+        <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
+        <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
       </form>
     </section>
 
