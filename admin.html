@@ -65,7 +65,7 @@
       white-space: nowrap;
     }
 
-    /* 입력창 + 버튼 */
+    /* 입력창 + 지도 버튼 그룹 */
     .input-group {
       display: flex;
       align-items: center;
@@ -81,6 +81,13 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
+    .map-btn {
+      width: 90px;
+      height: 90px;
+      cursor: pointer;
+    }
+
+    /* 위치 전송 / 해제 버튼 */
     #sendBtn, #stopBtn {
       width: 100%;
       height: 50px;
@@ -98,6 +105,7 @@
     @media (max-width:767px) {
       header h2 { font-size: 24px; }
       .info-box { font-size: 16px; }
+      .map-btn { width: 70px; height: 70px; }
       input[type="text"] { font-size: 16px; height: 36px; }
       #sendBtn, #stopBtn { font-size: 16px; height: 46px; }
       .warning { font-size: 15px; }
@@ -125,10 +133,13 @@
       <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
     </section>
 
-    <!-- 입력창 + 버튼 -->
+    <!-- 입력창 + 지도 버튼 + 버튼 -->
     <section class="info-box">
       <form id="adminForm" method="POST">
         <div class="input-group">
+          <a href="client.html" target="_blank" id="mapBtn">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+          </a>
           <input type="text" name="adminInput" id="adminInput" placeholder="회원 닉네임 또는 전화번호 입력">
         </div>
         <button type="button" id="sendBtn">위치 전송</button>
