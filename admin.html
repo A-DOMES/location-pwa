@@ -65,7 +65,7 @@
       white-space: nowrap;
     }
 
-    /* 입력창 + 지도 버튼 그룹 */
+    /* 입력창 + 버튼 그룹 */
     .input-group {
       display: flex;
       align-items: center;
@@ -82,9 +82,7 @@
       box-sizing: border-box;
     }
     .map-btn {
-      width: 90px;
-      height: 90px;
-      cursor: pointer;
+      display: none; /* 관리자 화면에서는 지도 버튼 숨김 */
     }
 
     /* 위치 전송 / 해제 버튼 */
@@ -105,7 +103,6 @@
     @media (max-width:767px) {
       header h2 { font-size: 24px; }
       .info-box { font-size: 16px; }
-      .map-btn { width: 70px; height: 70px; }
       input[type="text"] { font-size: 16px; height: 36px; }
       #sendBtn, #stopBtn { font-size: 16px; height: 46px; }
       .warning { font-size: 15px; }
@@ -119,7 +116,22 @@
       <h2>A-DOMES | 관리자 화면</h2>
     </header>
 
-    <!-- 관리자 안내 -->
+    <!-- 버튼 영역 (상단) -->
+    <section class="info-box">
+      <form id="adminForm" method="POST">
+        <div class="input-group">
+          <!-- 지도 버튼은 숨김 처리 -->
+          <a href="client.html" target="_blank" id="mapBtn">
+            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
+          </a>
+          <input type="text" name="adminInput" id="adminInput" placeholder="회원 닉네임 또는 전화번호 입력">
+        </div>
+        <button type="button" id="sendBtn">위치 전송</button>
+        <button type="button" id="stopBtn">위치정보 해제</button>
+      </form>
+    </section>
+
+    <!-- 앱 목적/주의사항 (아래로 이동) -->
     <section class="info-box">
       <h3>앱 목적(관리자)</h3>
       <p>이 앱은 현장의 위치 정보를 기록하고 관리자가 회원들의 위치를 확인하기 위해 만들어졌습니다.</p>
@@ -132,23 +144,7 @@
       </p>
       <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
     </section>
-
-    <!-- 입력창 + 지도 버튼 + 버튼 -->
-    <section class="info-box">
-      <form id="adminForm" method="POST">
-        <div class="input-group">
-          <a href="client.html" target="_blank" id="mapBtn">
-            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-          </a>
-          <input type="text" name="adminInput" id="adminInput" placeholder="회원 닉네임 또는 전화번호 입력">
-        </div>
-        <button type="button" id="sendBtn">위치 전송</button>
-        <button type="button" id="stopBtn">위치정보 해제</button>
-      </form>
-    </section>
   </div>
-</body>
-</html>
 
 
 <!-- ✅ CONFIG 불러오기 -->
