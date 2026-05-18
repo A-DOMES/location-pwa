@@ -65,7 +65,15 @@
       white-space: nowrap;
     }
 
-    /* 텍스트박스: 현재 크기 유지 + 우측으로 살짝 이동 */
+    /* 입력창 + 버튼 그룹 */
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* 텍스트박스: 사용자용과 동일하게 */
     input[type="text"] {
       margin-left: 16px;
       height: 40px;
@@ -74,14 +82,16 @@
       border: 2px solid #1976d2;
       border-radius: 6px;
       box-sizing: border-box;
+      flex: 1;
     }
 
-    /* 지도 버튼 (관리자에서는 숨김) */
+    /* 지도 버튼: 초기에는 숨김, 성공 시 JS로 표시 */
     .map-btn {
       width: 90px;
       height: 90px;
       cursor: pointer;
-      display: none;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     /* 위치 전송 / 해제 버튼 */
@@ -171,7 +181,6 @@
       <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
     </section>
   </div>
-
 
 
 <!-- ✅ CONFIG 불러오기 -->
