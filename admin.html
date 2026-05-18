@@ -22,8 +22,7 @@
     input[type="text"] { margin-left:16px; height:40px; font-size:18px; padding:8px; border:2px solid #1976d2;
                          border-radius:6px; box-sizing:border-box; flex:1; }
 
-    /* 지도 버튼: 초기 숨김, 성공 시 표시 */
-    .map-btn { width:90px; height:90px; cursor:pointer; visibility:hidden; pointer-events:none; }
+    .map-btn { width:90px; height:90px; cursor:pointer; }
     .map-btn.hidden { display:none; pointer-events:none; }
 
     #sendBtn, #stopBtn { width:100%; height:50px; font-size:18px; border:none; border-radius:8px; cursor:pointer;
@@ -36,15 +35,6 @@
                      max-width:400px; text-align:center; font-size:18px;
                      background:linear-gradient(135deg,#e3f2fd,#bbdefb); box-shadow:0 6px 16px rgba(0,0,0,0.2);
                      margin:50% auto; }
-
-    @media (max-width:767px) {
-      header h2 { font-size:24px; }
-      .info-box { font-size:16px; }
-      .map-btn { width:70px; height:70px; }
-      input[type="text"] { font-size:16px; height:36px; max-width:65%; }
-      #sendBtn, #stopBtn { font-size:16px; height:46px; }
-      .warning { font-size:15px; }
-    }
   </style>
 </head>
 
@@ -56,7 +46,8 @@
   <section class="info-box">
     <form id="locationForm" method="POST">
       <div class="input-group">
-        <a href="client.html" target="_blank" id="mapBtn">
+        <!-- ✅ 처음엔 숨김 -->
+        <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden; pointer-events:none;">
           <img src="btn-current.png" alt="지도 버튼" class="map-btn">
         </a>
         <input type="text" name="phone" id="phone" placeholder="회원가입 닉네임 또는 전화번호 입력">
