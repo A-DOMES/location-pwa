@@ -93,6 +93,10 @@
       visibility: hidden;
       pointer-events: none;
     }
+    .map-btn.hidden {
+      display: none;
+      pointer-events: none;
+    }
 
     /* 위치 전송 / 해제 버튼 */
     #sendBtn, #stopBtn {
@@ -157,6 +161,7 @@
     <section class="info-box">
       <form id="locationForm" method="POST">
         <div class="input-group">
+          <!-- ✅ 처음엔 숨김, 위치전송 성공 시 나타남 -->
           <a href="client.html" target="_blank" id="mapBtn">
             <img src="btn-current.png" alt="지도 버튼" class="map-btn">
           </a>
