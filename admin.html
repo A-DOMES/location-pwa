@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>A-DOMES | 위치 정보 시스템</title>
+  <title>A-DOMES | 관리자 시스템</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
 
@@ -52,39 +52,28 @@
     }
     .info-box h3 {
       margin-top: 2px;
-      margin-bottom: 2px;
+      margin-bottom: 6px;
       color: #1565c0;
       font-size: 20px;
     }
-    .info-box p {
-      margin-top: 2px;
-      margin-bottom: 8px;
-    }
-    .desc {
-      display: block;
-      margin-top: 6px;
-      font-size: 16px;
-    }
     .warning {
       display: block;
-      margin-top: 4px;
+      margin-top: 6px;
       font-size: 18px;
       color: #d32f2f;
       font-weight: bold;
       white-space: nowrap;
     }
 
-    /* 입력창 + 지도 버튼 그룹 */
+    /* 입력창 + 버튼 */
     .input-group {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 12px;
     }
-    /* 텍스트박스: 현재 크기 유지 + 우측으로 살짝 이동 */
     input[type="text"] {
-      margin-left: 16px;   /* 좌측에서 살짝 띄워서 우측으로 이동한 효과 */
-      /* 필요에 따라 15px, 20px 등으로 조정 가능 */
+      flex: 1;
       height: 40px;
       font-size: 18px;
       padding: 8px;
@@ -92,13 +81,6 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
-    .map-btn {
-      width: 90px;
-      height: 90px;
-      cursor: pointer;
-    }
-
-    /* 위치 전송 / 해제 버튼 */
     #sendBtn, #stopBtn {
       width: 100%;
       height: 50px;
@@ -109,49 +91,14 @@
       color: white;
       margin-bottom: 6px;
     }
-    
-    #sendBtn {
-      background: linear-gradient(to bottom, #42a5f5, #1976d2);
-    }
-    
-    #stopBtn {
-      background: linear-gradient(to bottom, #ef5350, #f44336);
-      margin-top: 4px;   /* 해제 버튼을 조금 더 아래로 */
-    }
-
-
-    /* 모달창 */
-    .modal {
-      position: fixed;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.4);
-      z-index: 1000;
-    }
-    
-    /* 모달 내용 */
-    .modal-content {
-      background-color: #fefefe;
-      padding: 20px;
-      border: 2px solid #2196F3;
-      border-radius: 10px;
-      width: 80%;
-      max-width: 400px;
-      text-align: center;
-      font-size: 18px;
-      background: linear-gradient(135deg, #e3f2fd, #bbdefb); /* 요청하신 색상 */
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    
-      /* 위치 조정: margin-top으로 상단에서 중앙 방향으로 내림 */
-      margin: 50% auto;   /* auto는 좌우 중앙, 20%는 위에서 내려오는 정도 */
-    }
+    #sendBtn { background: linear-gradient(to bottom, #42a5f5, #1976d2); }
+    #stopBtn { background: linear-gradient(to bottom, #ef5350, #f44336); margin-top: 4px; }
 
     /* 모바일 대응 */
     @media (max-width:767px) {
       header h2 { font-size: 24px; }
       .info-box { font-size: 16px; }
-      .map-btn { width: 70px; height: 70px; }
-      input[type="text"] { font-size: 16px; height: 36px; max-width: 65%; }
+      input[type="text"] { font-size: 16px; height: 36px; }
       #sendBtn, #stopBtn { font-size: 16px; height: 46px; }
       .warning { font-size: 15px; }
     }
@@ -159,51 +106,39 @@
 </head>
 
 <body>
-<div class="main-card">
-  <header>
-    <h2>A-DOMES | 위치 전송</h2>
-  </header>
+  <div class="main-card">
+    <header>
+      <h2>A-DOMES | 관리자 화면</h2>
+    </header>
 
-  <!-- 위치 전송 영역 -->
-  <form id="locationForm" method="POST">
-    <div class="center-wrapper">
-      <div class="inner-group">
-        <!-- 📌 닉네임이 자동으로 채워짐 -->
-        <input type="text" name="phone" id="phone" 
-               placeholder="회원가입 닉네임 또는 전화번호를 입력하세요">
-        <div class="button-group">
-          <!-- ✅ 처음엔 링크는 유지, 공간도 유지 -->
-          <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden; pointer-events:none;">
-            <img src="btn-current.png" alt="지도 버튼" class="map-btn">
-          </a>
-          <!-- ✅ 버튼 클릭 시 admin.html에서 빈값 검증 후 서버 호출 -->
-          <button type="button" id="sendBtn" onclick="sendLocation()">위치 전송</button>
-          <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
-    </form>
-  </section>
+    <!-- 관리자 안내 -->
+    <section class="info-box">
+      <h3>앱 목적(관리자)</h3>
+      <p>이 앱은 현장의 위치 정보를 기록하고 관리자가 회원들의 위치를 확인하기 위해 만들어졌습니다.</p>
 
-  <!-- 앱 목적 + 주요 기능 (아래로 이동) -->
-  <section class="info-box">
-    <h3>앱 목적(관리자)</h3>
-    <p>
-      전국 어디든 목적지를 검색해 안전하게 길을 안내받을 수 있습니다.<br>
-      내 위치를 기록하고 회원끼리 서로의 위치를 확인할 수 있습니다.
-    </p>
-
-    <h3>주요 기능</h3>
-    <p>
-      📡 나의 현재 위치 전송 및 자동 갱신<br>
-      🗺️ 전국 지도 검색 및 직선 거리 확인<br>
-      👥 회원 이름으로 상대 위치 확인<br>
-      🚸 보호구역 · 속도제한 · 기타 알림<br>
-      <span class="desc">위치전송 버튼을 누르면 입력한 값과 현재 위치가 사용자 서버에 기록됩니다.</span>
+      <h3>사용 방법(주의사항)</h3>
+      <p>
+        입력란의 값은 고유 식별자입니다.<br>
+        위치 전송 버튼을 누르면 현재 위치가 서버에 기록되며 자동 추적됩니다.<br>
+        화면을 켜 두시면 5분마다 자동으로 위치가 갱신됩니다.
+      </p>
       <span class="warning">📱 위치 전송을 위해 화면을 끄지 마세요!</span>
-    </p>
-  </section>
+    </section>
 
-  <div id="map"></div>
-</div>
-  
+    <!-- 입력창 + 버튼 -->
+    <section class="info-box">
+      <form id="adminForm" method="POST">
+        <div class="input-group">
+          <input type="text" name="adminInput" id="adminInput" placeholder="회원 닉네임 또는 전화번호 입력">
+        </div>
+        <button type="button" id="sendBtn">위치 전송</button>
+        <button type="button" id="stopBtn">위치정보 해제</button>
+      </form>
+    </section>
+  </div>
+</body>
+</html>
+
 
 <!-- ✅ CONFIG 불러오기 -->
 <script src="config.js"></script>
