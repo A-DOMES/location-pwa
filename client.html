@@ -247,21 +247,18 @@ function showMap() {
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
-
-      // ✅ 마커 클릭 시 정보창 표시
+      
+      // ✅ 마커 클릭 시 모달창 + 레이더 갱신
       marker.addListener("click", () => {
+        // 위치정보 모달창 표시
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
+      
+        // 레이더 갱신 (클릭 시점에만 실행)
+        const pos = marker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
       });
-
-      // ✅ 마커 좌표를 기준으로 레이더 갱신 호출
-      const pos = marker.getPosition();
-      updateRadarPolygon(
-        { lat: pos.lat(), lng: pos.lng() }, // 마커의 실제 좌표 사용
-        heading
-      );
-    });
-
+    }); 
   } else if (mode === "all") {
     allData.forEach(user => {
       const marker = new google.maps.Marker({
