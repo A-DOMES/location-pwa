@@ -207,7 +207,7 @@ window.onload = () => {
   }
 
 /* ---------------------- 지도 초기화 ---------------------- */    
-function showMap() {
+function showMap(currentUserPhone) {
   clearMap();
   if (!map) return;
 
@@ -224,178 +224,29 @@ function showMap() {
     anchor: new google.maps.Point(16, 48)
   };
 
-  if (mode === "current") {
-    const now = new Date();
-    const latestByUser = {};
-
-    // ✅ 최근 5분 내 업데이트된 사용자만 필터링
-    allData.forEach(user => {
-      const updated = new Date(user.updated);
-      if (now - updated <= 5 * 60 * 1000) {
-        const key = user.phone;
-        if (!latestByUser[key] || updated > new Date(latestByUser[key].updated)) {
-          latestByUser[key] = user;
-        }
-      }
+  // ✅ 사용자 데이터 루프
+  allData.forEach(user => {
+    const marker = new google.maps.Marker({
+      position: { lat: user.lat, lng: user.lng },
+      map: map,
+      icon: customRedMarker,
+      title: `${user.phone} (${user.status}, ${user.updated})`,
+      animation: google.maps.Animation.DROP
     });
+    markers.push(marker);
 
-    Object.values(latestByUser).forEach(user => {
-      if (user.phone === "내번호") {
-        // ✅ 내 마커는 하나만 유지
-        if (!myMarker) {
-          myMarker = new google.maps.Marker({
-            position: { lat: user.lat, lng: user.lng },
-            map: map,
-            icon: customRedMarker,
-            title: "내 위치",
-            animation: google.maps.Animation.DROP
-          });
-          markers.push(myMarker);
-        } else {
-          myMarker.setPosition({ lat: user.lat, lng: user.lng });
-        }
-
-        // ✅ 레이더는 내 마커 좌표 기준으로 갱신
-        const pos = myMarker.getPosition();
-        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-
-        myMarker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
-
-      } else {
-        // ✅ 일반 사용자만 마커 생성 (내번호 제외)
-        const marker = new google.maps.Marker({
-          position: { lat: user.lat, lng: user.lng },
-          map: map,
-          icon: customRedMarker,
-          title: `${user.phone} (${user.status}, ${user.updated})`,
-          animation: google.maps.Animation.DROP
-        });
-        markers.push(marker);
-
-        marker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
-      }
-    });
-
-  } else if (mode === "all") {
-    // ✅ 전체 사용자 마커 표시
-    allData.forEach(user => {
-      if (user.phone === "내번호") {
-        // ✅ 내 마커만 유지
-        if (!myMarker) {
-          myMarker = new google.maps.Marker({
-            position: { lat: user.lat, lng: user.lng },
-            map: map,
-            icon: customRedMarker,
-            title: "내 위치",
-            animation: google.maps.Animation.DROP
-          });
-          markers.push(myMarker);
-        } else {
-          myMarker.setPosition({ lat: user.lat, lng: user.lng });
-        }
-
-        const pos = myMarker.getPosition();
-        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-
-        myMarker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
-
-      } else {
-        // ✅ 일반 사용자만 마커 생성
-        const marker = new google.maps.Marker({
-          position: { lat: user.lat, lng: user.lng },
-          map: map,
-          icon: customRedMarker,
-          title: `${user.phone} (${user.status}, ${user.time})`,
-          animation: google.maps.Animation.DROP
-        });
-        markers.push(marker);
-
-        marker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
-      }
-    });
-
-  } else if (mode === "paths") {
-    // ✅ 경로 모드
-    const select = document.getElementById("path-user-select");
-    const selectedPhone = select ? select.value : "all";
-    let users = allData;
-    if (selectedPhone !== "all") {
-      users = allData.filter(u => u.phone === selectedPhone);
+    // ✅ 로그인한 사용자에게만 레이더 붙이기
+    if (user.phone === currentUserPhone) {
+      radarTargetMarker = marker; // 레이더 대상 지정
+      const pos = radarTargetMarker.getPosition();
+      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
     }
 
-    users.forEach(user => {
-      const pathCoords = [];
-      for (let j = 0; j < user.path.length; j += 2) {
-        const lat = user.path[j];
-        const lng = user.path[j + 1];
-        if (lat && lng) pathCoords.push({ lat, lng });
-      }
-      if (pathCoords.length > 0) {
-        const polyline = new google.maps.Polyline({
-          path: pathCoords,
-          geodesic: true,
-          strokeColor: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
-        polylines.push(polyline);
-
-        const last = pathCoords[pathCoords.length - 1];
-        if (user.phone === "내번호") {
-          // ✅ 내 마커만 유지
-          if (!myMarker) {
-            myMarker = new google.maps.Marker({
-              position: last,
-              map: map,
-              icon: customRedMarker,
-              title: "내 위치",
-              animation: google.maps.Animation.DROP
-            });
-            markers.push(myMarker);
-          } else {
-            myMarker.setPosition(last);
-          }
-
-          const pos = myMarker.getPosition();
-          updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-
-          myMarker.addListener("click", () => {
-            updateLocationBox(user);
-            document.getElementById("locationBox").style.display = "block";
-          });
-
-        } else {
-          // ✅ 일반 사용자만 마커 생성
-          const marker = new google.maps.Marker({
-            position: last,
-            map: map,
-            icon: customRedMarker,
-            title: `${user.phone} / ${user.updated}`,
-            animation: google.maps.Animation.DROP
-          });
-          markers.push(marker);
-
-          marker.addListener("click", () => {
-            updateLocationBox(user);
-            document.getElementById("locationBox").style.display = "block";
-          });
-        }
-      }
+    marker.addListener("click", () => {
+      updateLocationBox(user);
+      document.getElementById("locationBox").style.display = "block";
     });
-  }
+  });
 
   // ✅ 클러스터 옵션 처리
   if (document.getElementById("clusterOption")?.checked) {
@@ -413,6 +264,8 @@ function showMap() {
 
   updateUserPanelContent(mode);
 }
+
+
 
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
@@ -864,7 +717,7 @@ function updateRadarPolygon(myPos, heading) {
     });
   }
 
-  // ✅ 중심점(내 마커 위치) 추가
+  // ✅ 중심점(레이더 대상 사용자 마커 위치) 추가
   points.unshift(myPos);
 
   if (radarPolygon) {
@@ -882,6 +735,7 @@ function updateRadarPolygon(myPos, heading) {
     });
   }
 }
+
 
 // ✅ 내 위치 추적 (circle 대신 마커 사용)
 if (navigator.geolocation) {
