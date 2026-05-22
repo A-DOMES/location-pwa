@@ -131,7 +131,7 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-// ---------------------- 지도 초기화 ----------------------
+// ---------------------- 로딩시 지도 초기화 ----------------------
 window.onload = () => {
   // ✅ 초기 중심 좌표 저장
   const initialCenter = { lat: 36.5, lng: 127.5 };
@@ -211,7 +211,7 @@ function showMap() {
   clearMap();
   if (!map) return;
 
-  // ✅ 커스텀 마커 아이콘 정의 (적색 원 대신 사용할 마커)
+  // ✅ 커스텀 마커 아이콘 정의
   const customRedMarker = {
     url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
@@ -241,7 +241,7 @@ function showMap() {
 
     Object.values(latestByUser).forEach(user => {
       if (user.phone === "내번호") {
-        // ✅ 내 마커는 하나만 유지 (중복 방지)
+        // ✅ 내 마커는 하나만 유지
         if (!myMarker) {
           myMarker = new google.maps.Marker({
             position: { lat: user.lat, lng: user.lng },
@@ -252,7 +252,6 @@ function showMap() {
           });
           markers.push(myMarker);
         } else {
-          // 이미 있으면 위치만 갱신
           myMarker.setPosition({ lat: user.lat, lng: user.lng });
         }
 
@@ -260,14 +259,13 @@ function showMap() {
         const pos = myMarker.getPosition();
         updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
-        // ✅ 내 마커 클릭 시 모달창 표시
         myMarker.addListener("click", () => {
           updateLocationBox(user);
           document.getElementById("locationBox").style.display = "block";
         });
 
       } else {
-        // ✅ 일반 사용자 마커 생성
+        // ✅ 일반 사용자만 마커 생성 (내번호 제외)
         const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map: map,
@@ -287,26 +285,45 @@ function showMap() {
   } else if (mode === "all") {
     // ✅ 전체 사용자 마커 표시
     allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.time})`,
-        animation: google.maps.Animation.DROP
-      });
-      markers.push(marker);
-
       if (user.phone === "내번호") {
-        // ✅ 내 마커 지정 및 레이더 갱신
-        myMarker = marker;
+        // ✅ 내 마커만 유지
+        if (!myMarker) {
+          myMarker = new google.maps.Marker({
+            position: { lat: user.lat, lng: user.lng },
+            map: map,
+            icon: customRedMarker,
+            title: "내 위치",
+            animation: google.maps.Animation.DROP
+          });
+          markers.push(myMarker);
+        } else {
+          myMarker.setPosition({ lat: user.lat, lng: user.lng });
+        }
+
         const pos = myMarker.getPosition();
         updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-      }
 
-      marker.addListener("click", () => {
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block";
-      });
+        myMarker.addListener("click", () => {
+          updateLocationBox(user);
+          document.getElementById("locationBox").style.display = "block";
+        });
+
+      } else {
+        // ✅ 일반 사용자만 마커 생성
+        const marker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          icon: customRedMarker,
+          title: `${user.phone} (${user.status}, ${user.time})`,
+          animation: google.maps.Animation.DROP
+        });
+        markers.push(marker);
+
+        marker.addListener("click", () => {
+          updateLocationBox(user);
+          document.getElementById("locationBox").style.display = "block";
+        });
+      }
     });
 
   } else if (mode === "paths") {
@@ -337,26 +354,45 @@ function showMap() {
         polylines.push(polyline);
 
         const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map: map,
-          icon: customRedMarker,
-          title: `${user.phone} / ${user.updated}`,
-          animation: google.maps.Animation.DROP
-        });
-        markers.push(marker);
-
         if (user.phone === "내번호") {
-          // ✅ 내 마커 지정 및 레이더 갱신
-          myMarker = marker;
+          // ✅ 내 마커만 유지
+          if (!myMarker) {
+            myMarker = new google.maps.Marker({
+              position: last,
+              map: map,
+              icon: customRedMarker,
+              title: "내 위치",
+              animation: google.maps.Animation.DROP
+            });
+            markers.push(myMarker);
+          } else {
+            myMarker.setPosition(last);
+          }
+
           const pos = myMarker.getPosition();
           updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-        }
 
-        marker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
+          myMarker.addListener("click", () => {
+            updateLocationBox(user);
+            document.getElementById("locationBox").style.display = "block";
+          });
+
+        } else {
+          // ✅ 일반 사용자만 마커 생성
+          const marker = new google.maps.Marker({
+            position: last,
+            map: map,
+            icon: customRedMarker,
+            title: `${user.phone} / ${user.updated}`,
+            animation: google.maps.Animation.DROP
+          });
+          markers.push(marker);
+
+          marker.addListener("click", () => {
+            updateLocationBox(user);
+            document.getElementById("locationBox").style.display = "block";
+          });
+        }
       }
     });
   }
