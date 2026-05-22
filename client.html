@@ -232,40 +232,49 @@ function showMap() {
     anchor: new google.maps.Point(12, 24)
   };
 
-  // ✅ 마커 생성 함수 (원형 + 핀 겹치기)
-  function createCustomMarker(user, iconPin) {
-    // 1. 반투명 청색 원형 (배경)
-    const circleMarker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map: map,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: "#0000FF",   // 청색
-        fillOpacity: 0.3,       // 반투명
-        strokeColor: "#0000FF",
-        strokeOpacity: 0.5,
-        strokeWeight: 1,
-        scale: 20
-      },
-      clickable: false,
-      zIndex: 1
-    });
+// ✅ 내 위치 마커 (빨간 원형 + 빨간 핀)
+const circleMarker = new google.maps.Marker({
+  position: { lat: myLat, lng: myLng },
+  map: map,
+  icon: {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#FF0000",   // 빨강 원형
+    fillOpacity: 0.3,       // 반투명
+    strokeColor: "#FF0000",
+    strokeOpacity: 0.5,
+    strokeWeight: 1,
+    scale: 20
+  },
+  clickable: false,
+  zIndex: 1
+});
 
-    // 2. 핀 마커 (앞쪽)
-    const pinMarker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map: map,
-      icon: iconPin,
-      title: `${user.phone} (${user.status}, ${user.updated})`,
-      animation: google.maps.Animation.BOUNCE,
-      zIndex: 2
-    });
+const pinMarker = new google.maps.Marker({
+  position: { lat: myLat, lng: myLng },
+  map: map,
+  icon: {
+    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z",
+    fillColor: "#FF0000",   // 빨강 핀
+    fillOpacity: 0.95,
+    strokeColor: "#FFFFFF",
+    strokeWeight: 2,
+    scale: 2,
+    anchor: new google.maps.Point(12, 24)
+  },
+  title: "내 위치",
+  animation: google.maps.Animation.BOUNCE,
+  zIndex: 2
+});
 
-    // ✅ 클릭 이벤트는 핀 마커에만 적용
-    pinMarker.addListener("click", () => {
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
-    });
+markers.push(circleMarker);
+markers.push(pinMarker);
+
+
+pinMarker.addListener("click", () => {
+  updateLocationBox(user);
+  document.getElementById("locationBox").style.display = "block";
+});
+
 
     // ✅ 관리 배열에 추가
     markers.push(circleMarker);
