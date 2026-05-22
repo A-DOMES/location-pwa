@@ -1511,7 +1511,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
   <script src="client.js"></script>
-  
+
+<!-- ✅ 토글 버튼 -->
+<div id="toggleFollowBtn">
+  <span class="icon" id="toggleIcon">
+    <!-- 기본: 사람 중심 SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+      <circle cx="16" cy="10" r="6" fill="#FFD39B"/>
+      <path d="M8 28c0-4 4-8 8-8s8 4 8 8H8z" fill="#4A90E2"/>
+    </svg>
+  </span>
+  <span class="label" id="toggleLabel">사람중심</span>
+</div>
+
 </body>
 </html>
   
