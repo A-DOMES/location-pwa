@@ -1325,42 +1325,28 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-  // ----------------------토글버튼 사람중심 지도중심 변환 ----------------------
+// ---------------------- 토글 버튼 이벤트 ----------------------
 const toggleBtn = document.getElementById("toggleFollowBtn");
-const toggleIcon = document.getElementById("toggleIcon");
-const toggleLabel = document.getElementById("toggleLabel");
+const iconSpan = toggleBtn.querySelector(".icon");
+const labelSpan = toggleBtn.querySelector(".label");
 
 let followUser = true;
 
-// ✅ SVG 코드 정의
-const personSVG = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
-    <circle cx="16" cy="10" r="6" fill="#FFD39B"/>
-    <path d="M8 28c0-4 4-8 8-8s8 4 8 8H8z" fill="#4A90E2"/>
-  </svg>
-`;
-
-const mapSVG = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
-    <rect x="4" y="6" width="24" height="20" rx="2" fill="#A8D08D"/>
-    <path d="M4 6l8 4 8-4 8 4v16l-8-4-8 4-8-4V6z" fill="#F4B183"/>
-    <circle cx="16" cy="16" r="4" fill="#E74C3C"/>
-  </svg>
-`;
-
-// ✅ 토글 이벤트
 toggleBtn.addEventListener("click", () => {
   followUser = !followUser;
 
-  toggleIcon.innerHTML = followUser ? personSVG : mapSVG;
-  toggleLabel.innerText = followUser ? "사람중심" : "지도중심";
+  // ✅ 아이콘과 라벨만 교체
+  iconSpan.textContent = followUser ? "👤" : "🗺️";
+  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
   if (followUser) {
+    // 사람 중심 모드 → 현재 위치 기준
     if (currentLat && currentLng) {
       map.setCenter(new google.maps.LatLng(currentLat, currentLng));
       map.setZoom(16);
     }
   } else {
+    // 지도 중심 모드 → 경로 마지막 좌표 기준
     if (pathCoords.length > 0) {
       const lastPoint = pathCoords[pathCoords.length - 1];
       map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1369,16 +1355,19 @@ toggleBtn.addEventListener("click", () => {
   }
 });
 
-// ✅ 드래그 가능하게 만들기
+// ---------------------- 드래그 가능하게 적용 ----------------------
+makeDraggableAndResizable(toggleBtn);
+
+// ---------------------- 드래그 가능 함수 ----------------------
 function makeDraggableAndResizable(element) {
   let isDragging = false;
-  let offsetX, offsetY;
+  let offsetX = 0, offsetY = 0;
 
   element.addEventListener("mousedown", (e) => {
     isDragging = true;
     offsetX = e.clientX - element.offsetLeft;
     offsetY = e.clientY - element.offsetTop;
-    element.style.transition = "none";
+    element.style.transition = "none"; // 드래그 중에는 애니메이션 제거
   });
 
   document.addEventListener("mousemove", (e) => {
@@ -1389,11 +1378,9 @@ function makeDraggableAndResizable(element) {
 
   document.addEventListener("mouseup", () => {
     isDragging = false;
-    element.style.transition = "transform 0.2s ease, background 0.3s ease";
+    element.style.transition = "transform 0.2s ease, background 0.3s ease"; // 원래 애니메이션 복원
   });
 }
-
-makeDraggableAndResizable(toggleBtn);
     
 </script>
 </head>
@@ -1583,17 +1570,12 @@ makeDraggableAndResizable(toggleBtn);
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
   <script src="client.js"></script>
 
-<!-- ✅ 토글 버튼 -->
+<!-- ✅ 토글 버튼 추가-->
 <div id="toggleFollowBtn">
-  <span class="icon" id="toggleIcon">
-    <!-- 기본: 사람 중심 SVG -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
-      <circle cx="16" cy="10" r="6" fill="#FFD39B"/>
-      <path d="M8 28c0-4 4-8 8-8s8 4 8 8H8z" fill="#4A90E2"/>
-    </svg>
-  </span>
-  <span class="label" id="toggleLabel">사람중심</span>
-</div>
+  <span class="icon">👤</span>
+  <span class="label">중심모드</span>
+</div>  
+
 
 </body>
 </html>
