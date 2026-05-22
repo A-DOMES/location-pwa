@@ -737,49 +737,30 @@ function updateRadarPolygon(myPos, heading) {
 }
 
 
-// ✅ 내 위치 추적 (circle 대신 마커 사용)
+// ✅ 내 위치 추적 (지도에는 표시하지 않음)
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0;
 
-      // ✅ 내 마커는 하나만 유지 (중복 방지)
-      if (!myMarker) {
-        myMarker = new google.maps.Marker({
-          position: myPos,
-          map: map,
-          title: "내 위치",
-          icon: {
-            // ✅ circle 대신 마커 아이콘 사용
-            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
-                <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 32 16 32s16-20 16-32C32 7.163 24.837 0 16 0z"
-                      fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
-                <circle cx="16" cy="16" r="6" fill="#FFFFFF"/>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(32, 48),
-            anchor: new google.maps.Point(16, 48)
-          }
-        });
-      } else {
-        // ✅ 이미 있으면 위치만 갱신
-        myMarker.setPosition(myPos);
+      // ✅ 내 위치는 서버 업데이트용으로만 사용
+      sendMyLocationToServer(myPos);
+
+      // ✅ 레이더는 로그인한 사용자 마커 기준으로 갱신
+      if (radarTargetMarker) {
+        const pos = radarTargetMarker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
+
+        // ✅ 레이더 탐지 역시 로그인한 사용자 기준
+        checkRadarPOIs({ lat: pos.lat(), lng: pos.lng() });
       }
-
-      // ✅ 레이더는 내 마커 좌표 기준으로 갱신
-      updateRadarPolygon(myPos, heading);
-
-      // ✅ 레이더 탐지 역시 내 마커 좌표 기준
-      checkRadarPOIs(myPos);
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
   );
 }
-
-
+    
 // ---------------------- 슬라이더/단위 변경 + 버튼 + on/off ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const slider = document.getElementById("radiusSlider");
