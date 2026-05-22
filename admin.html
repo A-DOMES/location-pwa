@@ -108,18 +108,30 @@ input[type="text"] {
   color:white;
   margin-bottom:6px;
   display:block;
-  transition:transform 0.2s ease;
+  transition:transform 0.2s ease;   /* ✅ hover/active 상태 전환 애니메이션 */
 }
+
+/* 위치 전송 버튼 스타일 */
 #sendBtn {
   background:linear-gradient(to bottom, #42a5f5, #1976d2); /* 파란색 그라데이션 */
   margin-top:20px;
 }
+
+/* 위치정보 해제 버튼 스타일 */
 #stopBtn {
   background:linear-gradient(to bottom, #ef5350, #f44336); /* 빨간색 그라데이션 */
   margin-top:10px;
 }
+
+/* ✅ hover 시: 버튼이 위로 살짝 올라오면서 커짐 */
 #sendBtn:hover, #stopBtn:hover {
-  transform:translateY(-3px) scale(1.05); /* ✅ 위로 살짝 올라옴 */
+  transform:translateY(-3px) scale(1.05);
+}
+
+/* ✅ active(클릭 순간)와 focus(클릭 후 포커스 유지) 시: 원래 크기로 복귀 */
+#sendBtn:active, #stopBtn:active,
+#sendBtn:focus, #stopBtn:focus {
+  transform:none; /* 원래 상태로 되돌림 */
 }
 
 /* =========================== ✅ 모달창 전체 영역 (PC용) =========================== */
