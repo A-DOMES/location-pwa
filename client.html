@@ -1324,6 +1324,77 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 });
 
+
+  // ----------------------토글버튼 사람중심 지도중심 변환 ----------------------
+const toggleBtn = document.getElementById("toggleFollowBtn");
+const toggleIcon = document.getElementById("toggleIcon");
+const toggleLabel = document.getElementById("toggleLabel");
+
+let followUser = true;
+
+// ✅ SVG 코드 정의
+const personSVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+    <circle cx="16" cy="10" r="6" fill="#FFD39B"/>
+    <path d="M8 28c0-4 4-8 8-8s8 4 8 8H8z" fill="#4A90E2"/>
+  </svg>
+`;
+
+const mapSVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+    <rect x="4" y="6" width="24" height="20" rx="2" fill="#A8D08D"/>
+    <path d="M4 6l8 4 8-4 8 4v16l-8-4-8 4-8-4V6z" fill="#F4B183"/>
+    <circle cx="16" cy="16" r="4" fill="#E74C3C"/>
+  </svg>
+`;
+
+// ✅ 토글 이벤트
+toggleBtn.addEventListener("click", () => {
+  followUser = !followUser;
+
+  toggleIcon.innerHTML = followUser ? personSVG : mapSVG;
+  toggleLabel.innerText = followUser ? "사람중심" : "지도중심";
+
+  if (followUser) {
+    if (currentLat && currentLng) {
+      map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+      map.setZoom(16);
+    }
+  } else {
+    if (pathCoords.length > 0) {
+      const lastPoint = pathCoords[pathCoords.length - 1];
+      map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+      map.setZoom(7);
+    }
+  }
+});
+
+// ✅ 드래그 가능하게 만들기
+function makeDraggableAndResizable(element) {
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  element.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    offsetX = e.clientX - element.offsetLeft;
+    offsetY = e.clientY - element.offsetTop;
+    element.style.transition = "none";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    element.style.left = `${e.clientX - offsetX}px`;
+    element.style.top = `${e.clientY - offsetY}px`;
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    element.style.transition = "transform 0.2s ease, background 0.3s ease";
+  });
+}
+
+makeDraggableAndResizable(toggleBtn);
+    
 </script>
 </head>
  
