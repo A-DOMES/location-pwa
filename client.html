@@ -221,12 +221,14 @@ function showMap() {
       </svg>
     `),
     scaledSize: new google.maps.Size(32, 48),
-    anchor: new google.maps.Point(16, 50) // ✅ 바닥 끝이 좌표에 붙도록 anchor 미세 조정
+    anchor: new google.maps.Point(16, 48) // ✅ 마커 끝이 좌표에 붙도록 anchor 설정
   };
 
   if (mode === "current") {
     const now = new Date();
     const latestByUser = {};
+
+    // ✅ 최근 5분 내 업데이트된 사용자만 필터링
     allData.forEach(user => {
       const updated = new Date(user.updated);
       if (now - updated <= 5 * 60 * 1000) {
@@ -247,13 +249,13 @@ function showMap() {
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
-      
+
       // ✅ 내 마커일 경우 → 생성 직후 레이더 붙이기
-      if (user.phone === "내번호") { // ← 내 식별자 조건
+      if (user.phone === "내번호") { // ← 내 phone 값으로 조건 지정
         const pos = marker.getPosition();
         updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
       }
-    
+
       // ✅ 마커 클릭 시 모달창 표시
       marker.addListener("click", () => {
         updateLocationBox(user);
@@ -271,14 +273,17 @@ function showMap() {
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
+
+      // ✅ 내 마커일 경우에만 레이더 붙이기
+      if (user.phone === "내번호") {
+        const pos = marker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
+      }
+
       marker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
       });
-
-      // ✅ 모든 모드에서도 레이더를 마커 좌표 기준으로 갱신 가능
-      const pos = marker.getPosition();
-      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
     });
 
   } else if (mode === "paths") {
@@ -316,22 +321,27 @@ function showMap() {
           animation: google.maps.Animation.DROP
         });
         markers.push(marker);
+
+        // ✅ 내 마커일 경우에만 레이더 붙이기
+        if (user.phone === "내번호") {
+          const pos = marker.getPosition();
+          updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
+        }
+
         marker.addListener("click", () => {
           updateLocationBox(user);
           document.getElementById("locationBox").style.display = "block";
         });
-
-        // ✅ 경로 모드에서도 마지막 마커 좌표 기준으로 레이더 갱신
-        const pos = marker.getPosition();
-        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
       }
     });
   }
 
+  // ✅ 클러스터 옵션 처리
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
+  // ✅ 초기 모달창 표시 (첫 사용자 기준)
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
