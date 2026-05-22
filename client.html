@@ -264,7 +264,7 @@ function showMap() {
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: (user.phone === myPhone) ? iconMe : iconUser,
-        title: `${user.phone} (${user.status}, ${user.updated})`,
+        title: `${user.phone} (${user.status}, ${user.time})`,
         animation: google.maps.Animation.BOUNCE
       });
       markers.push(marker);
@@ -338,6 +338,7 @@ function showMap() {
 
   updateUserPanelContent(mode);
 }
+
 
 
   // ---------------------- 사용자 패널 ----------------------
