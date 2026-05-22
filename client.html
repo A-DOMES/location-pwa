@@ -206,10 +206,12 @@ window.onload = () => {
     polylines = [];
   }
 
+// ---------------------- 지도 초기화 ----------------------
 function showMap() {
   clearMap();
   if (!map) return;
 
+  // ✅ 커스텀 마커 아이콘 정의
   const customRedMarker = {
     url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
@@ -219,7 +221,7 @@ function showMap() {
       </svg>
     `),
     scaledSize: new google.maps.Size(32, 48),
-    anchor: new google.maps.Point(16, 48)
+    anchor: new google.maps.Point(16, 50) // ✅ 바닥 끝이 좌표에 붙도록 anchor 미세 조정
   };
 
   if (mode === "current") {
@@ -234,19 +236,30 @@ function showMap() {
         }
       }
     });
+
     Object.values(latestByUser).forEach(user => {
+      // ✅ 마커 생성
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.updated})`, // ✅ 툴팁 유지
+        title: `${user.phone} (${user.status}, ${user.updated})`,
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
+
+      // ✅ 마커 클릭 시 정보창 표시
       marker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
       });
+
+      // ✅ 마커 좌표를 기준으로 레이더 갱신 호출
+      const pos = marker.getPosition();
+      updateRadarPolygon(
+        { lat: pos.lat(), lng: pos.lng() }, // 마커의 실제 좌표 사용
+        heading
+      );
     });
 
   } else if (mode === "all") {
@@ -255,7 +268,7 @@ function showMap() {
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.time})`, // ✅ 툴팁 유지
+        title: `${user.phone} (${user.status}, ${user.time})`,
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
@@ -263,6 +276,10 @@ function showMap() {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
       });
+
+      // ✅ 모든 모드에서도 레이더를 마커 좌표 기준으로 갱신 가능
+      const pos = marker.getPosition();
+      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
     });
 
   } else if (mode === "paths") {
@@ -296,7 +313,7 @@ function showMap() {
           position: last,
           map: map,
           icon: customRedMarker,
-          title: `${user.phone} / ${user.updated}`, // ✅ 툴팁 유지
+          title: `${user.phone} / ${user.updated}`,
           animation: google.maps.Animation.DROP
         });
         markers.push(marker);
@@ -304,6 +321,10 @@ function showMap() {
           updateLocationBox(user);
           document.getElementById("locationBox").style.display = "block";
         });
+
+        // ✅ 경로 모드에서도 마지막 마커 좌표 기준으로 레이더 갱신
+        const pos = marker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
       }
     });
   }
