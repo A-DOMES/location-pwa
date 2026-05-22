@@ -201,32 +201,78 @@ function showMap() {
   clearMap();
   if (!map) return;
 
-  // ✅ 합쳐진 아이콘 정의
-  // 다른 사용자: 청색 반투명 원형 + 빨강 핀
-  const iconUser = {
-    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z " +
-          "M12 2m-10,10a10,10 0 1,0 20,0a10,10 0 1,0 -20,0",
-    fillColor: "#FF0000",   // 핀은 빨강
-    fillOpacity: 0.95,      // 핀은 불투명
-    strokeColor: "#0000FF", // 원형은 청색 테두리
-    strokeWeight: 2,
-    scale: 2,
-    anchor: new google.maps.Point(12, 24)
-  };
-
-  // 내 위치: 빨강 반투명 원형 + 빨강 핀
-  const iconMe = {
-    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z " +
-          "M12 2m-10,10a10,10 0 1,0 20,0a10,10 0 1,0 -20,0",
-    fillColor: "#FF0000",   // 핀과 원형 모두 빨강
-    fillOpacity: 0.6,       // 원형은 반투명
+  // ✅ 모드별 커스텀 핀 아이콘 정의
+  const iconCurrent = {
+    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z",
+    fillColor: "#0000FF",   // 파랑 핀
+    fillOpacity: 0.95,
     strokeColor: "#FFFFFF",
     strokeWeight: 2,
     scale: 2,
     anchor: new google.maps.Point(12, 24)
   };
 
-  // ✅ current 모드
+  const iconAll = {
+    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z",
+    fillColor: "#FF0000",   // 빨강 핀
+    fillOpacity: 0.95,
+    strokeColor: "#FFFFFF",
+    strokeWeight: 2,
+    scale: 2,
+    anchor: new google.maps.Point(12, 24)
+  };
+
+  const iconPaths = {
+    path: "M12 2C8 2 5 5 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3-7-7-7z",
+    fillColor: "#00CC00",   // 초록 핀
+    fillOpacity: 0.95,
+    strokeColor: "#FFFFFF",
+    strokeWeight: 2,
+    scale: 2,
+    anchor: new google.maps.Point(12, 24)
+  };
+
+  // ✅ 마커 생성 함수 (원형 + 핀 겹치기)
+  function createCustomMarker(user, iconPin) {
+    // 1. 반투명 청색 원형 (배경)
+    const circleMarker = new google.maps.Marker({
+      position: { lat: user.lat, lng: user.lng },
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: "#0000FF",   // 청색
+        fillOpacity: 0.3,       // 반투명
+        strokeColor: "#0000FF",
+        strokeOpacity: 0.5,
+        strokeWeight: 1,
+        scale: 20
+      },
+      clickable: false,
+      zIndex: 1
+    });
+
+    // 2. 핀 마커 (앞쪽)
+    const pinMarker = new google.maps.Marker({
+      position: { lat: user.lat, lng: user.lng },
+      map: map,
+      icon: iconPin,
+      title: `${user.phone} (${user.status}, ${user.updated})`,
+      animation: google.maps.Animation.BOUNCE,
+      zIndex: 2
+    });
+
+    // ✅ 클릭 이벤트는 핀 마커에만 적용
+    pinMarker.addListener("click", () => {
+      updateLocationBox(user);
+      document.getElementById("locationBox").style.display = "block";
+    });
+
+    // ✅ 관리 배열에 추가
+    markers.push(circleMarker);
+    markers.push(pinMarker);
+  }
+
+  // ✅ 모드별 처리
   if (mode === "current") {
     const now = new Date();
     const latestByUser = {};
@@ -239,43 +285,15 @@ function showMap() {
         }
       }
     });
-
     Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: (user.phone === myPhone) ? iconMe : iconUser, // 내 위치면 iconMe, 아니면 iconUser
-        title: `${user.phone} (${user.status}, ${user.updated})`,
-        animation: google.maps.Animation.BOUNCE
-      });
-      markers.push(marker);
-
-      // ✅ 마커 클릭 시 위치 박스 갱신
-      marker.addListener("click", () => {
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block";
-      });
+      createCustomMarker(user, iconCurrent); // 파랑 핀 + 청색 원형
     });
 
-  // ✅ all 모드
   } else if (mode === "all") {
     allData.forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: (user.phone === myPhone) ? iconMe : iconUser,
-        title: `${user.phone} (${user.status}, ${user.time})`,
-        animation: google.maps.Animation.BOUNCE
-      });
-      markers.push(marker);
-
-      marker.addListener("click", () => {
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block";
-      });
+      createCustomMarker(user, iconAll); // 빨강 핀 + 청색 원형
     });
 
-  // ✅ paths 모드
   } else if (mode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
@@ -292,6 +310,7 @@ function showMap() {
         const lng = user.path[j + 1];
         if (lat && lng) pathCoords.push({ lat, lng });
       }
+
       if (pathCoords.length > 0) {
         const polyline = new google.maps.Polyline({
           path: pathCoords,
@@ -304,24 +323,12 @@ function showMap() {
         polylines.push(polyline);
 
         const last = pathCoords[pathCoords.length - 1];
-        const marker = new google.maps.Marker({
-          position: last,
-          map: map,
-          icon: (user.phone === myPhone) ? iconMe : iconUser,
-          title: `${user.phone} / ${user.updated}`,
-          animation: google.maps.Animation.BOUNCE
-        });
-        markers.push(marker);
-
-        marker.addListener("click", () => {
-          updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block";
-        });
+        createCustomMarker(user, iconPaths); // 초록 핀 + 청색 원형
       }
     });
   }
 
-  // ✅ 클러스터링 옵션 적용
+  // ✅ 마커 클러스터링 옵션 적용
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
@@ -338,7 +345,6 @@ function showMap() {
 
   updateUserPanelContent(mode);
 }
-
 
 
   // ---------------------- 사용자 패널 ----------------------
