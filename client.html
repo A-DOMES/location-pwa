@@ -1340,11 +1340,13 @@ toggleBtn.addEventListener("click", () => {
   labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
   if (followUser) {
+    // 사람 중심 모드 → 현재 위치 기준
     if (currentLat && currentLng) {
       map.setCenter(new google.maps.LatLng(currentLat, currentLng));
       map.setZoom(16);
     }
   } else {
+    // 지도 중심 모드 → 경로 마지막 좌표 기준
     if (pathCoords.length > 0) {
       const lastPoint = pathCoords[pathCoords.length - 1];
       map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1352,6 +1354,7 @@ toggleBtn.addEventListener("click", () => {
     }
   }
 });
+
 
 // ---------------------- 드래그 가능하게 적용 ----------------------
 function makeDraggableAndResizable(element) {
