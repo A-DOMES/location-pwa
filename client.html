@@ -248,17 +248,19 @@ function showMap() {
       });
       markers.push(marker);
       
-      // ✅ 마커 클릭 시 모달창 + 레이더 갱신
-      marker.addListener("click", () => {
-        // 위치정보 모달창 표시
-        updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block";
-      
-        // 레이더 갱신 (클릭 시점에만 실행)
+      // ✅ 내 마커일 경우 → 생성 직후 레이더 붙이기
+      if (user.phone === "내번호") { // ← 내 식별자 조건
         const pos = marker.getPosition();
         updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
+      }
+    
+      // ✅ 마커 클릭 시 모달창 표시
+      marker.addListener("click", () => {
+        updateLocationBox(user);
+        document.getElementById("locationBox").style.display = "block";
       });
-    }); 
+    });
+
   } else if (mode === "all") {
     allData.forEach(user => {
       const marker = new google.maps.Marker({
