@@ -1326,23 +1326,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ---------------------- 토글 버튼 이벤트 ----------------------
+// ---------------------- 토글 버튼 이벤트 ----------------------
 const toggleBtn = document.getElementById("toggleFollowBtn");
+const iconSpan = toggleBtn.querySelector(".icon");
+const labelSpan = toggleBtn.querySelector(".label");
+
+let followUser = true;
 
 toggleBtn.addEventListener("click", () => {
   followUser = !followUser;
 
-  const icon = followUser ? "👤" : "🗺️";
-  const label = followUser ? "사람중심" : "지도중심";
-  toggleBtn.innerText = `${icon}${label}`;
+  // ✅ 아이콘과 라벨만 교체
+  iconSpan.textContent = followUser ? "👤" : "🗺️";
+  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
   if (followUser) {
-    // 사람 중심 모드 → 현재 위치 기준
     if (currentLat && currentLng) {
       map.setCenter(new google.maps.LatLng(currentLat, currentLng));
       map.setZoom(16);
     }
   } else {
-    // 지도 중심 모드 → 경로 마지막 좌표 기준
     if (pathCoords.length > 0) {
       const lastPoint = pathCoords[pathCoords.length - 1];
       map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
