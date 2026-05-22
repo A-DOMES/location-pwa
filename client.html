@@ -1335,18 +1335,16 @@ let followUser = true;
 toggleBtn.addEventListener("click", () => {
   followUser = !followUser;
 
-  // ✅ 버튼 내부의 아이콘과 라벨만 교체
+  // ✅ 아이콘과 라벨만 교체
   iconSpan.textContent = followUser ? "👤" : "🗺️";
   labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
   if (followUser) {
-    // 사람 중심 모드 → 현재 위치 기준
     if (currentLat && currentLng) {
       map.setCenter(new google.maps.LatLng(currentLat, currentLng));
       map.setZoom(16);
     }
   } else {
-    // 지도 중심 모드 → 경로 마지막 좌표 기준
     if (pathCoords.length > 0) {
       const lastPoint = pathCoords[pathCoords.length - 1];
       map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1356,10 +1354,6 @@ toggleBtn.addEventListener("click", () => {
 });
 
 // ---------------------- 드래그 가능하게 적용 ----------------------
-makeDraggableAndResizable(toggleBtn);
-
-
-// ---------------------- 드래그 가능 함수 ----------------------
 function makeDraggableAndResizable(element) {
   let isDragging = false;
   let offsetX = 0, offsetY = 0;
@@ -1368,7 +1362,7 @@ function makeDraggableAndResizable(element) {
     isDragging = true;
     offsetX = e.clientX - element.offsetLeft;
     offsetY = e.clientY - element.offsetTop;
-    element.style.transition = "none"; // 드래그 중에는 애니메이션 제거
+    element.style.transition = "none";
   });
 
   document.addEventListener("mousemove", (e) => {
@@ -1379,9 +1373,12 @@ function makeDraggableAndResizable(element) {
 
   document.addEventListener("mouseup", () => {
     isDragging = false;
-    element.style.transition = "transform 0.2s ease, background 0.3s ease"; // 원래 애니메이션 복원
+    element.style.transition = "transform 0.2s ease, background 0.3s ease";
   });
 }
+
+makeDraggableAndResizable(toggleBtn);
+
     
 </script>
 </head>
@@ -1571,12 +1568,11 @@ function makeDraggableAndResizable(element) {
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->
   <script src="client.js"></script>
 
-<!-- ✅ 토글 버튼 추가-->
+<!-- ✅ 토글 버튼 -->
 <div id="toggleFollowBtn">
   <span class="icon">👤</span>
-  <span class="label">중심모드</span>
-</div>  
-
+  <span class="label">사람중심</span>
+</div>
 
 </body>
 </html>
