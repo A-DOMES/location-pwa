@@ -206,10 +206,12 @@ window.onload = () => {
     polylines = [];
   }
 
+/* ---------------------- 지도 초기화  ---------------------- */    
 function showMap() {
   clearMap();
   if (!map) return;
 
+  // ✅ 커스텀 마커 아이콘 정의 (적색 원 대신 사용할 마커)
   const customRedMarker = {
     url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
@@ -225,6 +227,8 @@ function showMap() {
   if (mode === "current") {
     const now = new Date();
     const latestByUser = {};
+
+    // ✅ 최근 5분 내 업데이트된 사용자만 필터링
     allData.forEach(user => {
       const updated = new Date(user.updated);
       if (now - updated <= 5 * 60 * 1000) {
@@ -234,16 +238,29 @@ function showMap() {
         }
       }
     });
+
     Object.values(latestByUser).forEach(user => {
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
-        map: map,
-        icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.updated})`, // ✅ 툴팁 유지
-        animation: google.maps.Animation.DROP
-      });
-      markers.push(marker);
-      marker.addListener("click", () => {
+      // ✅ 내 마커는 하나만 유지 (중복 방지)
+      if (!myMarker) {
+        myMarker = new google.maps.Marker({
+          position: { lat: user.lat, lng: user.lng },
+          map: map,
+          icon: customRedMarker,
+          title: "내 위치",
+          animation: google.maps.Animation.DROP
+        });
+        markers.push(myMarker);
+      } else {
+        // 이미 생성된 경우 위치만 갱신
+        myMarker.setPosition({ lat: user.lat, lng: user.lng });
+      }
+
+      // ✅ 내 마커 좌표 기준으로 레이더 갱신 (적색 원 제거)
+      const pos = myMarker.getPosition();
+      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
+
+      // ✅ 마커 클릭 시 모달창 표시
+      myMarker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
       });
@@ -255,10 +272,18 @@ function showMap() {
         position: { lat: user.lat, lng: user.lng },
         map: map,
         icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.time})`, // ✅ 툴팁 유지
+        title: `${user.phone} (${user.status}, ${user.time})`,
         animation: google.maps.Animation.DROP
       });
       markers.push(marker);
+
+      // ✅ 내 마커일 경우에만 레이더 붙이기
+      if (user.phone === "내번호") {
+        if (!myMarker) myMarker = marker; // 내 마커 지정
+        const pos = marker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
+      }
+
       marker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
@@ -296,10 +321,18 @@ function showMap() {
           position: last,
           map: map,
           icon: customRedMarker,
-          title: `${user.phone} / ${user.updated}`, // ✅ 툴팁 유지
+          title: `${user.phone} / ${user.updated}`,
           animation: google.maps.Animation.DROP
         });
         markers.push(marker);
+
+        // ✅ 내 마커일 경우에만 레이더 붙이기
+        if (user.phone === "내번호") {
+          if (!myMarker) myMarker = marker;
+          const pos = marker.getPosition();
+          updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
+        }
+
         marker.addListener("click", () => {
           updateLocationBox(user);
           document.getElementById("locationBox").style.display = "block";
@@ -308,10 +341,12 @@ function showMap() {
     });
   }
 
+  // ✅ 클러스터 옵션 처리
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
+  // ✅ 초기 모달창 표시 (첫 사용자 기준)
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
@@ -322,6 +357,7 @@ function showMap() {
 
   updateUserPanelContent(mode);
 }
+
 
 
   // ---------------------- 사용자 패널 ----------------------
@@ -616,7 +652,7 @@ function getMapIdByDevice() {
   return CONFIG.mapIds.fixed;
 }
 
-/* ---------------------- 지도 초기화  ---------------------- */
+/* ---------------------- 지도 초기화 (벡터지도 관련) ---------------------- */
 // 라이트 스타일 JSON
 const lightStyle = [
   { elementType: "geometry", stylers: [{ color: "#ffffff" }] },
