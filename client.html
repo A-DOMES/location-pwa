@@ -240,20 +240,19 @@ function showMap() {
     });
 
     Object.values(latestByUser).forEach(user => {
-      // ✅ 마커 생성
-      const marker = new google.maps.Marker({
-        position: { lat: user.lat, lng: user.lng },
+      // ✅ 내 마커 생성
+      const myMarker = new google.maps.Marker({
+        position: { lat: myLat, lng: myLng },
         map: map,
         icon: customRedMarker,
-        title: `${user.phone} (${user.status}, ${user.updated})`,
+        title: "내 위치",
         animation: google.maps.Animation.DROP
       });
-      markers.push(marker);
-
-      // ✅ 내 마커일 경우 → 생성 직후 레이더 붙이기
-      if (user.phone === "내번호") { // ← 내 phone 값으로 조건 지정
-        const pos = marker.getPosition();
-        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
+      markers.push(myMarker);
+      
+      // ✅ 레이더 갱신 시 내 마커 좌표를 중심으로 사용
+      const pos = myMarker.getPosition();
+      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
       }
 
       // ✅ 마커 클릭 시 모달창 표시
@@ -805,7 +804,7 @@ function updateRadarPolygon(myPos, heading) {
   }
 
   // ✅ 중심점(마커 위치) 추가
-  points.unshift(myPos);
+  // points.unshift(myPos);
 
   if (radarPolygon) {
     radarPolygon.setPath(points); 
@@ -830,30 +829,27 @@ if (navigator.geolocation) {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0;
 
+      // ✅ 내 마커: 커스텀 아이콘 사용 (빨간 핀 등)
       if (!myMarker) {
         myMarker = new google.maps.Marker({
           position: myPos,
           map: map,
           title: "내 위치",
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#FF0000",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2,
-            scale: 10
-          }
+          icon: customRedMarker // ← 기존에 정의한 SVG 마커 사용
         });
       } else {
         myMarker.setPosition(myPos);
       }
 
-      updateRadarPolygon(myPos, heading);
+      // ✅ 레이더는 내 마커 좌표 기준으로만 갱신
+      const posMarker = myMarker.getPosition();
+      updateRadarPolygon({ lat: posMarker.lat(), lng: posMarker.lng() }, heading);
     },
     (err) => console.error("위치 추적 실패:", err),
     { enableHighAccuracy: true }
   );
 }
+
 
 // ---------------------- 슬라이더/단위 변경 + 버튼 + on/off ----------------------
 document.addEventListener("DOMContentLoaded", () => {
