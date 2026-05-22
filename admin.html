@@ -208,15 +208,15 @@ input[type="text"] {
 
 <body>
 <div class="main-card">
-  <!-- ✅ 화면 상단에 관리자 화면 표시 -->
   <header>
-    <h2>A-DOMES | 관리자 화면</h2>
+  <h2>A-DOMES | 관리자 화면</h2>
   </header>
-
+  
   <!-- 입력창 + 버튼 -->
   <section class="info-box">
     <form id="locationForm" method="POST">
       <div class="input-group">
+        <!-- ✅ 처음엔 숨김 -->
         <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden;">
           <img src="btn-current.png" alt="지도 버튼" class="map-btn">
         </a>
@@ -226,7 +226,6 @@ input[type="text"] {
       <button type="button" id="stopBtn" onclick="stopLocation()">위치정보 해제</button>
     </form>
   </section>
-
   <div id="map"></div>
 </div>
 
