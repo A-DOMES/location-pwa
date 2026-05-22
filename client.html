@@ -131,14 +131,26 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-  // ---------------------- 지도 초기화 ----------------------
-  window.onload = () => {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 36.5, lng: 127.5 },
-      zoom: 7,
-      mapTypeId: "roadmap",   // 기본 지도 타입
-      styles: null            // ✅ 스타일 적용하지 않음 → 일반지도
-    });
+// ---------------------- 지도 초기화 ----------------------
+window.onload = () => {
+  // ✅ 초기 중심 좌표 저장
+  const initialCenter = { lat: 36.5, lng: 127.5 };
+
+  // ✅ 지도 생성
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: initialCenter,
+    zoom: 7,
+    mapTypeId: "roadmap",
+    styles: null
+  });
+
+  // ✅ 마우스 우클릭 시 초기 상태로 복귀
+  map.addListener("rightclick", () => {
+    map.setZoom(7);               // 줌 레벨을 7로 복귀
+    map.setCenter(initialCenter); // 초기 중심 좌표로 복귀
+  });
+};
+
 
     // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
     const themeToggle = document.getElementById("themeToggle");
@@ -749,10 +761,11 @@ function updateRadarPolygon(myPos, heading) {
     return;
   }
 
-  const angle = 90;
+  const angle = 90; // ✅ 레이더 각도 (좌우 45도)
   const points = [];
   const radiusInDegrees = convertToDegrees(radarRadiusMeters);
 
+  // ✅ 레이더 부채꼴 좌표 계산
   for (let a = -angle/2; a <= angle/2; a += 5) {
     const rad = (heading + a) * Math.PI / 180;
     const latOffset = radiusInDegrees * Math.cos(rad);
@@ -762,6 +775,8 @@ function updateRadarPolygon(myPos, heading) {
       lng: myPos.lng + lngOffset
     });
   }
+
+  // ✅ 중심점(마커 위치) 추가
   points.unshift(myPos);
 
   if (radarPolygon) {
@@ -770,10 +785,10 @@ function updateRadarPolygon(myPos, heading) {
   } else {
     radarPolygon = new google.maps.Polygon({
       paths: points,
-      strokeColor: "#00BFFF",
+      strokeColor: "#00BFFF",   // ✅ 레이더 테두리 색
       strokeOpacity: 0.8,
       strokeWeight: 2,
-      fillColor: "#00BFFF",
+      fillColor: "#00BFFF",     // ✅ 레이더 내부 색
       fillOpacity: 0.25,
       map: map
     });
