@@ -239,7 +239,7 @@ body.dark-mode #defaultMapBtn:hover {
   background:#555;
 }
 
-/* 토글 버튼 사람중심 지도중심 모드 버튼 */
+/* ---------------------- 토글 버튼 ( 사람중심 / 지도중심 ) ---------------------- */
 #toggleFollowBtn {
   position: absolute;
   left: 5px;
