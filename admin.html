@@ -209,14 +209,16 @@ input[type="text"] {
 <body>
 <div class="main-card">
   <header>
-  <h2>A-DOMES | 관리자 화면</h2>
+    <!-- ✅ 화면 상단에 관리자 화면 표시 -->
+    <h2>A-DOMES | 관리자 화면</h2>
+    <!-- ✅ 메타 영역의 title 값도 화면에 표시 -->
+    <p id="metaTitle" style="margin:4px 0; font-size:14px; color:#555;"></p>
   </header>
-  
+
   <!-- 입력창 + 버튼 -->
   <section class="info-box">
     <form id="locationForm" method="POST">
       <div class="input-group">
-        <!-- ✅ 처음엔 숨김 -->
         <a href="client.html" target="_blank" id="mapBtn" style="visibility:hidden;">
           <img src="btn-current.png" alt="지도 버튼" class="map-btn">
         </a>
@@ -228,6 +230,11 @@ input[type="text"] {
   </section>
   <div id="map"></div>
 </div>
+
+<!-- ✅ 자바스크립트로 head의 title 값을 가져와서 화면에도 표시 -->
+<script>
+  document.getElementById("metaTitle").innerText = document.title;
+</script>
 
 <!-- ✅ CONFIG 불러오기 -->
 <script src="config.js"></script>
