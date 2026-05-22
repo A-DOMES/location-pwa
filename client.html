@@ -196,37 +196,20 @@ async function loadData(token = null) {
     polylines = [];
   }
 
-// ---------------------- 지도 표시 ----------------------
 function showMap() {
   clearMap();
   if (!map) return;
 
-  // ✅ 모드별 커스텀 마커 아이콘 정의
-  const iconCurrent = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#0000FF",   // 파랑
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
-  };
-
-  const iconAll = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#FF0000",   // 빨강
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
-  };
-
-  const iconPaths = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: "#00CC00",   // 초록
-    fillOpacity: 1,
-    strokeColor: "#FFFFFF",
-    strokeWeight: 2,
-    scale: 12
+  const customRedMarker = {
+    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 32 16 32s16-20 16-32C32 7.163 24.837 0 16 0z"
+              fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
+        <circle cx="16" cy="16" r="6" fill="#FFFFFF"/>
+      </svg>
+    `),
+    scaledSize: new google.maps.Size(32, 48),
+    anchor: new google.maps.Point(16, 48)
   };
 
   if (mode === "current") {
@@ -245,16 +228,14 @@ function showMap() {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: iconCurrent,
-        title: `${user.phone} (${user.status}, ${user.updated})`,
-        animation: google.maps.Animation.BOUNCE
+        icon: customRedMarker,
+        title: `${user.phone} (${user.status}, ${user.updated})`, // ✅ 툴팁 유지
+        animation: google.maps.Animation.DROP
       });
       markers.push(marker);
-
-      // ✅ 마커 클릭 시 위치 박스 갱신
       marker.addListener("click", () => {
         updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+        document.getElementById("locationBox").style.display = "block";
       });
     });
 
@@ -263,23 +244,20 @@ function showMap() {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map: map,
-        icon: iconAll,
-        title: `${user.phone} (${user.status}, ${user.time})`,
-        animation: google.maps.Animation.BOUNCE
+        icon: customRedMarker,
+        title: `${user.phone} (${user.status}, ${user.time})`, // ✅ 툴팁 유지
+        animation: google.maps.Animation.DROP
       });
       markers.push(marker);
-
-      // ✅ 마커 클릭 시 위치 박스 갱신
       marker.addListener("click", () => {
         updateLocationBox(user);
-        document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+        document.getElementById("locationBox").style.display = "block";
       });
     });
 
   } else if (mode === "paths") {
     const select = document.getElementById("path-user-select");
     const selectedPhone = select ? select.value : "all";
-
     let users = allData;
     if (selectedPhone !== "all") {
       users = allData.filter(u => u.phone === selectedPhone);
@@ -307,16 +285,14 @@ function showMap() {
         const marker = new google.maps.Marker({
           position: last,
           map: map,
-          icon: iconPaths,
-          title: `${user.phone} / ${user.updated}`,
-          animation: google.maps.Animation.BOUNCE
+          icon: customRedMarker,
+          title: `${user.phone} / ${user.updated}`, // ✅ 툴팁 유지
+          animation: google.maps.Animation.DROP
         });
         markers.push(marker);
-
-        // ✅ 마커 클릭 시 위치 박스 갱신
         marker.addListener("click", () => {
           updateLocationBox(user);
-          document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+          document.getElementById("locationBox").style.display = "block";
         });
       }
     });
@@ -325,19 +301,18 @@ function showMap() {
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
-  
-  // ✅ 위치 정보 박스 갱신 추가 (첫 화면에도 적용)
+
   if (allData.length > 0) {
-    const user = allData[0]; // 첫 번째 사용자 기준
-    updateLocationBox(user); // 최신 버전 호출 (핀셋+닉네임 포함)
-    document.getElementById("locationBox").style.display = "block"; // 팝업 표시
+    const user = allData[0];
+    updateLocationBox(user);
+    document.getElementById("locationBox").style.display = "block";
   } else {
-    document.getElementById("locationBox").innerHTML =
-      "❌ 위치 데이터를 불러올 수 없습니다.";
+    document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
   }
-  
+
   updateUserPanelContent(mode);
-  }
+}
+
 
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
