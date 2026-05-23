@@ -262,7 +262,7 @@ function showMap(currentUserPhone) {
     
       if (!isNaN(lat) && !isNaN(lng)) {
         map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(16); // 동네 단위로 확대
+        map.setZoom(15); // 동네 단위로 확대
       } else {
         console.error("잘못된 좌표:", user.lat, user.lng);
       }
