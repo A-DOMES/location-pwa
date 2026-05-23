@@ -392,15 +392,16 @@ function updateLocationBox(user) {
   const latBox = document.getElementById("latBox");
   const lngBox = document.getElementById("lngBox");
   const addressBox = document.getElementById("addressBox");
-  const locationHeaderTitle = locationBox.querySelector("#locationHeader h3");
+  const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
   if (user && user.lat && user.lng) {
     // 로딩 메시지 숨기고 값 표시
     loadingMessage.style.display = "none";
 
     // 제목 업데이트 (예: 불뚝 → "불뚝이 현재 위치")
-    locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
+    locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
 
+    // 값 채우기
     latBox.textContent = user.lat.toFixed(6);
     lngBox.textContent = user.lng.toFixed(6);
     addressBox.textContent = user.address || "-";
