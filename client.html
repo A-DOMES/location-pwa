@@ -1337,13 +1337,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 토글 버튼 이벤트 ----------------------
   toggleBtn.addEventListener("click", () => {
     followUser = !followUser;
-
+  
     // 아이콘과 라벨 교체
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
-
+  
     // 버튼 스타일 토글 (CSS에서 .on 정의 필요)
     toggleBtn.classList.toggle("on", !followUser);
+  
+    // 지도중심 모드일 때 → 레벨 7로 이동
+    if (!followUser) {
+      map.setLevel(7);   // Kakao Map 기준, Leaflet/Google Map은 map.setZoom(7)
+    }
   });
 
   // ---------------------- 드래그 가능 함수 ----------------------
