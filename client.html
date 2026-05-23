@@ -382,26 +382,61 @@ window.openUserPanel = function(viewMode) {
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
+  const locationBox = document.getElementById("locationBox");
   const loadingMessage = document.getElementById("loadingMessage");
   const latBox = document.getElementById("latBox");
   const lngBox = document.getElementById("lngBox");
   const addressBox = document.getElementById("addressBox");
+  const locationHeaderTitle = locationBox.querySelector("#locationHeader h3");
 
   if (user && user.lat && user.lng) {
     // 값이 들어오면 로딩 메시지 숨기고 값 표시
     loadingMessage.style.display = "none";
+
+    // 제목에 사용자 이름 반영 (예: 불뚝 → "불뚝이 현재 위치")
+    locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
+
     latBox.textContent = user.lat.toFixed(6);
     lngBox.textContent = user.lng.toFixed(6);
     addressBox.textContent = user.address || "-";
   } else {
     // 값이 없으면 로딩 메시지만 표시
     loadingMessage.style.display = "block";
+    locationHeaderTitle.textContent = "📍 현 재 좌 표";
     latBox.textContent = "";
     lngBox.textContent = "";
     addressBox.textContent = "";
   }
-}
 
+  // 닫기 버튼 이벤트
+  const closeBtn = document.getElementById("closeBtn");
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      locationBox.style.display = "none";
+    };
+  }
+
+  // 공유 버튼 이벤트
+  const shareBtn = document.getElementById("shareBtn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const shareUrl =
+        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+      await navigator.clipboard.writeText(shareUrl);
+
+      const popup = document.getElementById("popupMessage");
+      popup.style.display = "block";
+      popup.style.opacity = "1";
+      setTimeout(() => {
+        popup.style.opacity = "0";
+        setTimeout(() => { popup.style.display = "none"; }, 2000);
+      }, 3000);
+    };
+  }
+
+  // 드래그 기능 적용
+  makeDraggable(locationBox);
+}
 
    
 // ---------------------- path 배열 변환 ----------------------
