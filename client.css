@@ -241,24 +241,23 @@ body.dark-mode #defaultMapBtn:hover {
 
 /* ---------------------- 토글 버튼 ( 사람중심 / 지도중심 ) ---------------------- */
 #toggleFollowBtn {
-  position: absolute; top: 8px; left: 320px;                /* 환경설정 버튼 오른쪽 위치 */
-  display: flex; flex-direction: row; align-items: center; justify-content: flex-start; /* 좌측정렬 */
-  width: 110px; height: 35px; line-height: 35px; padding: 0 8px; /* 폭 줄임 */
-  background: rgba(0, 191, 255, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); /* 반투명 청색 */
+  position: absolute; top: 8px; left: 320px;
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  width: 110px; height: 35px; line-height: 35px; padding: 0 8px;
+  background: rgba(0, 191, 255, 0.4); /* ✅ 더 투명한 파란색 */
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 2px solid #1976d2; border-radius: 999px;
-  font: 700 16px "맑은 고딕","Malgun Gothic",sans-serif; color: #ffffff; /* 글씨 흰색 */
+  font: 700 16px "Segoe UI","Roboto","Noto Sans KR",sans-serif; color: #ffffff; /* 글씨 흰색 */
   cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 9999; white-space: nowrap;
   transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease; will-change: transform;
 }
 
-#toggleFollowBtn:hover   { background: rgba(0, 191, 255, 0.8); transform: scale(1.1); }
+#toggleFollowBtn:hover   { background: rgba(0, 191, 255, 0.6); transform: scale(1.1); }
 #toggleFollowBtn:active  { transform: scale(0.95); }
 
 #toggleFollowBtn .icon   { margin-right: 6px; font-size: 20px; vertical-align: middle; }
 #toggleFollowBtn .label  { font-size: 16px; color: #ffffff; } /* 글씨 흰색 고정 */
 
-/* 지도중심 모드일 때 → 배경 동일 유지 */
-#toggleFollowBtn.on {
-  background: rgba(0, 191, 255, 0.6); /* 사람중심과 동일한 배경 */
-}
+#toggleFollowBtn.on      { background: rgba(0, 191, 255, 0.4); } /* 지도중심 모드도 동일 */
+
 
