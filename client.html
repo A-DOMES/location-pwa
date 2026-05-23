@@ -10,146 +10,145 @@
   <!-- 1. config.js 먼저 (CONFIG 객체 정의) -->
   <script src="config.js"></script>
 
-      <!-- 1. 사용자 코드 -->
-      <script>
-      // ---------------------- 전역 변수 ----------------------
-      let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-      let polylines = []; // 경로 Polyline 저장 배열
-      let geoWatchId = null;
-      let originalCenter;  // 초기 중심 좌표
-      let currentLat, currentLng;
-    
-      let myMarker = null;
-      let radarPolygon = null;
-      let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-      
-      // ✅ 내부 값은 항상 미터 단위로 저장
-      let radarRadiusMeters = 50; 
-      let radarUnit = "m"; // 표시 단위: m 또는 km
-        
-      // ---------------------- 마커 제거 함수 ----------------------
-      function clearMarkers() {
-        markers.forEach(m => m.setMap(null));
-        markers = [];
-      }
+  <!-- 1. 사용자 코드 -->
+  <script>
+  // ---------------------- 전역 변수 ----------------------
+  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+  let polylines = []; // 경로 Polyline 저장 배열
+  let geoWatchId = null;
+  let originalCenter;  // 초기 중심 좌표
+  let currentLat, currentLng;
 
-      // ---------------------- 거리 계산 함수 ----------------------
-      function calculateDistance(lat1, lng1, lat2, lng2) {
-        const R = 6371; // 지구 반지름 (km)
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a = Math.sin(dLat/2)**2 +
-                  Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-                  Math.sin(dLng/2)**2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      }
+  let myMarker = null;
+  let radarPolygon = null;
+  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
+  
+  // ✅ 내부 값은 항상 미터 단위로 저장
+  let radarRadiusMeters = 50; 
+  let radarUnit = "m"; // 표시 단위: m 또는 km
     
-      // ---------------------- 문자열 기반 색상 함수 ----------------------
-      function stringToColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-          hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-        return "#" + "00000".substring(0, 6 - c.length) + c;
-      }
+  // ---------------------- 마커 제거 함수 ----------------------
+  function clearMarkers() {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+  }
 
-    // ---------------------- 데이터 로딩 ----------------------
-    async function loadData(token = null) {
-      try {
-        let url = CONFIG.ADMIN_URL + "?mode=getLocations";
-        if (token) url += "&token=" + encodeURIComponent(token);
+  // ---------------------- 거리 계산 함수 ----------------------
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+              Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // ---------------------- 문자열 기반 색상 함수 ----------------------
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  }
+
+// ---------------------- 데이터 로딩 ----------------------
+async function loadData(token = null) {
+  try {
+    let url = CONFIG.ADMIN_URL + "?mode=getLocations";
+    if (token) url += "&token=" + encodeURIComponent(token);
+
+    const response = await fetch(url);
+    allData = await response.json();
+
+    // 드롭다운 갱신
+    populatePathSelect();
+
+    // ✅ 데이터 정상 수신 후 지도 표시
+    showMap();
+
+    // ✅ 위치 정보 박스 갱신
+        if (allData.length > 0) {
+          const user = allData[0]; // 첫 번째 사용자 기준
+          const locationBox = document.getElementById("locationBox");
+          locationBox.innerHTML = `
+            현재 위치: <br>
+            위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
+            경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
+            주소: ${user.address || "-"} <br>
+            <button id="shareBtn">현재 위치 공유</button>
+          `;
     
-        const response = await fetch(url);
-        allData = await response.json();
-    
-        // 드롭다운 갱신
-        populatePathSelect();
-    
-        // ✅ 데이터 정상 수신 후 지도 표시
-        showMap();
-    
-        // ✅ 위치 정보 박스 갱신
-            if (allData.length > 0) {
-              const user = allData[0]; // 첫 번째 사용자 기준
-              const locationBox = document.getElementById("locationBox");
-              locationBox.innerHTML = `
-                현재 위치: <br>
-                위도: ${user.lat ? user.lat.toFixed(6) : "-"} <br>
-                경도: ${user.lng ? user.lng.toFixed(6) : "-"} <br>
-                주소: ${user.address || "-"} <br>
-                <button id="shareBtn">현재 위치 공유</button>
-              `;
-        
-              const shareBtn = document.getElementById("shareBtn");
-              if (shareBtn) {
-                shareBtn.onclick = async () => {
-                  const shareUrl =
-                    `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-                  await navigator.clipboard.writeText(shareUrl);
-    
-              // ✅ 공유 팝업 표시
-              const popup = document.getElementById("popupMessage");
-              popup.style.display = "block";
-              popup.style.opacity = "1";
-              setTimeout(() => {
-                popup.style.opacity = "0";
-                setTimeout(() => { popup.style.display = "none"; }, 2000);
-              }, 3000);
-            };
-          }
-        } else {
-          document.getElementById("locationBox").innerHTML =
-            "❌ 위치 데이터를 불러올 수 없습니다.";
-        }
-      } catch (err) {
-        console.error("데이터 로드 실패:", err);
-        showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+          const shareBtn = document.getElementById("shareBtn");
+          if (shareBtn) {
+            shareBtn.onclick = async () => {
+              const shareUrl =
+                `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+              await navigator.clipboard.writeText(shareUrl);
+
+          // ✅ 공유 팝업 표시
+          const popup = document.getElementById("popupMessage");
+          popup.style.display = "block";
+          popup.style.opacity = "1";
+          setTimeout(() => {
+            popup.style.opacity = "0";
+            setTimeout(() => { popup.style.display = "none"; }, 2000);
+          }, 3000);
+        };
       }
+    } else {
+      document.getElementById("locationBox").innerHTML =
+        "❌ 위치 데이터를 불러올 수 없습니다.";
+    }
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+    showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
+  }
+}
+
+
+  // ---------------------- 갱신 주기 설정 ----------------------
+  function setCustomInterval() {
+    const value = parseInt(document.getElementById("intervalValue").value);
+    const unit = document.getElementById("intervalUnit").value;
+
+    if (isNaN(value) || value <= 0) {
+      alert("1 이상의 값을 입력하세요.");
+      return;
     }
 
+    let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
 
-      // ---------------------- 갱신 주기 설정 ----------------------
-      function setCustomInterval() {
-        const value = parseInt(document.getElementById("intervalValue").value);
-        const unit = document.getElementById("intervalUnit").value;
-    
-        if (isNaN(value) || value <= 0) {
-          alert("1 이상의 값을 입력하세요.");
-          return;
-        }
-    
-        let newInterval = unit === "seconds" ? value * 1000 : value * 60000;
-    
-        clearInterval(intervalId);
-        intervalId = setInterval(loadData, newInterval);
-    
-        const msgBox = document.getElementById("message-box");
-        msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
-        msgBox.style.display = "block";
-        setTimeout(() => { msgBox.style.display = "none"; }, 2000);
-      }
+    clearInterval(intervalId);
+    intervalId = setInterval(loadData, newInterval);
 
-    // ---------------------- 로딩시 지도 초기화 ----------------------
-    window.onload = () => {
-      // ✅ 초기 중심 좌표 저장
-      const initialCenter = { lat: 36.5, lng: 127.5 };
-    
-      // ✅ 지도 생성
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: initialCenter,
-        zoom: 7,
-        mapTypeId: "roadmap",
-        styles: null
-      });
-    
-    // ✅ 마우스 우클릭 시 초기 상태로 복귀
-      map.addListener("rightclick", () => {
-        map.setZoom(7);               // 줌 레벨을 7로 복귀
-        map.setCenter(initialCenter); // 초기 중심 좌표로 복귀
-      });
+    const msgBox = document.getElementById("message-box");
+    msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
+    msgBox.style.display = "block";
+    setTimeout(() => { msgBox.style.display = "none"; }, 2000);
+  }
 
+// ---------------------- 로딩시 지도 초기화 ----------------------
+window.onload = () => {
+  // ✅ 초기 중심 좌표 저장
+  const initialCenter = { lat: 36.5, lng: 127.5 };
+
+  // ✅ 지도 생성
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: initialCenter,
+    zoom: 7,
+    mapTypeId: "roadmap",
+    styles: null
+  });
+
+  // ✅ 마우스 우클릭 시 초기 상태로 복귀
+  map.addListener("rightclick", () => {
+    map.setZoom(7);               // 줌 레벨을 7로 복귀
+    map.setCenter(initialCenter); // 초기 중심 좌표로 복귀
+  });
 
     // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
     const themeToggle = document.getElementById("themeToggle");
@@ -383,40 +382,34 @@ window.openUserPanel = function(viewMode) {
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
   const locationBox = document.getElementById("locationBox");
-  const loadingMessage = document.getElementById("loadingMessage");
-  const latBox = document.getElementById("latBox");
-  const lngBox = document.getElementById("lngBox");
-  const addressBox = document.getElementById("addressBox");
-  const locationHeaderTitle = locationBox.querySelector("#locationHeader h3");
+  locationBox.innerHTML = `
+    <div class="location-header">
+      <span>
+        📍 ${user.phone || "사용자"} 위치 정보
+      </span>
+      <button id="closeLocationBox">✖</button>
+    </div>
+    <div class="coord">
+      🌐 위도: ${user.lat ? user.lat.toFixed(6) : "-"}
+    </div>
+    <div class="coord">
+      📐 경도: ${user.lng ? user.lng.toFixed(6) : "-"}
+    </div>
+    <div class="coord">
+      🏠 주소: ${user.address || "-"}
+    </div>
+    <button id="shareBtn">현재 위치 공유</button>
+  `;
 
-  if (user && user.lat && user.lng) {
-    // 값이 들어오면 로딩 메시지 숨기고 값 표시
-    loadingMessage.style.display = "none";
-
-    // 제목에 사용자 이름 반영 (예: 불뚝 → "불뚝이 현재 위치")
-    locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
-
-    latBox.textContent = user.lat.toFixed(6);
-    lngBox.textContent = user.lng.toFixed(6);
-    addressBox.textContent = user.address || "-";
-  } else {
-    // 값이 없으면 로딩 메시지만 표시
-    loadingMessage.style.display = "block";
-    locationHeaderTitle.textContent = "📍 현 재 좌 표";
-    latBox.textContent = "";
-    lngBox.textContent = "";
-    addressBox.textContent = "";
-  }
-
-  // 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("closeBtn");
+  // ✅ 닫기 버튼 이벤트
+  const closeBtn = document.getElementById("closeLocationBox");
   if (closeBtn) {
     closeBtn.onclick = () => {
       locationBox.style.display = "none";
     };
   }
 
-  // 공유 버튼 이벤트
+  // ✅ 공유 버튼 이벤트
   const shareBtn = document.getElementById("shareBtn");
   if (shareBtn) {
     shareBtn.onclick = async () => {
@@ -434,9 +427,10 @@ function updateLocationBox(user) {
     };
   }
 
-  // 드래그 기능 적용
+  // ✅ 드래그 기능 적용
   makeDraggable(locationBox);
 }
+
 
    
 // ---------------------- path 배열 변환 ----------------------
@@ -1540,19 +1534,11 @@ toggleBtn.addEventListener("click", () => {
   </div>
   <div id="locationContent">
     <div id="loadingMessage">위치 정보를 가져오는 중...</div>
-    
-    <!-- 위도 -->
-    <div class="coord">
-      🌐 위도: <span id="latBox"></span>
-    </div>
-    <!-- 경도 -->
-    <div class="coord">
-      📐 경도: <span id="lngBox"></span>
-    </div>
-    <!-- 주소 -->
-    <div class="coord">
-      🏠 주소: <div id="addressBox"></div>
-    </div>
+    <span id="latBox"></span>
+    <span id="lngBox"></span>
+    <small id="directionBox"></small>
+    <small id="timeBox"></small>
+    <div id="addressBox"></div>
   </div>
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
