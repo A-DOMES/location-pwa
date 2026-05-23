@@ -1329,16 +1329,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const iconSpan = toggleBtn.querySelector(".icon");
   const labelSpan = toggleBtn.querySelector(".label");
 
+  // 기본은 사람중심 모드
   let followUser = true;
 
   toggleBtn.addEventListener("click", () => {
     followUser = !followUser;
 
-    // ✅ 아이콘과 라벨 교체
+    // 아이콘과 라벨 교체
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // ✅ 버튼 이동/스타일을 위한 클래스 토글
+    // 버튼 스타일 토글 (CSS에서 .on 정의 필요)
     toggleBtn.classList.toggle("on", !followUser);
 
     // 필요하다면 지도 이동 로직 추가
@@ -1371,13 +1372,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener('mousemove', e => {
       if (isDragging) {
-        element.style.left = (e.clientX - offsetX) + 'px';
-        element.style.top = (e.clientY - offsetY) + 'px';
+        let newLeft = e.clientX - offsetX;
+        let newTop = e.clientY - offsetY;
+
+        // 화면 경계 체크
+        newLeft = Math.max(0, Math.min(window.innerWidth - element.offsetWidth, newLeft));
+        newTop = Math.max(0, Math.min(window.innerHeight - element.offsetHeight, newTop));
+
+        element.style.left = newLeft + 'px';
+        element.style.top = newTop + 'px';
       }
     });
 
     document.addEventListener('mouseup', () => isDragging = false);
 
+    // 모바일 터치
     element.addEventListener('touchstart', e => {
       if (e.touches.length === 1) {
         isDragging = true;
@@ -1389,8 +1398,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener('touchmove', e => {
       if (isDragging && e.touches.length === 1) {
-        element.style.left = (e.touches[0].clientX - offsetX) + 'px';
-        element.style.top = (e.touches[0].clientY - offsetY) + 'px';
+        let newLeft = e.touches[0].clientX - offsetX;
+        let newTop = e.touches[0].clientY - offsetY;
+
+        newLeft = Math.max(0, Math.min(window.innerWidth - element.offsetWidth, newLeft));
+        newTop = Math.max(0, Math.min(window.innerHeight - element.offsetHeight, newTop));
+
+        element.style.left = newLeft + 'px';
+        element.style.top = newTop + 'px';
       }
     });
 
