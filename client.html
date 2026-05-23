@@ -1215,6 +1215,7 @@ function makeResizable(panelId) {
   });
 }
 
+// ---------------------- DOMContentLoaded 이후 실행 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
@@ -1223,22 +1224,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const leftEdge = document.getElementById("left-edge");
   const rightEdge = document.getElementById("right-edge");
 
-  // ---------------------- 최소화 버튼 ----------------------
+  // ▶ 최소화 버튼 이벤트
   minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
     panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-
     if (panel.classList.contains("snap-left")) {
       panel.classList.add("collapsed-left");
     } else {
       panel.classList.add("collapsed-right");
     }
-
-    // 인라인 스타일 제거 → CSS 규칙만 적용
     panel.style = "";
   });
 
-  // ---------------------- 최대화 버튼 ----------------------
+  // ▶ 최대화 버튼 이벤트
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
       panel.classList.remove("maximized");
@@ -1276,21 +1273,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---------------------- 닫기 버튼 ----------------------
+  // ▶ 닫기 버튼 이벤트
   closeBtn.addEventListener("click", () => {
-    panel.classList.remove(
-      "open",
-      "collapsed-left",
-      "collapsed-right",
-      "maximized",
-      "snap-left",
-      "snap-right",
-      "touch-active"
-    );
+    panel.classList.remove("open","collapsed-left","collapsed-right","maximized","snap-left","snap-right","touch-active");
     panel.style = "";
   });
 
-  // ---------------------- 끝부분 이벤트 처리 ----------------------
+  // ▶ 끝부분 이벤트 처리
   if (leftEdge) {
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) {
@@ -1317,87 +1306,72 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------------------- 드래그 + Snap 기능 적용 ----------------------
+  // ▶ 드래그 + Snap 기능 적용
   makePanelDraggable("user-panel");
 
-  // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
+  // ▶ 네 면 리사이즈 기능 적용
   makeResizable("user-panel");
-});
 
-    // ---------------------- 토글 버튼 이벤트 ----------------------
-    const toggleBtn = document.getElementById("toggleFollowBtn");
-    const iconSpan = toggleBtn.querySelector(".icon");
-    const labelSpan = toggleBtn.querySelector(".label");
+  // ---------------------- 토글 버튼 이벤트 ----------------------
+  const toggleBtn = document.getElementById("toggleFollowBtn");
+  let followUser = true;
 
-    let followUser = true;
+  toggleBtn.addEventListener("click", () => {
+    followUser = !followUser;
+    // ✅ 버튼 전체를 다시 그려줌 (span 구조 유지)
+    toggleBtn.innerHTML = followUser
+      ? '<span class="icon">👤</span><span class="label">사람중심</span>'
+      : '<span class="icon">🗺️</span><span class="label">지도중심</span>';
+  });
 
-    toggleBtn.addEventListener("click", () => {
-      followUser = !followUser;
+// ---------------------- 드래그 가능 함수 ----------------------
+function makeDraggableAndResizable(element) {
+  let isDragging = false, offsetX, offsetY;
 
-      // ✅ 아이콘과 라벨만 교체
-      iconSpan.textContent = followUser ? "👤" : "🗺️";
-      labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+  // ▶ 마우스 드래그 시작
+  element.addEventListener('mousedown', e => {
+    isDragging = true;
+    offsetX = e.clientX - element.offsetLeft;
+    offsetY = e.clientY - element.offsetTop;
+    element.style.right = ""; // 오른쪽 고정 해제
+  });
 
-      // 여기서 지도 중심/사람 중심 모드에 맞게 지도 이동 로직 추가 가능
-      // 예시:
-      /*
-      if (followUser) {
-        if (currentLat && currentLng) {
-          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-          map.setZoom(16);
-        }
-      } else {
-        if (pathCoords.length > 0) {
-          const lastPoint = pathCoords[pathCoords.length - 1];
-          map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-          map.setZoom(7);
-        }
-      }
-      */
-    });
-
-    // ---------------------- 드래그 가능 함수 ----------------------
-    function makeDraggableAndResizable(element) {
-      let isDragging = false, offsetX, offsetY;
-
-      element.addEventListener('mousedown', e => {
-        isDragging = true;
-        offsetX = e.clientX - element.offsetLeft;
-        offsetY = e.clientY - element.offsetTop;
-        element.style.right = "";
-      });
-
-      document.addEventListener('mousemove', e => {
-        if (isDragging) {
-          element.style.left = (e.clientX - offsetX) + 'px';
-          element.style.top = (e.clientY - offsetY) + 'px';
-        }
-      });
-
-      document.addEventListener('mouseup', () => isDragging = false);
-
-      element.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-          isDragging = true;
-          offsetX = e.touches[0].clientX - element.offsetLeft;
-          offsetY = e.touches[0].clientY - element.offsetTop;
-          element.style.right = "";
-        }
-      });
-
-      document.addEventListener('touchmove', e => {
-        if (isDragging && e.touches.length === 1) {
-          element.style.left = (e.touches[0].clientX - offsetX) + 'px';
-          element.style.top = (e.touches[0].clientY - offsetY) + 'px';
-        }
-      });
-
-      document.addEventListener('touchend', () => isDragging = false);
+  // ▶ 마우스 드래그 이동
+  document.addEventListener('mousemove', e => {
+    if (isDragging) {
+      element.style.left = (e.clientX - offsetX) + 'px';
+      element.style.top = (e.clientY - offsetY) + 'px';
     }
+  });
 
-    // 적용
-    makeDraggableAndResizable(toggleBtn);
+  // ▶ 마우스 드래그 종료
+  document.addEventListener('mouseup', () => isDragging = false);
 
+  // ▶ 터치 드래그 시작
+  element.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      offsetX = e.touches[0].clientX - element.offsetLeft;
+      offsetY = e.touches[0].clientY - element.offsetTop;
+      element.style.right = ""; // 오른쪽 고정 해제
+    }
+  });
+
+  // ▶ 터치 드래그 이동
+  document.addEventListener('touchmove', e => {
+    if (isDragging && e.touches.length === 1) {
+      element.style.left = (e.touches[0].clientX - offsetX) + 'px';
+      element.style.top = (e.touches[0].clientY - offsetY) + 'px';
+    }
+  });
+
+  // ▶ 터치 드래그 종료
+  document.addEventListener('touchend', () => isDragging = false);
+}
+
+// ---------------------- 적용 ----------------------
+// 토글 버튼을 드래그 가능하게 적용
+makeDraggableAndResizable(document.getElementById("toggleFollowBtn"));
 
     
 </script>
