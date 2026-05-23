@@ -382,23 +382,33 @@ window.openUserPanel = function(viewMode) {
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
-  // 위도/경도/주소 등 내용만 업데이트
-  document.getElementById("latBox").textContent =
-    user.lat ? user.lat.toFixed(6) : "-";
-  document.getElementById("lngBox").textContent =
-    user.lng ? user.lng.toFixed(6) : "-";
-  document.getElementById("addressBox").textContent =
-    user.address || "-";
-  document.getElementById("directionBox").textContent =
-    user.direction || "";
-  document.getElementById("timeBox").textContent =
-    user.time || "";
+  const locationBox = document.getElementById("locationBox");
 
-  // 닫기 버튼 이벤트는 body에 이미 있으니 여기서 연결만 해주면 됨
+  // 처음에는 로딩 메시지만 보이게
+  const loadingMessage = document.getElementById("loadingMessage");
+  const latBox = document.getElementById("latBox");
+  const lngBox = document.getElementById("lngBox");
+  const addressBox = document.getElementById("addressBox");
+
+  if (user && user.lat && user.lng) {
+    // 값이 들어오면 로딩 메시지 숨기고 값 표시
+    loadingMessage.style.display = "none";
+    latBox.textContent = user.lat.toFixed(6);
+    lngBox.textContent = user.lng.toFixed(6);
+    addressBox.textContent = user.address || "-";
+  } else {
+    // 값이 없으면 로딩 메시지만 표시
+    loadingMessage.style.display = "block";
+    latBox.textContent = "";
+    lngBox.textContent = "";
+    addressBox.textContent = "";
+  }
+
+  // 닫기 버튼 이벤트
   const closeBtn = document.getElementById("closeBtn");
   if (closeBtn) {
     closeBtn.onclick = () => {
-      document.getElementById("locationBox").style.display = "none";
+      locationBox.style.display = "none";
     };
   }
 
@@ -420,8 +430,7 @@ function updateLocationBox(user) {
     };
   }
 
-  // 드래그 기능 적용
-  makeDraggable(document.getElementById("locationBox"));
+  makeDraggable(locationBox);
 }
 
 
@@ -1535,14 +1544,6 @@ toggleBtn.addEventListener("click", () => {
     <!-- 경도 -->
     <div class="coord">
       📐 경도: <span id="lngBox"></span>
-    </div>
-    <!-- 방향 -->
-    <div class="coord">
-      🧭 방향: <small id="directionBox"></small>
-    </div>
-    <!-- 시간 -->
-    <div class="coord">
-      ⏰ 시간: <small id="timeBox"></small>
     </div>
     <!-- 주소 -->
     <div class="coord">
