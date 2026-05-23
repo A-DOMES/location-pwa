@@ -26,9 +26,6 @@
   // ✅ 내부 값은 항상 미터 단위로 저장
   let radarRadiusMeters = 50; 
   let radarUnit = "m"; // 표시 단위: m 또는 km
-
-  // ✅ 로그인한 사용자 phone 값 저장 (추가)
-  let currentUserPhone = null;
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -216,7 +213,7 @@ window.onload = () => {
   }
 
 /* ---------------------- 지도 초기화 ---------------------- */    
-function showMap(currentUserPhone) {
+function showMap() {
   clearMap();
   if (!map) return;
 
@@ -245,7 +242,8 @@ function showMap(currentUserPhone) {
     markers.push(marker);
 
     // ✅ 로그인한 사용자에게만 레이더 붙이기
-    if (user.phone === currentUserPhone) {
+    // 여기서 전역변수 currentUserPhone을 직접 사용
+    if (currentUserPhone && user.phone === currentUserPhone) {
       radarTargetMarker = marker; // 레이더 대상 지정
       const pos = radarTargetMarker.getPosition();
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
@@ -255,17 +253,6 @@ function showMap(currentUserPhone) {
     marker.addListener("click", () => {
       updateLocationBox(user);
       document.getElementById("locationBox").style.display = "block";
-    
-      // 지도 이동 (선택한 마커 위치로)
-      const lat = parseFloat(user.lat);
-      const lng = parseFloat(user.lng);
-    
-      if (!isNaN(lat) && !isNaN(lng)) {
-        map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(18); // 동네 단위로 확대
-      } else {
-        console.error("잘못된 좌표:", user.lat, user.lng);
-      }
     });
   });
 
@@ -274,7 +261,7 @@ function showMap(currentUserPhone) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 초기 모달창 표시 (첫 사용자 기준)
+  // ✅ 초기 모달창 표시
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
