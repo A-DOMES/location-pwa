@@ -273,3 +273,11 @@ body.dark-mode #defaultMapBtn:hover {
     #toggleFollowBtn .icon { margin-right:4px; margin-left:-10px; font-size:28px; }
     #toggleFollowBtn .label { margin-left:2px; font-size:20px; }
 
+#toggleFollowBtn.on {
+  background: #1976d2;
+  color: #fff;
+}
+
+#toggleFollowBtn.on .icon {
+  margin-left: 20px; /* 오른쪽으로 이동 */
+}
