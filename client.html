@@ -382,34 +382,40 @@ window.openUserPanel = function(viewMode) {
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
   const locationBox = document.getElementById("locationBox");
-  locationBox.innerHTML = `
-    <div class="location-header">
-      <span>
-        📍 ${user.phone || "사용자"} 위치 정보
-      </span>
-      <button id="closeLocationBox">✖</button>
-    </div>
-    <div class="coord">
-      🌐 위도: ${user.lat ? user.lat.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      📐 경도: ${user.lng ? user.lng.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      🏠 주소: ${user.address || "-"}
-    </div>
-    <button id="shareBtn">현재 위치 공유</button>
-  `;
+  const loadingMessage = document.getElementById("loadingMessage");
+  const latBox = document.getElementById("latBox");
+  const lngBox = document.getElementById("lngBox");
+  const addressBox = document.getElementById("addressBox");
+  const locationHeaderTitle = locationBox.querySelector("#locationHeader h3");
 
-  // ✅ 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("closeLocationBox");
+  if (user && user.lat && user.lng) {
+    // 값이 들어오면 로딩 메시지 숨기고 값 표시
+    loadingMessage.style.display = "none";
+
+    // 제목에 사용자 이름 반영 (예: 불뚝 → "불뚝이 현재 위치")
+    locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
+
+    latBox.textContent = user.lat.toFixed(6);
+    lngBox.textContent = user.lng.toFixed(6);
+    addressBox.textContent = user.address || "-";
+  } else {
+    // 값이 없으면 로딩 메시지만 표시
+    loadingMessage.style.display = "block";
+    locationHeaderTitle.textContent = "📍 현 재 좌 표";
+    latBox.textContent = "";
+    lngBox.textContent = "";
+    addressBox.textContent = "";
+  }
+
+  // 닫기 버튼 이벤트
+  const closeBtn = document.getElementById("closeBtn");
   if (closeBtn) {
     closeBtn.onclick = () => {
       locationBox.style.display = "none";
     };
   }
 
-  // ✅ 공유 버튼 이벤트
+  // 공유 버튼 이벤트
   const shareBtn = document.getElementById("shareBtn");
   if (shareBtn) {
     shareBtn.onclick = async () => {
@@ -427,9 +433,10 @@ function updateLocationBox(user) {
     };
   }
 
-  // ✅ 드래그 기능 적용
+  // 드래그 기능 적용
   makeDraggable(locationBox);
 }
+
 
 
    
