@@ -395,10 +395,10 @@ function updateLocationBox(user) {
   const locationHeaderTitle = locationBox.querySelector("#locationHeader h3");
 
   if (user && user.lat && user.lng) {
-    // 값이 들어오면 로딩 메시지 숨기고 값 표시
+    // 로딩 메시지 숨기고 값 표시
     loadingMessage.style.display = "none";
 
-    // 제목에 사용자 이름 반영 (예: 불뚝 → "불뚝이 현재 위치")
+    // 제목 업데이트 (예: 불뚝 → "불뚝이 현재 위치")
     locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
 
     latBox.textContent = user.lat.toFixed(6);
@@ -439,10 +439,8 @@ function updateLocationBox(user) {
     };
   }
 
-  // 드래그 기능 적용
   makeDraggable(locationBox);
 }
-
 
 
    
