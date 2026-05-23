@@ -71,10 +71,7 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 데이터 정상 수신 후 지도 표시
-    // 여기서 로그인한 사용자 phone 값을 넘겨줌
-    // CONFIG.CURRENT_USER_PHONE은 로그인 시점에 세팅해둔 값이어야 함
-    const currentUserPhone = CONFIG.CURRENT_USER_PHONE; 
-    showMap(currentUserPhone);
+    showMap();
 
     // ✅ 위치 정보 박스 갱신
     if (allData.length > 0) {
@@ -265,7 +262,7 @@ function showMap(currentUserPhone) {
     
       if (!isNaN(lat) && !isNaN(lng)) {
         map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(16); // 동네 단위로 확대
+        map.setZoom(18); // 동네 단위로 확대
       } else {
         console.error("잘못된 좌표:", user.lat, user.lng);
       }
