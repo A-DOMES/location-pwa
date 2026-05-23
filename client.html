@@ -382,9 +382,6 @@ window.openUserPanel = function(viewMode) {
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
-  const locationBox = document.getElementById("locationBox");
-
-  // 처음에는 로딩 메시지만 보이게
   const loadingMessage = document.getElementById("loadingMessage");
   const latBox = document.getElementById("latBox");
   const lngBox = document.getElementById("lngBox");
@@ -403,34 +400,6 @@ function updateLocationBox(user) {
     lngBox.textContent = "";
     addressBox.textContent = "";
   }
-
-  // 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("closeBtn");
-  if (closeBtn) {
-    closeBtn.onclick = () => {
-      locationBox.style.display = "none";
-    };
-  }
-
-  // 공유 버튼 이벤트
-  const shareBtn = document.getElementById("shareBtn");
-  if (shareBtn) {
-    shareBtn.onclick = async () => {
-      const shareUrl =
-        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-      await navigator.clipboard.writeText(shareUrl);
-
-      const popup = document.getElementById("popupMessage");
-      popup.style.display = "block";
-      popup.style.opacity = "1";
-      setTimeout(() => {
-        popup.style.opacity = "0";
-        setTimeout(() => { popup.style.display = "none"; }, 2000);
-      }, 3000);
-    };
-  }
-
-  makeDraggable(locationBox);
 }
 
 
