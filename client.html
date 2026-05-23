@@ -1324,7 +1324,9 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 });
 
-  // ---------------------- 토글 버튼 이벤트 ----------------------
+// ---------------------- DOM 준비 후 실행 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  // 토글 버튼 요소 가져오기
   const toggleBtn = document.getElementById("toggleFollowBtn");
   const iconSpan = toggleBtn.querySelector(".icon");
   const labelSpan = toggleBtn.querySelector(".label");
@@ -1332,6 +1334,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 기본은 사람중심 모드
   let followUser = true;
 
+  // ---------------------- 토글 버튼 이벤트 ----------------------
   toggleBtn.addEventListener("click", () => {
     followUser = !followUser;
 
@@ -1341,22 +1344,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 버튼 스타일 토글 (CSS에서 .on 정의 필요)
     toggleBtn.classList.toggle("on", !followUser);
-
-    // 필요하다면 지도 이동 로직 추가
-    /*
-    if (followUser) {
-      if (currentLat && currentLng) {
-        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-        map.setZoom(16);
-      }
-    } else {
-      if (pathCoords.length > 0) {
-        const lastPoint = pathCoords[pathCoords.length - 1];
-        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-        map.setZoom(7);
-      }
-    }
-    */
   });
 
   // ---------------------- 드래그 가능 함수 ----------------------
@@ -1414,6 +1401,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 적용
   makeDraggableAndResizable(toggleBtn);
+});
+
    
 </script>
 </head>
