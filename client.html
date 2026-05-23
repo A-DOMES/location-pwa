@@ -26,6 +26,9 @@
   // ✅ 내부 값은 항상 미터 단위로 저장
   let radarRadiusMeters = 50; 
   let radarUnit = "m"; // 표시 단위: m 또는 km
+
+  // ✅ 로그인한 사용자 phone 값 저장 (추가)
+  let currentUserPhone = null;
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -68,8 +71,9 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 데이터 정상 수신 후 지도 표시
-    // 로그인한 사용자 phone 값을 넘겨줌
-    const currentUserPhone = CONFIG.CURRENT_USER_PHONE; // 로그인한 사용자 phone 값
+    // 여기서 로그인한 사용자 phone 값을 넘겨줌
+    // CONFIG.CURRENT_USER_PHONE은 로그인 시점에 세팅해둔 값이어야 함
+    const currentUserPhone = CONFIG.CURRENT_USER_PHONE; 
     showMap(currentUserPhone);
 
     // ✅ 위치 정보 박스 갱신
@@ -89,7 +93,7 @@ async function loadData(token = null) {
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
 
-      // 공유 버튼 이벤트
+      // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
       if (shareBtn) {
         shareBtn.onclick = async () => {
@@ -116,6 +120,7 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
+
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
