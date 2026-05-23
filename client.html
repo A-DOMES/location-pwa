@@ -68,7 +68,9 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 데이터 정상 수신 후 지도 표시
-    showMap();
+    // 로그인한 사용자 phone 값을 넘겨줌
+    const currentUserPhone = CONFIG.CURRENT_USER_PHONE; // 로그인한 사용자 phone 값
+    showMap(currentUserPhone);
 
     // ✅ 위치 정보 박스 갱신
     if (allData.length > 0) {
@@ -82,7 +84,7 @@ async function loadData(token = null) {
       const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
       loadingMessage.style.display = "none";
-      locationHeaderTitle.textContent = `${user.name || "사용자"}의 현재 위치`;
+      locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
       latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
@@ -114,7 +116,6 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
