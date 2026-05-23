@@ -382,35 +382,27 @@ window.openUserPanel = function(viewMode) {
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
-  const locationBox = document.getElementById("locationBox");
-  locationBox.innerHTML = `
-    <div class="location-header">
-      <span>
-        📍 ${user.phone || "사용자"} 위치 정보
-      </span>
-      <button id="closeLocationBox">✖</button>
-    </div>
-    <div class="coord">
-      🌐 위도: ${user.lat ? user.lat.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      📐 경도: ${user.lng ? user.lng.toFixed(6) : "-"}
-    </div>
-    <div class="coord">
-      🏠 주소: ${user.address || "-"}
-    </div>
-    <button id="shareBtn">현재 위치 공유</button>
-  `;
+  // 위도/경도/주소 등 내용만 업데이트
+  document.getElementById("latBox").textContent =
+    user.lat ? user.lat.toFixed(6) : "-";
+  document.getElementById("lngBox").textContent =
+    user.lng ? user.lng.toFixed(6) : "-";
+  document.getElementById("addressBox").textContent =
+    user.address || "-";
+  document.getElementById("directionBox").textContent =
+    user.direction || "";
+  document.getElementById("timeBox").textContent =
+    user.time || "";
 
-  // ✅ 닫기 버튼 이벤트
-  const closeBtn = document.getElementById("closeLocationBox");
+  // 닫기 버튼 이벤트는 body에 이미 있으니 여기서 연결만 해주면 됨
+  const closeBtn = document.getElementById("closeBtn");
   if (closeBtn) {
     closeBtn.onclick = () => {
-      locationBox.style.display = "none";
+      document.getElementById("locationBox").style.display = "none";
     };
   }
 
-  // ✅ 공유 버튼 이벤트
+  // 공유 버튼 이벤트
   const shareBtn = document.getElementById("shareBtn");
   if (shareBtn) {
     shareBtn.onclick = async () => {
@@ -428,8 +420,8 @@ function updateLocationBox(user) {
     };
   }
 
-  // ✅ 드래그 기능 적용
-  makeDraggable(locationBox);
+  // 드래그 기능 적용
+  makeDraggable(document.getElementById("locationBox"));
 }
 
 
@@ -1535,11 +1527,27 @@ toggleBtn.addEventListener("click", () => {
   </div>
   <div id="locationContent">
     <div id="loadingMessage">위치 정보를 가져오는 중...</div>
-    <span id="latBox"></span>
-    <span id="lngBox"></span>
-    <small id="directionBox"></small>
-    <small id="timeBox"></small>
-    <div id="addressBox"></div>
+    
+    <!-- 위도 -->
+    <div class="coord">
+      🌐 위도: <span id="latBox"></span>
+    </div>
+    <!-- 경도 -->
+    <div class="coord">
+      📐 경도: <span id="lngBox"></span>
+    </div>
+    <!-- 방향 -->
+    <div class="coord">
+      🧭 방향: <small id="directionBox"></small>
+    </div>
+    <!-- 시간 -->
+    <div class="coord">
+      ⏰ 시간: <small id="timeBox"></small>
+    </div>
+    <!-- 주소 -->
+    <div class="coord">
+      🏠 주소: <div id="addressBox"></div>
+    </div>
   </div>
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
