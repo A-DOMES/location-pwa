@@ -242,9 +242,14 @@ function showMap(currentUserPhone) {
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
     }
 
+    // ✅ 마커 클릭 이벤트
     marker.addListener("click", () => {
       updateLocationBox(user);
       document.getElementById("locationBox").style.display = "block";
+  
+      // 지도 이동 추가
+      map.setCenter({ lat: user.lat, lng: user.lng });
+      map.setZoom(7);
     });
   });
 
