@@ -19,6 +19,6 @@ const CONFIG = {
   },
     // ✅ 기본 좌표 및 간격
   DEFAULT_CENTER: { lat: 36.5, lng: 127.5 }, // 대한민국 중앙 좌표
-  DEFAULT_INTERVAL: 300000 // 5분 (밀리초)
+  DEFAULT_INTERVAL: 60000 // 1분 (밀리초)
 };
 
