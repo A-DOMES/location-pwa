@@ -167,7 +167,7 @@ window.onload = () => {
 
     // ✅ 데이터 로딩 및 기본 갱신 주기
     loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 60000);
+    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
   };
 
   // ---------------------- 드롭다운 갱신 ----------------------
@@ -691,12 +691,15 @@ window.moveToUser = function(lat, lng, phone) {
     animation: google.maps.Animation.BOUNCE
   });
 };
+
+
+
     
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
   const value = parseInt(document.getElementById("intervalValue").value, 10);
   const unit = document.getElementById("intervalUnit").value;
-  let intervalMs = 60000;
+  let intervalMs = 300000;
   if (unit === "minutes") intervalMs = value * 60000;
   else if (unit === "seconds") intervalMs = value * 1000;
 
@@ -1493,7 +1496,7 @@ toggleBtn.addEventListener("click", () => {
   <div class="dropdown-item">
     <strong>갱신 주기 설정</strong><br>
     <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-      <input type="number" id="intervalValue" value="1" min="1" style="width:70px; font-size:18px; padding:6px;">
+      <input type="number" id="intervalValue" value="5" min="1" style="width:70px; font-size:18px; padding:6px;">
       <select id="intervalUnit" style="font-size:18px; padding:6px;">
         <option value="minutes">분</option>
         <option value="seconds">초</option>
