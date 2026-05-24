@@ -26,7 +26,13 @@
   // ✅ 내부 값은 항상 미터 단위로 저장
   let radarRadiusMeters = 50; 
   let radarUnit = "m"; // 표시 단위: m 또는 km
-    
+
+  let currentUserPhone = null;
+
+  // 로그인 성공 시
+  currentUserPhone = loginResponse.phone; // 서버에서 내려준 내 별명(phone 값)
+
+
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
     markers.forEach(m => m.setMap(null));
