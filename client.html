@@ -12,25 +12,43 @@
 
   <!-- 1. 사용자 코드 -->
   <script>
-  // ---------------------- 전역 변수 ----------------------
-  let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
-  let polylines = []; // 경로 Polyline 저장 배열
-  let geoWatchId = null;
-  let originalCenter;  // 초기 중심 좌표
-  let currentLat, currentLng;
+// ---------------------- 전역 변수 ----------------------
 
-  let myMarker = null;
-  let radarPolygon = null;
-  let radarEnabled = true; // ✅ 레이더 on/off 상태 관리
-  
-  // ✅ 내부 값은 항상 미터 단위로 저장
-  let radarRadiusMeters = 50; 
-  let radarUnit = "m"; // 표시 단위: m 또는 km
+// ✅ 지도 관련 전역 변수
+let map, mode = "current", markers = [], markerCluster, intervalId, allData = [];
+let polylines = [];        // 경로 Polyline 저장 배열
+let geoWatchId = null;     // geolocation watchPosition ID
+let originalCenter;        // 초기 중심 좌표
+let currentLat, currentLng; // 현재 내 위치 좌표
 
-  let currentUserPhone = null;
+// ✅ 내 위치 마커 및 레이더 관련 변수
+let myMarker = null;       // 내 위치 마커 (지도에 표시)
+let radarPolygon = null;   // 레이더(부채꼴) Polygon 객체
+let radarEnabled = true;   // 레이더 on/off 상태 관리
 
-  // 로그인 성공 시
-  currentUserPhone = loginResponse.phone; // 서버에서 내려준 내 별명(phone 값)
+// ✅ 레이더 반경 (항상 내부적으로는 미터 단위로 저장)
+let radarRadiusMeters = 50; 
+let radarUnit = "m";       // 표시 단위: m 또는 km
+
+// ✅ 로그인한 사용자 식별용 (내 계정 phone 값)
+let currentUserPhone = null;
+
+// ❌ 기존 코드: loginResponse가 정의되지 않아 에러 발생
+// currentUserPhone = loginResponse.phone;
+
+// ✅ 수정 방향:
+// 로그인 성공 시 서버 응답 객체(data)에 phone 값이 포함되어 있음.
+// 따라서 로그인 처리 함수에서 아래처럼 세팅해야 함:
+//
+// fetch("/login", { ... })
+//   .then(res => res.json())
+//   .then(data => {
+//     currentUserPhone = data.phone; // 서버에서 내려준 내 별명(phone 값)
+//   });
+//
+// 이렇게 하면 currentUserPhone이 정상적으로 세팅되고,
+// 이후 showMap(currentUserPhone) 호출 시 내 위치에 항상 레이더가 붙게 됨.
+
 
 
   // ---------------------- 마커 제거 함수 ----------------------
@@ -64,23 +82,34 @@
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
   try {
+    // ✅ 서버에서 위치 데이터 가져오기
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
     if (token) url += "&token=" + encodeURIComponent(token);
 
     const response = await fetch(url);
     allData = await response.json();
 
-    // 드롭다운 갱신
+    console.log("서버 응답 allData:", allData);
+    console.log("현재 사용자 phone:", currentUserPhone);
+
+    // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
+    if (!currentUserPhone && allData.length > 0) {
+      // ⚠️ 여기서는 첫 번째 사용자 기준으로 내 계정을 세팅
+      // 필요하다면 로그인 시 받은 phone 값과 비교해서 지정 가능
+      currentUserPhone = allData[0].phone;
+      console.log("내 계정 세팅 완료:", currentUserPhone);
+    }
+
+    // ✅ 드롭다운 갱신
     populatePathSelect();
 
-    // ✅ 데이터 정상 수신 후 지도 표시
+    // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
     // ✅ 위치 정보 박스 갱신
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
 
-      // 로딩 메시지 숨기고 값 채우기
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
@@ -101,7 +130,6 @@ async function loadData(token = null) {
             `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
           await navigator.clipboard.writeText(shareUrl);
 
-          // ✅ 공유 팝업 표시
           const popup = document.getElementById("popupMessage");
           popup.style.display = "block";
           popup.style.opacity = "1";
@@ -111,6 +139,35 @@ async function loadData(token = null) {
           }, 3000);
         };
       }
+
+      // ---------------------- 상대방 움직임 감지 ----------------------
+      // ✅ 상대방 좌표 변화 감지 → 움직일 때만 레이더 표시
+      allData.forEach(otherUser => {
+        const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
+
+        // 내 계정이 아닌 경우만 체크
+        if (normalize(otherUser.phone) !== normalize(currentUserPhone)) {
+          if (!window.prevPositions) window.prevPositions = {};
+
+          const prev = window.prevPositions[otherUser.phone];
+          const curr = { lat: otherUser.lat, lng: otherUser.lng };
+
+          if (prev) {
+            const dist = google.maps.geometry.spherical.computeDistanceBetween(
+              new google.maps.LatLng(prev.lat, prev.lng),
+              new google.maps.LatLng(curr.lat, curr.lng)
+            );
+
+            // ✅ 움직임이 2m 이상일 때만 레이더 표시
+            if (dist > 2) {
+              updateRadarPolygon(curr, 0);
+            }
+          }
+
+          // ✅ 현재 좌표를 prevPositions에 저장
+          window.prevPositions[otherUser.phone] = curr;
+        }
+      });
     } else {
       document.getElementById("locationBox").innerHTML =
         "❌ 위치 데이터를 불러올 수 없습니다.";
@@ -218,12 +275,10 @@ window.onload = () => {
     polylines = [];
   }
 
-/* ---------------------- 지도 초기화 ---------------------- */    
 function showMap(currentUserPhone) {
   clearMap();
   if (!map) return;
 
-  // ✅ 커스텀 마커 아이콘 정의
   const customRedMarker = {
     url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
@@ -236,10 +291,8 @@ function showMap(currentUserPhone) {
     anchor: new google.maps.Point(16, 48)
   };
 
-  // ✅ 비교 함수: 하이픈, 공백 제거 후 소문자로 변환
   const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
-  // ✅ 사용자 데이터 루프
   allData.forEach(user => {
     const marker = new google.maps.Marker({
       position: { lat: user.lat, lng: user.lng },
@@ -250,37 +303,35 @@ function showMap(currentUserPhone) {
     });
     markers.push(marker);
 
-    // ✅ 로그인한 사용자에게만 레이더 붙이기
+    // ✅ 내 위치 → 항상 레이더 붙이기
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = marker; // 레이더 대상 지정
+      radarTargetMarker = marker;
       const pos = radarTargetMarker.getPosition();
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
+    } else {
+      // ✅ 상대방 → 움직일 때만 레이더 붙이기 (예: dist > 2m 조건)
+      // 여기서는 단순히 marker 위치를 비교하는 로직을 추가해야 함
+      // 예시: 이전 좌표와 현재 좌표 비교 후 updateRadarPolygon 호출
     }
 
-    // ✅ 마커 클릭 이벤트
     marker.addListener("click", () => {
       updateLocationBox(user);
       document.getElementById("locationBox").style.display = "block";
-    
-      // 지도 이동 (선택한 마커 위치로)
       const lat = parseFloat(user.lat);
       const lng = parseFloat(user.lng);
-    
       if (!isNaN(lat) && !isNaN(lng)) {
         map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(15); // 동네 단위로 확대
+        map.setZoom(15);
       } else {
         console.error("잘못된 좌표:", user.lat, user.lng);
       }
     });
   });
 
-  // ✅ 클러스터 옵션 처리
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 초기 모달창 표시 (첫 사용자 기준)
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
@@ -291,8 +342,6 @@ function showMap(currentUserPhone) {
 
   updateUserPanelContent(mode);
 }
-
-
 
 
   // ---------------------- 사용자 패널 ----------------------
@@ -771,29 +820,40 @@ function updateRadarPolygon(myPos, heading) {
 }
 
 
-// ✅ 내 위치 추적 (지도에는 표시하지 않음)
+// ---------------------- 내 위치 추적 ----------------------
+// 특징: 내 위치는 항상 레이더 표시, 서버에 좌표 업데이트
+// 상대방은 loadData()에서 움직임 있을 때만 레이더 표시
+
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (pos) => {
+      // ✅ 내 현재 위치 좌표
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0;
 
-      // ✅ 내 위치는 서버 업데이트용으로만 사용
+      // ✅ 내 위치를 서버로 전송 (좌표 갱신용)
       sendMyLocationToServer(myPos);
 
-      // ✅ 레이더는 로그인한 사용자 마커 기준으로 갱신
+      // ✅ 로그인한 사용자 마커 기준으로 레이더 항상 갱신
+      // radarTargetMarker는 showMap()에서 내 계정 마커로 지정됨
       if (radarTargetMarker) {
         const pos = radarTargetMarker.getPosition();
+
+        // ✅ 내 위치에는 항상 레이더 붙이기
         updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, heading);
 
-        // ✅ 레이더 탐지 역시 로그인한 사용자 기준
+        // ✅ 레이더 탐지 (POI 탐색)도 내 위치 기준으로 항상 실행
         checkRadarPOIs({ lat: pos.lat(), lng: pos.lng() });
       }
+
+      // ⚠️ 상대방은 여기서 레이더를 붙이지 않음
+      // → loadData()에서 좌표 변화 감지 시만 updateRadarPolygon 호출
     },
     (err) => console.error("위치 추적 실패:", err),
-    { enableHighAccuracy: true }
+    { enableHighAccuracy: true } // ✅ 고정밀 위치 추적 옵션
   );
 }
+
     
 // ---------------------- 슬라이더/단위 변경 + 버튼 + on/off ----------------------
 document.addEventListener("DOMContentLoaded", () => {
