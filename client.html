@@ -68,7 +68,7 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 데이터 정상 수신 후 지도 표시
-    showMap();
+    showMap(currentUserPhone);
 
     // ✅ 위치 정보 박스 갱신
     if (allData.length > 0) {
