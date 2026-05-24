@@ -1,5 +1,5 @@
   // ---------------------- 추가 전역 변수 ----------------------
-  let myMarker;  // 내 위치 마커
+  // let myMarker;  // 내 위치 마커
   let radarRadiusMeters = 50;        // 레이더 반경 (기본값 50m)
   let radarEnabled = true;           // 레이더 활성화 여부
   let pathCoords = [];               // 경로 좌표 배열
