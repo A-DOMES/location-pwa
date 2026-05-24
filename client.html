@@ -167,7 +167,7 @@ window.onload = () => {
 
     // ✅ 데이터 로딩 및 기본 갱신 주기
     loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 300000);
+    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 60000);
   };
 
   // ---------------------- 드롭다운 갱신 ----------------------
@@ -699,7 +699,7 @@ window.moveToUser = function(lat, lng, phone) {
 window.setCustomInterval = function() {
   const value = parseInt(document.getElementById("intervalValue").value, 10);
   const unit = document.getElementById("intervalUnit").value;
-  let intervalMs = 300000;
+  let intervalMs = 60000;
   if (unit === "minutes") intervalMs = value * 60000;
   else if (unit === "seconds") intervalMs = value * 1000;
 
