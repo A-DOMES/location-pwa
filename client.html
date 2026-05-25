@@ -97,7 +97,7 @@ async function loadData(token = null) {
 
     // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
-      // ⚠️ 여기서는 첫 번째 사용자 기준으로 내 계정을 세팅
+      // ⚠️ 현재는 첫 번째 사용자 기준으로 내 계정을 세팅
       // 필요하다면 로그인 시 받은 phone 값과 비교해서 지정 가능
       currentUserPhone = allData[0].phone;
       console.log("내 계정 세팅 완료:", currentUserPhone);
@@ -113,19 +113,23 @@ async function loadData(token = null) {
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
 
+      // ✅ 모달창 요소 가져오기
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
       const addressBox = document.getElementById("addressBox");
       const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-      loadingMessage.style.display = "none";
+      // ✅ 로딩 메시지 숨기기
+      if (loadingMessage) loadingMessage.style.display = "none";
+
+      // ✅ 모달창에 위치정보 표시
       locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
       latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
 
-      // ✅ 공유 버튼 이벤트
+      // ✅ 공유 버튼 이벤트 (클립보드에 구글맵 링크 복사)
       const shareBtn = document.getElementById("shareBtn");
       if (shareBtn) {
         shareBtn.onclick = async () => {
@@ -148,7 +152,7 @@ async function loadData(token = null) {
       allData.forEach(otherUser => {
         const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
-        // 내 계정이 아닌 경우만 체크
+        // ✅ 내 계정이 아닌 경우만 체크
         if (normalize(otherUser.phone) !== normalize(currentUserPhone)) {
           if (!window.prevPositions) window.prevPositions = {};
 
@@ -172,6 +176,7 @@ async function loadData(token = null) {
         }
       });
     } else {
+      // ✅ 데이터가 없을 때 모달창에 오류 메시지 표시
       document.getElementById("locationBox").innerHTML =
         "❌ 위치 데이터를 불러올 수 없습니다.";
     }
@@ -180,7 +185,6 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
 
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -281,7 +285,7 @@ window.onload = () => {
     polylines = [];
   }
   
-  // ---------------------- 지도 보여주기 창  ----------------------
+// ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
   clearMap();
   if (!map) return;
@@ -299,7 +303,7 @@ function showMap(currentUserPhone) {
     anchor: new google.maps.Point(16, 48)
   };
 
-   // ✅ 사용자 phone 값 비교용 (공백/특수문자 제거)
+  // ✅ 사용자 phone 값 비교용 (공백/특수문자 제거)
   const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
   // ✅ 서버에서 받은 모든 사용자 데이터 반복
@@ -314,8 +318,8 @@ function showMap(currentUserPhone) {
     });
     markers.push(marker);
 
+    // ✅ 내 계정일 경우
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      // ✅ 내 계정 처리
       radarTargetMarker = marker;
       const pos = radarTargetMarker.getPosition();
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
@@ -325,20 +329,20 @@ function showMap(currentUserPhone) {
         myPolyline = new google.maps.Polyline({
           path: myPath,
           geodesic: true,
-          strokeColor: "#0000FF", // 내 마커 경로는 파란색
+          strokeColor: "#0000FF", // 내 계정 경로는 파란색
           strokeOpacity: 1.0,
           strokeWeight: 4,
           map: map
         });
       }
 
-      // ✅ 내 경로 갱신 (좌표 추가 후 선 업데이트)
+      // ✅ 내 경로 갱신
       const newLatLng = { lat: pos.lat(), lng: pos.lng() };
       myPath.push(newLatLng);
       myPolyline.setPath(myPath);
 
     } else {
-      // ✅ 다른 사용자 처리
+      // ✅ 다른 사용자 → 노란색 경로 표시
       if (!userPaths[user.phone]) userPaths[user.phone] = [];
       userPaths[user.phone].push({ lat: user.lat, lng: user.lng });
 
@@ -346,7 +350,7 @@ function showMap(currentUserPhone) {
         userPolylines[user.phone] = new google.maps.Polyline({
           path: userPaths[user.phone],
           geodesic: true,
-          strokeColor: "#FFFF00",
+          strokeColor: "#FFFF00", // 다른 사용자 경로는 노란색
           strokeOpacity: 1.0,
           strokeWeight: 4,
           map: map
@@ -356,16 +360,27 @@ function showMap(currentUserPhone) {
       }
     }
 
-    // ✅ 마커 클릭 시 해당 사용자 위치로 이동
+    // ✅ 마커 클릭 시 모달창 갱신
     marker.addListener("click", () => {
       updateLocationBox(user);
       document.getElementById("locationBox").style.display = "block";
-      const lat = parseFloat(user.lat);
-      const lng = parseFloat(user.lng);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(15);
-      }
+
+      const latBox = document.getElementById("latBox");
+      const lngBox = document.getElementById("lngBox");
+      const addressBox = document.getElementById("addressBox");
+      const locationHeaderTitle = document.querySelector("#locationHeader h3");
+
+      locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
+      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+      addressBox.textContent = user.address || "-";
+
+      // ✅ 로딩 메시지 숨기기
+      const loadingMessage = document.getElementById("loadingMessage");
+      if (loadingMessage) loadingMessage.style.display = "none";
+
+      map.setCenter({ lat: parseFloat(user.lat), lng: parseFloat(user.lng) });
+      map.setZoom(15);
     });
   });
 
@@ -379,6 +394,17 @@ function showMap(currentUserPhone) {
     const user = allData[0];
     updateLocationBox(user);
     document.getElementById("locationBox").style.display = "block";
+
+    // ✅ 모달창 갱신 (첫 사용자 기준)
+    const latBox = document.getElementById("latBox");
+    const lngBox = document.getElementById("lngBox");
+    const addressBox = document.getElementById("addressBox");
+    const locationHeaderTitle = document.querySelector("#locationHeader h3");
+
+    locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
+    latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+    lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+    addressBox.textContent = user.address || "-";
 
     // ✅ 로딩 메시지 숨기기
     const loadingMessage = document.getElementById("loadingMessage");
