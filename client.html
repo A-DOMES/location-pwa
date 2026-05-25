@@ -109,11 +109,10 @@ async function loadData(token = null) {
     // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
-    // ✅ 위치 정보 박스 갱신
+    // ✅ 위치 정보 박스 갱신 (모달창)
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
 
-      // ✅ 모달창 요소 가져오기
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
@@ -129,7 +128,7 @@ async function loadData(token = null) {
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
 
-      // ✅ 공유 버튼 이벤트 (클립보드에 구글맵 링크 복사)
+      // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
       if (shareBtn) {
         shareBtn.onclick = async () => {
@@ -148,7 +147,6 @@ async function loadData(token = null) {
       }
 
       // ---------------------- 상대방 움직임 감지 ----------------------
-      // ✅ 상대방 좌표 변화 감지 → 움직일 때만 레이더 표시
       allData.forEach(otherUser => {
         const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
@@ -176,7 +174,6 @@ async function loadData(token = null) {
         }
       });
     } else {
-      // ✅ 데이터가 없을 때 모달창에 오류 메시지 표시
       document.getElementById("locationBox").innerHTML =
         "❌ 위치 데이터를 불러올 수 없습니다.";
     }
@@ -185,7 +182,7 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
+    
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
     const value = parseInt(document.getElementById("intervalValue").value);
@@ -270,21 +267,24 @@ window.onload = () => {
     });
   }
 
-  // ---------------------- 지도 초기화 보조 ----------------------
-  function clearMap() {
-    // ✅ 클러스터 제거
-    if (markerCluster) {
-      markerCluster.clearMarkers();
-      markerCluster = null;
-    }
-    // ✅ 기존 마커 제거
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-    // ✅ 기존 경로(Polyline) 제거
-    polylines.forEach(p => p.setMap(null));
-    polylines = [];
+// ---------------------- 지도 초기화 보조 ----------------------
+function clearMap() {
+  if (markerCluster) {
+    markerCluster.clearMarkers();
+    markerCluster = null;
   }
-  
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  polylines.forEach(p => p.setMap(null));
+  polylines = [];
+
+  // ✅ 내/상대방 경로 초기화
+  myPath = [];
+  myPolyline = null;
+  userPaths = {};
+  userPolylines = {};
+}
+
 // ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
   clearMap();
@@ -303,12 +303,10 @@ function showMap(currentUserPhone) {
     anchor: new google.maps.Point(16, 48)
   };
 
-  // ✅ 사용자 phone 값 비교용 (공백/특수문자 제거)
   const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
-  // ✅ 서버에서 받은 모든 사용자 데이터 반복
+  // ✅ 모든 사용자 데이터 반복
   allData.forEach(user => {
-    // ✅ 마커 생성
     const marker = new google.maps.Marker({
       position: { lat: user.lat, lng: user.lng },
       map: map,
@@ -318,31 +316,29 @@ function showMap(currentUserPhone) {
     });
     markers.push(marker);
 
-    // ✅ 내 계정일 경우
+    // ✅ 내 계정일 경우 → 파란색 경로
     if (normalize(user.phone) === normalize(currentUserPhone)) {
       radarTargetMarker = marker;
       const pos = radarTargetMarker.getPosition();
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
-      // ✅ 내 Polyline 초기화 (파란색)
       if (!myPolyline) {
         myPolyline = new google.maps.Polyline({
           path: myPath,
           geodesic: true,
-          strokeColor: "#0000FF", // 내 계정 경로는 파란색
+          strokeColor: "#0000FF",
           strokeOpacity: 1.0,
           strokeWeight: 4,
           map: map
         });
       }
 
-      // ✅ 내 경로 갱신
       const newLatLng = { lat: pos.lat(), lng: pos.lng() };
       myPath.push(newLatLng);
       myPolyline.setPath(myPath);
 
     } else {
-      // ✅ 다른 사용자 → 노란색 경로 표시
+      // ✅ 다른 사용자 → 노란색 경로
       if (!userPaths[user.phone]) userPaths[user.phone] = [];
       userPaths[user.phone].push({ lat: user.lat, lng: user.lng });
 
@@ -350,7 +346,7 @@ function showMap(currentUserPhone) {
         userPolylines[user.phone] = new google.maps.Polyline({
           path: userPaths[user.phone],
           geodesic: true,
-          strokeColor: "#FFFF00", // 다른 사용자 경로는 노란색
+          strokeColor: "#FFFF00",
           strokeOpacity: 1.0,
           strokeWeight: 4,
           map: map
@@ -375,7 +371,6 @@ function showMap(currentUserPhone) {
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
 
-      // ✅ 로딩 메시지 숨기기
       const loadingMessage = document.getElementById("loadingMessage");
       if (loadingMessage) loadingMessage.style.display = "none";
 
@@ -389,7 +384,7 @@ function showMap(currentUserPhone) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 첫 번째 사용자 정보 박스 갱신
+    // ✅ 첫 번째 사용자 정보 박스 갱신
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
@@ -411,13 +406,15 @@ function showMap(currentUserPhone) {
     if (loadingMessage) loadingMessage.style.display = "none";
 
   } else {
+    // ✅ 데이터가 없을 경우 모달창에 오류 메시지 표시
     document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
   }
 
-  // ✅ 사용자 패널 갱신
+  // ✅ 사용자 패널 갱신 (예: 사용자 리스트, 상태 표시 등)
   updateUserPanelContent(mode);
 }
 
+    
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
     const btnConnection = document.getElementById("btn-connection");
