@@ -49,7 +49,10 @@ let currentUserPhone = null;
 // 이렇게 하면 currentUserPhone이 정상적으로 세팅되고,
 // 이후 showMap(currentUserPhone) 호출 시 내 위치에 항상 레이더가 붙게 됨.
 
-
+// 경로를 저장할 배열
+let myPath = [];
+let myPolyline = null; // 내 마커 전용 Polyline
+    
 
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -265,84 +268,126 @@ window.onload = () => {
 
   // ---------------------- 지도 초기화 보조 ----------------------
   function clearMap() {
+    // ✅ 클러스터 제거
     if (markerCluster) {
       markerCluster.clearMarkers();
       markerCluster = null;
     }
+    // ✅ 기존 마커 제거
     markers.forEach(m => m.setMap(null));
     markers = [];
+    // ✅ 기존 경로(Polyline) 제거
     polylines.forEach(p => p.setMap(null));
     polylines = [];
   }
-
-function showMap(currentUserPhone) {
-  clearMap();
-  if (!map) return;
-
-  const customRedMarker = {
-    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 32 16 32s16-20 16-32C32 7.163 24.837 0 16 0z"
-              fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
-        <circle cx="16" cy="16" r="6" fill="#FFFFFF"/>
-      </svg>
-    `),
-    scaledSize: new google.maps.Size(32, 48),
-    anchor: new google.maps.Point(16, 48)
-  };
-
-  const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
-
-  allData.forEach(user => {
-    const marker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map: map,
-      icon: customRedMarker,
-      title: `${user.phone} (${user.status}, ${user.updated})`,
-      animation: google.maps.Animation.DROP
+  
+  // ---------------------- 지도 초기화 보조 ----------------------
+  function showMap(currentUserPhone) {
+    clearMap();
+    if (!map) return;
+  
+    // ✅ 커스텀 마커 아이콘 (빨간색)
+    const customRedMarker = {
+      url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
+          <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 32 16 32s16-20 16-32C32 7.163 24.837 0 16 0z"
+                fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
+          <circle cx="16" cy="16" r="6" fill="#FFFFFF"/>
+        </svg>
+      `),
+      scaledSize: new google.maps.Size(32, 48),
+      anchor: new google.maps.Point(16, 48)
+    };
+  
+    // ✅ 사용자 phone 값 비교용 (공백/특수문자 제거)
+    const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
+  
+    // ✅ 서버에서 받은 모든 사용자 데이터 반복
+    allData.forEach(user => {
+      // ✅ 마커 생성
+      const marker = new google.maps.Marker({
+        position: { lat: user.lat, lng: user.lng },
+        map: map,
+        icon: customRedMarker,
+        title: `${user.phone} (${user.status}, ${user.updated})`,
+        animation: google.maps.Animation.DROP
+      });
+      markers.push(marker);
+  
+      // ✅ 내 계정일 경우
+      if (normalize(user.phone) === normalize(currentUserPhone)) {
+        radarTargetMarker = marker;
+        const pos = radarTargetMarker.getPosition();
+        updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
+  
+        // ✅ 내 Polyline 초기화 (파란색)
+        if (!myPolyline) {
+          myPolyline = new google.maps.Polyline({
+            path: myPath,
+            geodesic: true,
+            strokeColor: "#0000FF", // 내 마커 경로는 파란색
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: map
+          });
+        }
+  
+        // ✅ 내 경로 갱신 (좌표 추가 후 선 업데이트)
+        const newLatLng = { lat: pos.lat(), lng: pos.lng() };
+        myPath.push(newLatLng);
+        myPolyline.setPath(myPath);
+  
+      } else {
+        // ✅ 다른 사용자 → 노란색 경로 표시
+        if (!userPaths[user.phone]) userPaths[user.phone] = [];
+        userPaths[user.phone].push({ lat: user.lat, lng: user.lng });
+  
+        if (!userPolylines[user.phone]) {
+          userPolylines[user.phone] = new google.maps.Polyline({
+            path: userPaths[user.phone],
+            geodesic: true,
+            strokeColor: "#FFFF00", // 다른 사람은 노란색
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: map
+          });
+        } else {
+          userPolylines[user.phone].setPath(userPaths[user.phone]);
+        }
+      }
+  
+      // ✅ 마커 클릭 시 해당 사용자 위치로 이동
+      marker.addListener("click", () => {
+        updateLocationBox(user);
+        document.getElementById("locationBox").style.display = "block";
+        const lat = parseFloat(user.lat);
+        const lng = parseFloat(user.lng);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          map.setCenter({ lat: lat, lng: lng });
+          map.setZoom(15);
+        } else {
+          console.error("잘못된 좌표:", user.lat, user.lng);
+        }
+      });
     });
-    markers.push(marker);
-
-    // ✅ 내 위치 → 항상 레이더 붙이기
-    if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = marker;
-      const pos = radarTargetMarker.getPosition();
-      updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-    } else {
-      // ✅ 상대방 → 움직일 때만 레이더 붙이기 (예: dist > 2m 조건)
-      // 여기서는 단순히 marker 위치를 비교하는 로직을 추가해야 함
-      // 예시: 이전 좌표와 현재 좌표 비교 후 updateRadarPolygon 호출
+  
+    // ✅ 클러스터 옵션 체크 시 클러스터링 적용
+    if (document.getElementById("clusterOption")?.checked) {
+      markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
     }
-
-    marker.addListener("click", () => {
+  
+    // ✅ 첫 번째 사용자 정보 박스 갱신
+    if (allData.length > 0) {
+      const user = allData[0];
       updateLocationBox(user);
       document.getElementById("locationBox").style.display = "block";
-      const lat = parseFloat(user.lat);
-      const lng = parseFloat(user.lng);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        map.setCenter({ lat: lat, lng: lng });
-        map.setZoom(15);
-      } else {
-        console.error("잘못된 좌표:", user.lat, user.lng);
-      }
-    });
-  });
-
-  if (document.getElementById("clusterOption")?.checked) {
-    markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
+    } else {
+      document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
+    }
+  
+    // ✅ 사용자 패널 갱신
+    updateUserPanelContent(mode);
   }
-
-  if (allData.length > 0) {
-    const user = allData[0];
-    updateLocationBox(user);
-    document.getElementById("locationBox").style.display = "block";
-  } else {
-    document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
-  }
-
-  updateUserPanelContent(mode);
-}
-
 
   // ---------------------- 사용자 패널 ----------------------
   document.addEventListener("DOMContentLoaded", () => {
@@ -518,35 +563,28 @@ function parsePathArray(pathArray) {
 }
 
 // ---------------------- 경로 그리기 ----------------------
-function drawPath(points, distanceKm) {
+// ✅ isMyPath 파라미터를 추가해서 내 계정인지 아닌지 구분
+function drawPath(points, distanceKm, isMyPath = false) {
   if (!map || !points || points.length === 0) return;
 
   // ✅ 기존 경로 지우기
   polylines.forEach(line => line.setMap(null));
   polylines = [];
 
-  // ✅ 구간별로 나눠서 거리 계산 후 색상 적용
+  // ✅ 구간별 Polyline 생성
   for (let i = 1; i < points.length; i++) {
     const start = new google.maps.LatLng(points[i-1].lat, points[i-1].lng);
     const end = new google.maps.LatLng(points[i].lat, points[i].lng);
 
-    // 두 점 사이의 실제 거리 (미터 단위)
-    const distance = google.maps.geometry.spherical.computeDistanceBetween(start, end);
+    // ✅ 내 계정이면 파란색, 다른 사람은 노란색
+    const color = isMyPath ? "#0000FF" : "#FFFF00";
 
-    // ✅ 5단계 색상 구분 (걷기/차량 추정)
-    let color = "#0000FF";                                           // 기본- 0~300m → 파랑 (걷기)
-    if (distance > 300 && distance <= 800) color = "#00FF00";        // - 300~800m → 초록 (빠른 걷기/조깅)
-    else if (distance > 800 && distance <= 2000) color = "#FFFF00";  // - 800m~2km → 노랑 (자전거/저속 차량)
-    else if (distance > 2000 && distance <= 5000) color = "#FFA500"; // - 2~5km → 주황 (일반 차량 이동)
-    else if (distance > 5000) color = "#FF0000";                     // - 5km 이상 → 빨강 (고속 차량 이동)
-
-    // ✅ 구간별 Polyline 생성
     const segment = new google.maps.Polyline({
       path: [points[i-1], points[i]], // 두 점을 연결
       geodesic: true,
-      strokeColor: color,             // 거리 기반 색상 적용
+      strokeColor: color,             // 색상 구분 적용
       strokeOpacity: 1.0,
-      strokeWeight: 5,                // 선 두께 (고정값)
+      strokeWeight: 5,                // 선 두께
       map: map
     });
 
@@ -554,6 +592,7 @@ function drawPath(points, distanceKm) {
     polylines.push(segment);
   }
 }
+
     
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
