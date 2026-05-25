@@ -414,7 +414,7 @@ input[type="text"] {
       fetch(CONFIG.ADMIN_URL, {
         method: "POST",
         body: new URLSearchParams({
-          mode: "autoUpdate",
+          mode: "location",     // ✅ 서버와 맞춤
           phone: document.getElementById("phone").value.trim(),
           status: "정상",
           lat: position.coords.latitude || 0,
