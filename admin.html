@@ -327,7 +327,7 @@ input[type="text"] {
       fetch(CONFIG.ADMIN_URL, {
         method: "POST",
         body: new URLSearchParams({
-          mode: "location",
+          mode: "login",   // ✅ 최초 전송 시 login 모드
           phone: phone,
           status: "정상",
           lat: position.coords.latitude || 0,
