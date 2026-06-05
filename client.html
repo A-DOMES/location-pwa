@@ -551,6 +551,11 @@ window.openUserPanel = function(viewMode) {
 
   // 패널 내용 갱신
   updateUserPanelContent(viewMode);
+
+  if (radarPolygon) {
+  radarPolygon.setMap(null);
+  radarPolygon = null;
+}
 };
 
     
@@ -1066,8 +1071,7 @@ function formatToKST(isoString) {
   });
 }
 
-/* ---------------------- 사용자 테이블 렌더링 ---------------------- */
-// ✅ 사용자 상태(A/F열 비교)와 총 이동거리/시간을 함께 표시하도록 개선
+// ---------------------- 사용자 테이블 렌더링 ----------------------
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
@@ -1106,10 +1110,15 @@ window.renderUserTable = function(users, viewMode = "current") {
       `;
     }
 
-    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 마커 하나만 표시
+    // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 경로 표시
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        clearMarkers(); // 이전 마커 제거
+        // 기존 마커/경로 제거
+        clearMarkers();
+        polylines.forEach(line => line.setMap(null));
+        polylines = [];
+
+        // 새 마커 표시
         const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map,
@@ -1119,6 +1128,12 @@ window.renderUserTable = function(users, viewMode = "current") {
         markers.push(marker);
         map.setCenter({ lat: user.lat, lng: user.lng });
         map.setZoom(15);
+
+        // ✅ paths 모드일 때만 경로 그리기
+        if (viewMode === "paths" && user.path) {
+          const pathPoints = parsePathArray(user.path);
+          drawPath(pathPoints, user.distance);
+        }
       }
     });
 
