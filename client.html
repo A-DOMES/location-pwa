@@ -258,24 +258,38 @@ window.onload = () => {
 
   // ✅ 마우스 우클릭 시 초기 상태로 복귀
   map.addListener("rightclick", () => {
-    map.setZoom(7);               // 줌 레벨을 7로 복귀
-    map.setCenter(initialCenter); // 초기 중심 좌표로 복귀
+    map.setZoom(7);
+    map.setCenter(initialCenter);
   });
 
-    // ✅ 라이트/다크 모드 토글 (지도 준비된 뒤에 실행)
-    const themeToggle = document.getElementById("themeToggle");
-    if (themeToggle) {
-      themeToggle.addEventListener("change", () => {
-        document.body.classList.toggle("dark-mode", themeToggle.checked);
-        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-      });
-    }
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      document.body.classList.toggle("dark-mode", themeToggle.checked);
+      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+    });
+  }
 
-    // ✅ 데이터 로딩 및 기본 갱신 주기
-    loadData();
-    intervalId = setInterval(loadData, CONFIG.DEFAULT_INTERVAL || 60000);
-  };
+  // ✅ 데이터 로딩 및 기본 갱신 주기 시작
+  loadData();
+  startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
+};
 
+// ---------------------- 자동 갱신 제어 ----------------------
+function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
+  if (!intervalId) {
+    intervalId = setInterval(loadData, intervalMs);
+  }
+}
+
+function stopAutoRefresh() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+    
   // ---------------------- 드롭다운 갱신 ----------------------
   function populatePathSelect(viewMode = "all") {
     const select = document.getElementById("path-user-select");
@@ -538,8 +552,21 @@ window.openUserPanel = function(viewMode) {
 
   // ✅ 기존 마커/경로 제거
   clearMarkers();
-  polylines.forEach(line => line.setMap(null));  // ← polylines만 사용
+  polylines.forEach(line => line.setMap(null));
   polylines = [];
+
+  // ✅ radarPolygon도 제거 (실제로 사용 중이므로 반드시 필요)
+  if (radarPolygon) {
+    radarPolygon.setMap(null);
+    radarPolygon = null;
+  }
+
+  // ✅ 특정 모드에서는 자동 갱신 중지
+  if (viewMode === "current" || viewMode === "all" || viewMode === "paths") {
+    stopAutoRefresh();
+  } else {
+    startAutoRefresh();
+  }
 
   // 패널 제목 갱신
   const title = document.getElementById("user-panel-title");
@@ -551,11 +578,6 @@ window.openUserPanel = function(viewMode) {
 
   // 패널 내용 갱신
   updateUserPanelContent(viewMode);
-
-  if (radarPolygon) {
-  radarPolygon.setMap(null);
-  radarPolygon = null;
-}
 };
 
     
@@ -857,8 +879,6 @@ window.moveToUser = function(lat, lng, phone) {
   });
 };
 
-
-
     
 /* ---------------------- 갱신 주기 설정 ---------------------- */
 window.setCustomInterval = function() {
@@ -868,8 +888,8 @@ window.setCustomInterval = function() {
   if (unit === "minutes") intervalMs = value * 60000;
   else if (unit === "seconds") intervalMs = value * 1000;
 
-  clearInterval(intervalId);
-  intervalId = setInterval(loadData, intervalMs);
+  stopAutoRefresh();
+  startAutoRefresh(intervalMs);
 
   const msgBox = document.getElementById("message-box");
   msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
@@ -1071,28 +1091,23 @@ function formatToKST(isoString) {
   });
 }
 
-// ---------------------- 사용자 테이블 렌더링 ----------------------
+// ---------------------- 사용자 테이블 렌더링 (성능 최적화 적용) ----------------------
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
-  tbody.innerHTML = ""; // 기존 테이블 내용 초기화
+  tbody.innerHTML = "";
 
-  // ✅ DocumentFragment 사용: 메모리에서만 존재하는 가상의 DOM 컨테이너
-  // 모든 행을 fragment에 모아두고 마지막에 한 번만 DOM에 붙여 성능 최적화
+  // ✅ DocumentFragment 사용 → 성능 최적화
   const fragment = document.createDocumentFragment();
 
   users.forEach(user => {
     const row = document.createElement("tr");
-    row.style.cursor = "pointer"; // 손가락 모양 커서
+    row.style.cursor = "pointer";
 
-    // ✅ 사용자 상태 판별 (A열: 로그인 시각, F열: 마지막 이동 시각)
     const status = getUserStatus(user);
-
-    // ✅ 경로 기반 이동거리/시간 계산
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
-    const totalTime = calculateTotalTime(pathPoints); // 총 이동시간 (분 단위)
+    const totalTime = calculateTotalTime(pathPoints);
 
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 + 이동시간 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
@@ -1103,7 +1118,6 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.address || "-"}</td>
       `;
     } else {
-      // ✅ current / all 모드: 상태 표시 (접속중/이동중/오프라인)
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${status.isLoggedIn ? (status.isMoving ? "이동중" : "접속중") : "오프라인"}</td>
@@ -1117,12 +1131,10 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ 행 클릭 시 해당 사용자 위치로 이동 + 경로 표시
     row.addEventListener("click", () => {
       if (user.lat && user.lng) {
-        // 기존 마커/경로 제거
         clearMarkers();
         polylines.forEach(line => line.setMap(null));
         polylines = [];
 
-        // 새 마커 표시
         const marker = new google.maps.Marker({
           position: { lat: user.lat, lng: user.lng },
           map,
@@ -1133,7 +1145,6 @@ window.renderUserTable = function(users, viewMode = "current") {
         map.setCenter({ lat: user.lat, lng: user.lng });
         map.setZoom(15);
 
-        // ✅ paths 모드일 때만 경로 그리기
         if (viewMode === "paths" && user.path && user.path.length > 0) {
           const pathPoints = parsePathArray(user.path);
           if (pathPoints.length > 1) {
@@ -1143,11 +1154,10 @@ window.renderUserTable = function(users, viewMode = "current") {
       }
     });
 
-    // ✅ fragment에 행을 모아둠 (DOM에 바로 붙이지 않음)
     fragment.appendChild(row);
   });
 
-  // ✅ 마지막에 한 번만 DOM 갱신 → 성능 최적화
+  // ✅ 마지막에 한 번만 DOM 갱신
   tbody.appendChild(fragment);
 };
 
