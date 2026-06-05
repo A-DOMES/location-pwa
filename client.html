@@ -254,11 +254,16 @@ window.onload = () => {
     zoom: 7,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     styles: null,
+
     // ✅ 지도/위성 전환 버튼 활성화
     mapTypeControl: true,
     mapTypeControlOptions: {
-      style: google.maps.MapTypeControlStyle.DEFAULT,   // 기본 버튼 스타일
-      position: google.maps.ControlPosition.TOP_RIGHT   // 지도 상단 오른쪽에 표시
+      style: google.maps.MapTypeControlStyle.DEFAULT,   // 버튼 스타일 (기본)
+      position: google.maps.ControlPosition.TOP_RIGHT,  // 지도 상단 오른쪽에 표시
+      mapTypeIds: [
+        google.maps.MapTypeId.ROADMAP,   // 일반 지도
+        google.maps.MapTypeId.SATELLITE  // 위성 지도
+      ]
     }
   });
 
@@ -281,6 +286,7 @@ window.onload = () => {
   loadData();
   startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
 };
+
 
 // ---------------------- 자동 갱신 제어 ----------------------
 function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
