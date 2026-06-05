@@ -252,8 +252,14 @@ window.onload = () => {
   map = new google.maps.Map(document.getElementById("map"), {
     center: initialCenter,
     zoom: 7,
-    mapTypeId: "roadmap",
-    styles: null
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    styles: null,
+    // ✅ 지도/위성 전환 버튼 활성화
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.DEFAULT,   // 기본 버튼 스타일
+      position: google.maps.ControlPosition.TOP_RIGHT   // 지도 상단 오른쪽에 표시
+    }
   });
 
   // ✅ 마우스 우클릭 시 초기 상태로 복귀
