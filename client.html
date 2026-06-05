@@ -1130,11 +1130,12 @@ window.renderUserTable = function(users, viewMode = "current") {
         map.setZoom(15);
 
         // ✅ paths 모드일 때만 경로 그리기
-        if (viewMode === "paths" && user.path) {
+        if (viewMode === "paths" && user.path && user.path.length > 0) {
           const pathPoints = parsePathArray(user.path);
-          drawPath(pathPoints, user.distance);
+          if (pathPoints.length > 1) {
+            drawPath(pathPoints, user.distance);
+          }
         }
-      }
     });
 
     tbody.appendChild(row);
