@@ -669,7 +669,7 @@ function drawPath(points, distanceKm, isMyPath = false) {
     const end = new google.maps.LatLng(points[i].lat, points[i].lng);
 
     // ✅ 내 계정이면 파란색, 다른 사람은 노란색
-    const color = isMyPath ? "#0000FF" : "#FFFF00";
+    const color = isMyPath ? "#0000FF" : "#0000FF";
 
     const segment = new google.maps.Polyline({
       path: [points[i-1], points[i]], // 두 점을 연결
