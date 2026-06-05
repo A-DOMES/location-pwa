@@ -1074,7 +1074,11 @@ function formatToKST(isoString) {
 // ---------------------- 사용자 테이블 렌더링 ----------------------
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
-  tbody.innerHTML = "";
+  tbody.innerHTML = ""; // 기존 테이블 내용 초기화
+
+  // ✅ DocumentFragment 사용: 메모리에서만 존재하는 가상의 DOM 컨테이너
+  // 모든 행을 fragment에 모아두고 마지막에 한 번만 DOM에 붙여 성능 최적화
+  const fragment = document.createDocumentFragment();
 
   users.forEach(user => {
     const row = document.createElement("tr");
@@ -1136,10 +1140,15 @@ window.renderUserTable = function(users, viewMode = "current") {
             drawPath(pathPoints, user.distance);
           }
         }
+      }
     });
 
-    tbody.appendChild(row);
+    // ✅ fragment에 행을 모아둠 (DOM에 바로 붙이지 않음)
+    fragment.appendChild(row);
   });
+
+  // ✅ 마지막에 한 번만 DOM 갱신 → 성능 최적화
+  tbody.appendChild(fragment);
 };
 
 
