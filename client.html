@@ -243,64 +243,53 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-// ---------------------- 지도 초기화  로딩시  ----------------------
-window.onload = () => {
-  // ✅ 초기 중심 좌표 저장
-  const initialCenter = { lat: 36.5, lng: 127.5 };
-
-  // ✅ 지도 생성
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: initialCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    styles: null,
-
-    // ✅ 지도/위성 전환 버튼 활성화
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      style: google.maps.MapTypeControlStyle.DEFAULT,   // 버튼 스타일 (기본)
-      position: google.maps.ControlPosition.TOP_RIGHT,  // 지도 상단 오른쪽에 표시
-      mapTypeIds: [
-        google.maps.MapTypeId.ROADMAP,   // 일반 지도
-        google.maps.MapTypeId.SATELLITE  // 위성 지도
-      ]
-    }
-  });
-
-  // ✅ 마우스 우클릭 시 초기 상태로 복귀
-  map.addListener("rightclick", () => {
-    map.setZoom(7);
-    map.setCenter(initialCenter);
-  });
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      document.body.classList.toggle("dark-mode", themeToggle.checked);
-      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+  // ---------------------- 지도 초기화  로딩시  ----------------------
+  window.onload = () => {
+    // ✅ 초기 중심 좌표 저장
+    const initialCenter = { lat: 36.5, lng: 127.5 };
+  
+    // ✅ 지도 생성
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: initialCenter,
+      zoom: 7,
+      mapTypeId: "roadmap",
+      styles: null
     });
+  
+    // ✅ 마우스 우클릭 시 초기 상태로 복귀
+    map.addListener("rightclick", () => {
+      map.setZoom(7);
+      map.setCenter(initialCenter);
+    });
+  
+    // ✅ 라이트/다크 모드 토글
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("change", () => {
+        document.body.classList.toggle("dark-mode", themeToggle.checked);
+        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+      });
+    }
+  
+    // ✅ 데이터 로딩 및 기본 갱신 주기 시작
+    loadData();
+    startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
+  };
+      
+  
+  // ---------------------- 자동 갱신 제어 ----------------------
+  function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
+    if (!intervalId) {
+      intervalId = setInterval(loadData, intervalMs);
+    }
   }
-
-  // ✅ 데이터 로딩 및 기본 갱신 주기 시작
-  loadData();
-  startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
-};
-
-
-// ---------------------- 자동 갱신 제어 ----------------------
-function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
-  if (!intervalId) {
-    intervalId = setInterval(loadData, intervalMs);
+  
+  function stopAutoRefresh() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
   }
-}
-
-function stopAutoRefresh() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-}
     
   // ---------------------- 드롭다운 갱신 ----------------------
   function populatePathSelect(viewMode = "all") {
