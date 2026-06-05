@@ -71,6 +71,45 @@ let myPolyline = null; // 내 마커 전용 Polyline
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
+  
+  // ---------------------- 사용자 상태 판별 함수 ----------------------
+  // A열(time: 로그인 시각), F열(updated: 마지막 이동 시각)을 비교해서 상태 구분
+  function getUserStatus(user) {
+    const now = new Date();
+    const loginTime = user.time ? new Date(user.time) : null;     // A열
+    const moveTime  = user.updated ? new Date(user.updated) : null; // F열
+  
+    let isLoggedIn = false;
+    let isMoving = false;
+  
+    // ✅ 로그인 여부: 현재 시각 기준 5분 이내 로그인
+    if (loginTime) {
+      const diffMinutes = (now - loginTime) / 1000 / 60;
+      isLoggedIn = diffMinutes <= 5;
+    }
+  
+    // ✅ 이동 여부: F열이 A열보다 크면 이동 발생
+    if (loginTime && moveTime) {
+      isMoving = moveTime > loginTime;
+    }
+  
+    return { isLoggedIn, isMoving };
+  }
+  
+  // ---------------------- 총 이동시간 계산 함수 ----------------------
+  // Path 배열에 timestamp가 포함되어 있다고 가정
+  function calculateTotalTime(pathPoints) {
+    if (!pathPoints || pathPoints.length < 2) return 0;
+  
+    const startTime = pathPoints[0].timestamp ? new Date(pathPoints[0].timestamp) : null;
+    const endTime   = pathPoints[pathPoints.length - 1].timestamp ? new Date(pathPoints[pathPoints.length - 1].timestamp) : null;
+  
+    if (startTime && endTime) {
+      const diffMinutes = (endTime - startTime) / 1000 / 60;
+      return diffMinutes; // 총 이동시간 (분 단위)
+    }
+    return 0;
+  }
 
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
@@ -1027,6 +1066,7 @@ function formatToKST(isoString) {
 }
 
 /* ---------------------- 사용자 테이블 렌더링 ---------------------- */
+// ✅ 사용자 상태(A/F열 비교)와 총 이동거리/시간을 함께 표시하도록 개선
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
@@ -1034,22 +1074,30 @@ window.renderUserTable = function(users, viewMode = "current") {
   users.forEach(user => {
     const row = document.createElement("tr");
     row.style.cursor = "pointer"; // 손가락 모양 커서
-    
+
+    // ✅ 사용자 상태 판별 (A열: 로그인 시각, F열: 마지막 이동 시각)
+    const status = getUserStatus(user);
+
+    // ✅ 경로 기반 이동거리/시간 계산
+    const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+    const totalTime = calculateTotalTime(pathPoints); // 총 이동시간 (분 단위)
+
     if (viewMode === "paths") {
-      // ✅ paths 모드: 이동거리 포함
+      // ✅ paths 모드: 이동거리 + 이동시간 포함
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>        
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${totalTime ? totalTime.toFixed(1) + " 분" : "-"}</td>
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
     } else {
-      // ✅ current / all 모드: 상태 포함
+      // ✅ current / all 모드: 상태 표시 (접속중/이동중/오프라인)
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>${user.status || "-"}</td>
+        <td>${status.isLoggedIn ? (status.isMoving ? "이동중" : "접속중") : "오프라인"}</td>
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
         <td>${user.address || "-"}</td>
@@ -1076,6 +1124,7 @@ window.renderUserTable = function(users, viewMode = "current") {
     tbody.appendChild(row);
   });
 };
+
 
 // ✅ 전체 사용자 내역을 패널에 출력하는 함수
 function renderAllUsersPanel() {
