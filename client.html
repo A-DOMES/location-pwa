@@ -95,45 +95,55 @@ let myPolyline = null; // 내 마커 전용 Polyline
   
     return { isLoggedIn, isMoving };
   }
-  
-/* ---------------------- 총 이동시간 계산 함수 ---------------------- */
+
+    
+// ---------------------- 총 이동시간 계산 함수 ----------------------
 function calculateTotalTime(pathPoints) {
   if (!pathPoints || pathPoints.length < 2) return 0;
 
   // ✅ 시간 문자열 변환 함수
+  // "2026. 6. 6 오후 10:58:04" → "2026-06-06T22:58:04"
   function normalizeTime(str) {
     if (!str) return null;
 
-    // "2026. 6. 6 오후 10:58:04" → "2026-06-06T22:58:04"
-    // 1) 년/월/일 추출
-    const parts = str.split(" ");
-    const year  = parts[0].replace(".", "");
-    const month = parts[1].replace(".", "").padStart(2, "0");
-    const day   = parts[2].replace(".", "").padStart(2, "0");
+    // 정규식으로 년/월/일/오전/오후/시/분/초 추출
+    const regex = /(\d{4})\. (\d{1,2})\. (\d{1,2}) (오전|오후) (\d{1,2}):(\d{2}):(\d{2})/;
+    const match = str.match(regex);
+    if (!match) return null;
 
-    // 2) 오전/오후 처리
-    let timeStr = parts[4]; // "10:58:04"
-    let [hh, mm, ss] = timeStr.split(":").map(Number);
-    if (parts[3] === "오후" && hh < 12) hh += 12;
-    if (parts[3] === "오전" && hh === 12) hh = 0;
+    let [_, year, month, day, ampm, hh, mm, ss] = match;
 
-    // 3) ISO 문자열 조립
-    return `${year}-${month}-${day}T${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
+    // 월/일 두 자리로 맞추기
+    month = month.padStart(2, "0");
+    day   = day.padStart(2, "0");
+
+    // 시(hour) 숫자로 변환
+    hh = parseInt(hh, 10);
+
+    // 오전/오후 처리
+    if (ampm === "오후" && hh < 12) hh += 12;
+    if (ampm === "오전" && hh === 12) hh = 0;
+
+    // ISO 8601 형식으로 반환
+    return `${year}-${month}-${day}T${String(hh).padStart(2,"0")}:${mm}:${ss}`;
   }
 
+  // ✅ 첫 번째 기록 시각과 마지막 기록 시각 가져오기
   const startRaw = pathPoints[0].time;
   const endRaw   = pathPoints[pathPoints.length - 1].time;
 
   const startTime = startRaw ? new Date(normalizeTime(startRaw)) : null;
   const endTime   = endRaw ? new Date(normalizeTime(endRaw)) : null;
 
+  // ✅ 두 시각이 모두 유효하면 차이를 분 단위로 계산
   if (startTime && endTime && !isNaN(startTime) && !isNaN(endTime)) {
     const diffMinutes = (endTime - startTime) / 1000 / 60;
     return diffMinutes; // 총 이동시간 (분 단위)
   }
+
+  // ✅ 계산 불가 시 0 반환
   return 0;
 }
-
 
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
