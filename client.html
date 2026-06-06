@@ -102,9 +102,31 @@ function calculateTotalTime(user) {
   // ✅ time(A열)과 updated(F열)이 모두 있어야 계산 가능
   if (!user.time || !user.updated) return 0;
 
-  // ✅ 문자열을 Date 객체로 변환
-  const startTime = new Date(user.time);     // 최초 기록 시간
-  const endTime   = new Date(user.updated);  // 마지막 업데이트 시간
+  // ✅ 시간 문자열 변환 함수
+  function normalizeTime(str) {
+    if (!str) return null;
+
+    // "2026. 6. 6 오후 10:58:04" → "2026-06-06T22:58:04"
+    const regex = /(\d{4})\. (\d{1,2})\. (\d{1,2}) (오전|오후) (\d{1,2}):(\d{2}):(\d{2})/;
+    const match = str.match(regex);
+    if (!match) return null;
+
+    let [_, year, month, day, ampm, hh, mm, ss] = match;
+    month = month.padStart(2, "0");
+    day   = day.padStart(2, "0");
+    hh    = parseInt(hh, 10);
+
+    // 오전/오후 처리
+    if (ampm === "오후" && hh < 12) hh += 12;
+    if (ampm === "오전" && hh === 12) hh = 0;
+
+    // ISO 8601 형식으로 반환
+    return `${year}-${month}-${day}T${String(hh).padStart(2,"0")}:${mm}:${ss}`;
+  }
+
+  // ✅ time과 updated를 ISO 형식으로 변환 후 Date 객체 생성
+  const startTime = new Date(normalizeTime(user.time));
+  const endTime   = new Date(normalizeTime(user.updated));
 
   // ✅ 두 값이 유효한 날짜일 경우 차이를 계산
   if (!isNaN(startTime) && !isNaN(endTime)) {
@@ -115,7 +137,6 @@ function calculateTotalTime(user) {
   // ✅ 계산 불가 시 0 반환
   return 0;
 }
-
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
     let hash = 0;
