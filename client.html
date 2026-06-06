@@ -1125,11 +1125,11 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ 총 이동시간 계산 (user.time vs user.updated)
     const totalTime = calculateTotalTime(user);
 
-    // ✅ 시간과 분으로 변환
+    // ✅ 시간과 분으로 변환 (소수점 대신 "시간+분" 형식으로 표시)
     let timeText = "-";
     if (totalTime > 0) {
-      const hours = Math.floor(totalTime / 60);
-      const minutes = Math.floor(totalTime % 60);
+      const hours = Math.floor(totalTime / 60);       // 총 시간
+      const minutes = Math.floor(totalTime % 60);     // 남은 분
       timeText = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
     }
 
