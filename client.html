@@ -124,7 +124,6 @@ let myPolyline = null; // 내 마커 전용 Polyline
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
   try {
-    // ✅ 서버에서 위치 데이터 가져오기
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
     if (token) url += "&token=" + encodeURIComponent(token);
 
@@ -134,38 +133,36 @@ async function loadData(token = null) {
     console.log("서버 응답 allData:", allData);
     console.log("현재 사용자 phone:", currentUserPhone);
 
-    // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
-      // ⚠️ 현재는 첫 번째 사용자 기준으로 내 계정을 세팅
-      // 필요하다면 로그인 시 받은 phone 값과 비교해서 지정 가능
       currentUserPhone = allData[0].phone;
       console.log("내 계정 세팅 완료:", currentUserPhone);
     }
 
-    // ✅ 드롭다운 갱신
     populatePathSelect();
-
-    // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
-    // ✅ 위치 정보 박스 갱신 (모달창)
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
 
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
+      const timeBox = document.getElementById("timeBox");
       const addressBox = document.getElementById("addressBox");
       const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-      // ✅ 로딩 메시지 숨기기
       if (loadingMessage) loadingMessage.style.display = "none";
 
-      // ✅ 모달창에 위치정보 표시
+      // ✅ 모달창 제목
       locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
+
+      // ✅ 위도, 경도, 갱신시간 표시
+      latBox.textContent = user.lat ? `위도: ${user.lat.toFixed(6)}` : "위도: -";
+      lngBox.textContent = user.lng ? `경도: ${user.lng.toFixed(6)}` : "경도: -";
+      timeBox.textContent = `갱신시간: ${new Date().toLocaleTimeString()}`;
+
+      // ✅ 주소는 기본적으로 안내 문구만 표시
+      addressBox.textContent = "주소: (마커 클릭 시 표시)";
 
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
@@ -189,7 +186,6 @@ async function loadData(token = null) {
       allData.forEach(otherUser => {
         const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
-        // ✅ 내 계정이 아닌 경우만 체크
         if (normalize(otherUser.phone) !== normalize(currentUserPhone)) {
           if (!window.prevPositions) window.prevPositions = {};
 
@@ -202,13 +198,11 @@ async function loadData(token = null) {
               new google.maps.LatLng(curr.lat, curr.lng)
             );
 
-            // ✅ 움직임이 2m 이상일 때만 레이더 표시
             if (dist > 2) {
               updateRadarPolygon(curr, 0);
             }
           }
 
-          // ✅ 현재 좌표를 prevPositions에 저장
           window.prevPositions[otherUser.phone] = curr;
         }
       });
@@ -221,6 +215,7 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
+
     
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -411,27 +406,41 @@ function showMap(currentUserPhone) {
     }
 
     // ✅ 마커 클릭 시 모달창 갱신
-    marker.addListener("click", () => {
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
+marker.addListener("click", () => {
+  updateLocationBox(user);
+  document.getElementById("locationBox").style.display = "block";
 
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
+  const latBox = document.getElementById("latBox");
+  const lngBox = document.getElementById("lngBox");
+  const timeBox = document.getElementById("timeBox");
+  const addressBox = document.getElementById("addressBox");
+  const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-      locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
+  locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
+  latBox.textContent = user.lat ? `위도: ${user.lat.toFixed(6)}` : "위도: -";
+  lngBox.textContent = user.lng ? `경도: ${user.lng.toFixed(6)}` : "경도: -";
+  timeBox.textContent = `갱신시간: ${new Date().toLocaleTimeString()}`;
+  addressBox.textContent = "주소: (클릭 시 표시)";
 
-      const loadingMessage = document.getElementById("loadingMessage");
-      if (loadingMessage) loadingMessage.style.display = "none";
+  const loadingMessage = document.getElementById("loadingMessage");
+  if (loadingMessage) loadingMessage.style.display = "none";
 
-      map.setCenter({ lat: parseFloat(user.lat), lng: parseFloat(user.lng) });
-      map.setZoom(15);
-    });
-  });
+  // ✅ 클릭 시 주소 가져오기
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${user.lat},${user.lng}&key=YOUR_API_KEY`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "OK") {
+        addressBox.textContent = `주소: ${data.results[0].formatted_address}`;
+      } else {
+        addressBox.textContent = "주소를 가져올 수 없습니다.";
+      }
+    })
+    .catch(err => console.error("주소 조회 실패:", err));
+
+  map.setCenter({ lat: parseFloat(user.lat), lng: parseFloat(user.lng) });
+  map.setZoom(15);
+});
+
 
   // ✅ 클러스터 옵션 체크 시 클러스터링 적용
   if (document.getElementById("clusterOption")?.checked) {
@@ -1780,6 +1789,9 @@ toggleBtn.addEventListener("click", () => {
     <small id="directionBox"></small>
     <small id="timeBox"></small>
     <div id="addressBox"></div>
+
+   <!-- ✅ 주소 확인 버튼 추가 -->
+  <button id="getAddressBtn">📍 주소 확인</button>   
   </div>
   <button id="shareBtn">📌 현재 위치 공유</button>
 </div>
