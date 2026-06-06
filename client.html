@@ -124,6 +124,7 @@ let myPolyline = null; // 내 마커 전용 Polyline
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
   try {
+    // ✅ 서버에서 위치 데이터 가져오기
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
     if (token) url += "&token=" + encodeURIComponent(token);
 
@@ -133,17 +134,22 @@ async function loadData(token = null) {
     console.log("서버 응답 allData:", allData);
     console.log("현재 사용자 phone:", currentUserPhone);
 
+    // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
       currentUserPhone = allData[0].phone;
       console.log("내 계정 세팅 완료:", currentUserPhone);
     }
 
+    // ✅ 드롭다운 갱신
     populatePathSelect();
+
+    // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
 
+      // ✅ 모달창 요소 가져오기
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
@@ -151,18 +157,19 @@ async function loadData(token = null) {
       const addressBox = document.getElementById("addressBox");
       const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
+      // ✅ 로딩 메시지 숨기기
       if (loadingMessage) loadingMessage.style.display = "none";
 
       // ✅ 모달창 제목
       locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
 
-      // ✅ 위도, 경도, 갱신시간 표시
+      // ✅ 처음에는 위도, 경도만 표시
       latBox.textContent = user.lat ? `위도: ${user.lat.toFixed(6)}` : "위도: -";
       lngBox.textContent = user.lng ? `경도: ${user.lng.toFixed(6)}` : "경도: -";
-      timeBox.textContent = `갱신시간: ${new Date().toLocaleTimeString()}`;
 
-      // ✅ 주소는 기본적으로 안내 문구만 표시
-      addressBox.textContent = "주소: (마커 클릭 시 표시)";
+      // ✅ 갱신시간과 주소는 비워둠 (마커 클릭 시 표시)
+      timeBox.textContent = "";
+      addressBox.textContent = "";
 
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
@@ -407,7 +414,6 @@ function showMap(currentUserPhone) {
 
     // ✅ 마커 클릭 시 모달창 갱신
 marker.addListener("click", () => {
-  updateLocationBox(user);
   document.getElementById("locationBox").style.display = "block";
 
   const latBox = document.getElementById("latBox");
@@ -420,12 +426,8 @@ marker.addListener("click", () => {
   latBox.textContent = user.lat ? `위도: ${user.lat.toFixed(6)}` : "위도: -";
   lngBox.textContent = user.lng ? `경도: ${user.lng.toFixed(6)}` : "경도: -";
   timeBox.textContent = `갱신시간: ${new Date().toLocaleTimeString()}`;
-  addressBox.textContent = "주소: (클릭 시 표시)";
 
-  const loadingMessage = document.getElementById("loadingMessage");
-  if (loadingMessage) loadingMessage.style.display = "none";
-
-  // ✅ 클릭 시 주소 가져오기
+  // ✅ 주소는 클릭 시에만 가져오기
   fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${user.lat},${user.lng}&key=YOUR_API_KEY`)
     .then(res => res.json())
     .then(data => {
