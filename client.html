@@ -1101,6 +1101,7 @@ function formatToKST(isoString) {
 }
 
 // ---------------------- 사용자 테이블 렌더링 (성능 최적화 적용) ----------------------
+// ---------------------- 사용자 테이블 렌더링 ----------------------
 window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
@@ -1112,21 +1113,39 @@ window.renderUserTable = function(users, viewMode = "current") {
     const row = document.createElement("tr");
     row.style.cursor = "pointer";
 
+    // ✅ 사용자 상태 계산
     const status = getUserStatus(user);
+
+    // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
+
+    // ✅ 총 이동시간 계산 (timestamp 기반)
     const totalTime = calculateTotalTime(pathPoints);
 
+    // ✅ 총 이동거리 계산 (경로 배열 기반)
+    let distanceKm = 0;
+    if (pathPoints.length > 1) {
+      for (let i = 1; i < pathPoints.length; i++) {
+        distanceKm += calculateDistance(
+          pathPoints[i-1].lat, pathPoints[i-1].lng,
+          pathPoints[i].lat, pathPoints[i].lng
+        );
+      }
+    }
+
     if (viewMode === "paths") {
+      // ✅ 경로보기 모드 → 이동거리/총 이동시간 표시
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
-        <td>${user.distance ? user.distance.toFixed(2) + " km" : "-"}</td>
+        <td>${distanceKm ? distanceKm.toFixed(2) + " km" : "-"}</td>   <!-- 총 이동거리 -->
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${totalTime ? totalTime.toFixed(1) + " 분" : "-"}</td>
+        <td>${totalTime ? totalTime.toFixed(1) + " 분" : "-"}</td>      <!-- 총 이동시간 -->
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
     } else {
+      // ✅ 기본 모드 (현재 접속자 / 전체 사용자)
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${status.isLoggedIn ? (status.isMoving ? "이동중" : "접속중") : "오프라인"}</td>
@@ -1157,7 +1176,7 @@ window.renderUserTable = function(users, viewMode = "current") {
         if (viewMode === "paths" && user.path && user.path.length > 0) {
           const pathPoints = parsePathArray(user.path);
           if (pathPoints.length > 1) {
-            drawPath(pathPoints, user.distance);
+            drawPath(pathPoints, distanceKm); // ✅ 경로 그리기 + 이동거리 전달
           }
         }
       }
@@ -1169,7 +1188,6 @@ window.renderUserTable = function(users, viewMode = "current") {
   // ✅ 마지막에 한 번만 DOM 갱신
   tbody.appendChild(fragment);
 };
-
 
 // ✅ 전체 사용자 내역을 패널에 출력하는 함수
 function renderAllUsersPanel() {
