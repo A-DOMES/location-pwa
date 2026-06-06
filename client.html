@@ -98,45 +98,16 @@ let myPolyline = null; // 내 마커 전용 Polyline
 
     
 // ---------------------- 총 이동시간 계산 함수 ----------------------
-function calculateTotalTime(pathPoints) {
-  if (!pathPoints || pathPoints.length < 2) return 0;
+function calculateTotalTime(user) {
+  // ✅ time(A열)과 updated(F열)이 모두 있어야 계산 가능
+  if (!user.time || !user.updated) return 0;
 
-  // ✅ 시간 문자열 변환 함수
-  // "2026. 6. 6 오후 10:58:04" → "2026-06-06T22:58:04"
-  function normalizeTime(str) {
-    if (!str) return null;
+  // ✅ 문자열을 Date 객체로 변환
+  const startTime = new Date(user.time);     // 최초 기록 시간
+  const endTime   = new Date(user.updated);  // 마지막 업데이트 시간
 
-    // 정규식으로 년/월/일/오전/오후/시/분/초 추출
-    const regex = /(\d{4})\. (\d{1,2})\. (\d{1,2}) (오전|오후) (\d{1,2}):(\d{2}):(\d{2})/;
-    const match = str.match(regex);
-    if (!match) return null;
-
-    let [_, year, month, day, ampm, hh, mm, ss] = match;
-
-    // 월/일 두 자리로 맞추기
-    month = month.padStart(2, "0");
-    day   = day.padStart(2, "0");
-
-    // 시(hour) 숫자로 변환
-    hh = parseInt(hh, 10);
-
-    // 오전/오후 처리
-    if (ampm === "오후" && hh < 12) hh += 12;
-    if (ampm === "오전" && hh === 12) hh = 0;
-
-    // ISO 8601 형식으로 반환
-    return `${year}-${month}-${day}T${String(hh).padStart(2,"0")}:${mm}:${ss}`;
-  }
-
-  // ✅ 첫 번째 기록 시각과 마지막 기록 시각 가져오기
-  const startRaw = pathPoints[0].time;
-  const endRaw   = pathPoints[pathPoints.length - 1].time;
-
-  const startTime = startRaw ? new Date(normalizeTime(startRaw)) : null;
-  const endTime   = endRaw ? new Date(normalizeTime(endRaw)) : null;
-
-  // ✅ 두 시각이 모두 유효하면 차이를 분 단위로 계산
-  if (startTime && endTime && !isNaN(startTime) && !isNaN(endTime)) {
+  // ✅ 두 값이 유효한 날짜일 경우 차이를 계산
+  if (!isNaN(startTime) && !isNaN(endTime)) {
     const diffMinutes = (endTime - startTime) / 1000 / 60;
     return diffMinutes; // 총 이동시간 (분 단위)
   }
@@ -1152,8 +1123,8 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
 
-    // ✅ 총 이동시간 계산
-    const totalTime = calculateTotalTime(pathPoints);
+    // ✅ 총 이동시간 계산 (user.time vs user.updated)
+    const totalTime = calculateTotalTime(user);
 
     // ✅ 총 이동거리 계산
     let distanceKm = 0;
@@ -1173,7 +1144,7 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${distanceKm ? distanceKm.toFixed(2) + " km" : "-"}</td>   <!-- 총 이동거리 -->
         <td>${user.time ? formatToKST(user.time) : "-"}</td>
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
-        <td>${totalTime ? totalTime.toFixed(1) + " 분" : "-"}</td>      <!-- 총 이동시간 -->
+        <td>${totalTime > 0 ? totalTime.toFixed(1) + " 분" : "-"}</td> <!-- ✅ 총 이동시간 -->
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
       `;
