@@ -392,7 +392,7 @@ function showMap(currentUserPhone) {
       myPolyline.setPath(myPath);
 
     } else {
-      // ✅ 다른 사용자 → 노란색 경로
+      // ✅ 다른 사용자 → 파란색 경로
       if (!userPaths[user.phone]) userPaths[user.phone] = [];
       userPaths[user.phone].push({ lat: user.lat, lng: user.lng });
 
@@ -400,7 +400,7 @@ function showMap(currentUserPhone) {
         userPolylines[user.phone] = new google.maps.Polyline({
           path: userPaths[user.phone],
           geodesic: true,
-          strokeColor: "#FFFF00",
+          strokeColor: "#0000FF",
           strokeOpacity: 1.0,
           strokeWeight: 5,
           map: map
