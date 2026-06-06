@@ -101,7 +101,7 @@ let myPolyline = null; // 내 마커 전용 Polyline
 function calculateTotalTime(user) {
   if (!user.time || !user.updated) return 0;
 
-  // ✅ 문자열 변환 함수
+  // ✅ 한국어 포맷 문자열을 ISO 형식으로 변환
   function normalizeTime(str) {
     const regex = /(\d{4})\. (\d{1,2})\. (\d{1,2}) (오전|오후) (\d{1,2}):(\d{2}):(\d{2})/;
     const match = str.match(regex);
@@ -116,9 +116,11 @@ function calculateTotalTime(user) {
     if (ampm === "오후" && hh < 12) hh += 12;
     if (ampm === "오전" && hh === 12) hh = 0;
 
+    // ISO 8601 형식 반환
     return `${year}-${month}-${day}T${String(hh).padStart(2,"0")}:${mm}:${ss}`;
   }
 
+  // ✅ time과 updated를 변환 후 Date 객체 생성
   const startTime = new Date(normalizeTime(user.time));
   const endTime   = new Date(normalizeTime(user.updated));
 
@@ -127,7 +129,7 @@ function calculateTotalTime(user) {
   }
   return 0;
 }
-
+    
   // ---------------------- 문자열 기반 색상 함수 ----------------------
   function stringToColor(str) {
     let hash = 0;
