@@ -1109,7 +1109,7 @@ window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
-  // ✅ DocumentFragment 사용 → 성능 최적화
+  // ✅ DocumentFragment 사용 → 성능 최적화 (1000명도 문제 없음)
   const fragment = document.createDocumentFragment();
 
   users.forEach(user => {
@@ -1122,8 +1122,22 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
 
-    // ✅ 총 이동시간 계산 (user.time vs user.updated)
-    const totalTime = calculateTotalTime(user);
+    // ✅ 최초 path 기록 시각을 startTime으로 저장
+    //    - 로그인 직후 path가 처음 기록될 때만 startTime을 설정
+    if (!user.startTime && pathPoints.length > 0) {
+      user.startTime = new Date(user.time); // 최초 path 기록 시각
+    }
+
+    // ✅ 총 이동시간 계산 (startTime vs updated)
+    let totalTime = 0;
+    if (user.startTime && user.updated) {
+      const startTime = new Date(user.startTime);
+      const endTime   = new Date(user.updated);
+      if (!isNaN(startTime) && !isNaN(endTime)) {
+        const diffMinutes = (endTime - startTime) / 1000 / 60;
+        totalTime = diffMinutes > 0 ? diffMinutes : 0;
+      }
+    }
 
     // ✅ 시간과 분으로 변환 (소수점 대신 "시간+분" 형식으로 표시)
     let timeText = "-";
@@ -1149,8 +1163,8 @@ window.renderUserTable = function(users, viewMode = "current") {
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${distanceKm ? distanceKm.toFixed(2) + " km" : "-"}</td>   <!-- 총 이동거리 -->
-        <td>${user.time ? formatToKST(user.time) : "-"}</td>
-        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>
+        <td>${user.startTime ? formatToKST(user.startTime) : "-"}</td> <!-- 최초 path 기록 시각 -->
+        <td>${user.updated ? formatToKST(user.updated) : "-"}</td>     <!-- 마지막 갱신 시각 -->
         <td>${timeText}</td> <!-- ✅ 총 이동시간 (시간+분 형식) -->
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
         <td>${user.address || "-"}</td>
@@ -1199,7 +1213,6 @@ window.renderUserTable = function(users, viewMode = "current") {
   // ✅ 마지막에 한 번만 DOM 갱신
   tbody.appendChild(fragment);
 };
-
     
 
 // ✅ 전체 사용자 내역을 패널에 출력하는 함수
