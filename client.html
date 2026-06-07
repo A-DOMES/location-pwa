@@ -1659,66 +1659,49 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 
 // ---------------------- 토글 버튼 이벤트 ----------------------
-
-// ✅ HTML에서 id="toggleFollowBtn"인 요소를 가져옴
 const toggleBtn = document.getElementById("toggleFollowBtn");
-
-// 안전하게 요소가 존재하는지 확인
 if (toggleBtn) {
-  // 버튼 내부의 아이콘과 라벨 span을 가져옴
-  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 표시용 span
-  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 표시용 span
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
 
   // ✅ 기본 모드를 지도중심으로 설정
-  // followUser = false → 지도중심 모드
-  // followUser = true  → 사람중심 모드
-  let followUser = false;
+  let followUser = false; // false → 지도중심, true → 사람중심
 
   // ✅ 버튼 초기 표시도 지도중심으로 맞춤
-  iconSpan.textContent = "🗺️";       // 아이콘: 지도
-  labelSpan.textContent = "지도중심"; // 라벨: 지도중심
+  iconSpan.textContent = "🗺️";
+  labelSpan.textContent = "지도중심";
 
-  // ✅ 초기 지도 위치도 경로 마지막 좌표 기준으로 맞춤
-  if (pathCoords.length > 0) {
-    const lastPoint = pathCoords[pathCoords.length - 1];
-    map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-    map.setZoom(7); // 넓은 범위를 보여주는 줌 레벨
-  }
+  // ⚠️ 초기 지도 위치 설정은 여기서 하지 않고,
+  // initMap()이나 데이터 로드 후에 실행하는 것이 안전합니다.
 
-  // ✅ 버튼 클릭 이벤트 등록
+  // ✅ 버튼 클릭 이벤트
   toggleBtn.addEventListener("click", () => {
-    // 상태 토글 (false ↔ true)
-    followUser = !followUser;
+    followUser = !followUser; // 상태 토글
 
-    // 아이콘과 라벨 교체 (각 span 갱신)
+    // 아이콘과 라벨 교체
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 버튼 스타일 토글 (CSS에서 .on 클래스 활용 가능)
+    // 버튼 스타일 토글
     toggleBtn.classList.toggle("on", followUser);
 
     // 모드별 지도 이동 처리
     if (followUser) {
-      // ✅ 사람중심 모드 → 현재 위치 기준으로 지도 이동
-      if (currentLat && currentLng) {
+      // 사람중심 모드 → 현재 위치 기준
+      if (map && currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-        map.setZoom(16); // 사람 위치를 자세히 보여주는 줌 레벨
-      } else {
-        console.warn("현재 위치 정보 없음");
+        map.setZoom(16);
       }
     } else {
-      // ✅ 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
-      if (pathCoords.length > 0) {
+      // 지도중심 모드 → 경로 마지막 좌표 기준
+      if (map && pathCoords && pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-        map.setZoom(7); // 넓은 범위를 보여주는 줌 레벨
-      } else {
-        console.warn("경로 좌표 없음");
+        map.setZoom(7);
       }
     }
   });
 } else {
-  // 요소를 못 찾았을 때 에러 방지
   console.error("toggleFollowBtn 요소를 찾을 수 없습니다.");
 }
 
