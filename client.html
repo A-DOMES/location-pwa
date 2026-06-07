@@ -818,54 +818,60 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
+// ---------------------- 지도 초기화 ----------------------
+// Google Maps API 스크립트 태그에 callback=initMap 이 붙어 있다면 반드시 이 함수가 필요합니다.
+// HTML 예시: <script src="https://maps.googleapis.com/maps/api/js?key=...&callback=initMap"></script>
 function initMap() {
+  // ✅ 초기 중심 좌표
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 기본은 일반 지도
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: originalCenter,
-        zoom: 7,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        disableDefaultUI: false
-      });
+  // ✅ 기본 지도 생성 (로드맵)
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: originalCenter,
+    zoom: 7,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    disableDefaultUI: false
+  });
 
-      // 라이트/다크 모드 토글
-      const themeToggle = document.getElementById("themeToggle");
-      if (themeToggle) {
-        themeToggle.addEventListener("change", () => {
-          if (themeToggle.checked) {
-            map.setOptions({ styles: darkStyle });
-            document.body.classList.add("dark-mode");
-          } else {
-            map.setOptions({ styles: lightStyle });
-            document.body.classList.remove("dark-mode");
-          }
-        });
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      if (themeToggle.checked) {
+        map.setOptions({ styles: darkStyle });
+        document.body.classList.add("dark-mode");
+      } else {
+        map.setOptions({ styles: lightStyle });
+        document.body.classList.remove("dark-mode");
       }
+    });
+  }
 
-      // 일반 지도 버튼
-      const defaultMapBtn = document.getElementById("defaultMapBtn");
-      if (defaultMapBtn) {
-        defaultMapBtn.addEventListener("click", () => {
-          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-          map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
-          if (themeToggle) themeToggle.checked = false;
-          document.body.classList.remove("dark-mode");
-        });
-      }
+  // ✅ 일반 지도 버튼 (기본 상태로 복귀)
+  const defaultMapBtn = document.getElementById("defaultMapBtn");
+  if (defaultMapBtn) {
+    defaultMapBtn.addEventListener("click", () => {
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
+      if (themeToggle) themeToggle.checked = false;
+      document.body.classList.remove("dark-mode");
+    });
+  }
 
-      // 커스텀 지도 타입 버튼
-      document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-      document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-      document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-      document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+  // ✅ 지도 타입 버튼들
+  document.getElementById("roadmapBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+  document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+  document.getElementById("hybridBtn").onclick    = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+  document.getElementById("terrainBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
-      // 우클릭 시 초기 위치로 복귀
-      google.maps.event.addListener(map, "contextmenu", function () {
-        map.setOptions({ center: originalCenter, zoom: 7 });
-      });
-    }
-    window.initMap = initMap;
+  // ✅ 우클릭 시 초기 위치로 복귀
+  google.maps.event.addListener(map, "contextmenu", function () {
+    map.setOptions({ center: originalCenter, zoom: 7 });
+  });
+}
+// ✅ Google Maps API 콜백 연결
+window.initMap = initMap;
+
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
