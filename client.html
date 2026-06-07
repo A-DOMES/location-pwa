@@ -1720,7 +1720,68 @@ toggleBtn.addEventListener("click", () => {
   makeDraggableAndResizable(toggleBtn);
 });
 
-   
+
+    /* ==================================================
+       📌 지도 초기화 (1달 동안의 path자료을 지도에 그리기)
+       ================================================= */
+    let map;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 37.5665, lng: 126.9780 }, // 기본 위치: 서울
+        zoom: 12
+      });
+    }
+
+    /* ============================
+       📌 CSV 파일 읽기
+       ============================ */
+    document.getElementById("csvFile").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const csvText = e.target.result;
+        drawPathFromCSV(csvText);
+      };
+      reader.readAsText(file);
+    });
+
+    /* ============================
+       📌 CSV → Polyline 변환
+       ============================ */
+    function drawPathFromCSV(csvText) {
+      const rows = csvText.split("\n").map(row => row.split(","));
+      const pathCoords = [];
+
+      // 🔹 CSV에서 위도/경도 추출 (두 번째 열=위도, 세 번째 열=경도)
+      rows.forEach(row => {
+        const lat = parseFloat(row[1]); // 위도
+        const lng = parseFloat(row[2]); // 경도
+        if (!isNaN(lat) && !isNaN(lng)) {
+          pathCoords.push({ lat, lng });
+        }
+      });
+
+      // 🔹 지도에 Polyline 표시
+      new google.maps.Polyline({
+        path: pathCoords,
+        geodesic: true,
+        strokeColor: "#FF0000",   // 빨간색 선
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: map
+      });
+
+      // 🔹 경로의 첫 좌표로 지도 중심 이동
+      if (pathCoords.length > 0) {
+        map.setCenter(pathCoords[0]);
+      }
+    }
+
+    // 페이지 로드 시 지도 초기화
+    window.onload = initMap;
+    
 </script>
 </head>
  
@@ -1915,6 +1976,13 @@ toggleBtn.addEventListener("click", () => {
   <span class="label">사람중심</span>
 </div>
 
+
+<!-- ✅ 이동경호 조회 ( 1달 동안의 백업자료만 조회) -->  
+  <h2>📍 이동 경로 조회</h2>
+  <!-- CSV 파일 업로드 버튼 -->
+  <input type="file" id="csvFile" accept=".csv" class="button">
+  <div id="map"></div>
+  
 </body>
 </html>
   
