@@ -261,3 +261,12 @@ body.dark-mode #defaultMapBtn:hover {
 #toggleFollowBtn.on      { background: rgba(0, 191, 255, 0.4); } /* 지도중심 모드도 동일 */
 
 
+/* ---------------------- 지도 컨테이너 버튼 (Path경로를 지도에 그리기 버튼 ) ---------------------- */
+/* 📌 지도 컨테이너 스타일 */
+#map { height: 500px; width: 100%; border: 1px solid #ccc; margin-top: 10px; }
+
+/* 📌 버튼 스타일 */
+.button { background-color: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+.button:hover { background-color: #0056b3; }
+
+
