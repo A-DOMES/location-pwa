@@ -1566,9 +1566,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
       // collapsed 상태에서 최대화로 변경
       panel.classList.remove("collapsed-left", "collapsed-right");
-
       if (window.innerWidth <= 768) {
-        // 모바일 화면 크기 → 하단에 40% 높이로 표시
+        // 모바일 화면 크기
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1576,7 +1575,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
-        // PC 화면 크기 → 오른쪽에 600px 폭으로 표시
+        // PC 화면 크기
         panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
@@ -1585,7 +1584,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.bottom = "auto";
       }
     } else {
-      // 일반 상태에서 최대화로 변경 (전체 화면 차지)
+      // 일반 상태에서 최대화로 변경
       panel.classList.add("maximized");
       panel.style.width = "100%";
       panel.style.height = "100%";
@@ -1598,7 +1597,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
-    // 모든 상태 제거 → 패널 완전히 닫힘
+    // 모든 상태 제거
     panel.classList.remove(
       "open",
       "collapsed-left",
@@ -1613,7 +1612,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 끝부분 이벤트 처리 ----------------------
   if (leftEdge) {
-    // 왼쪽 끝에 마우스/터치가 닿으면 패널 활성화
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
     });
@@ -1623,7 +1621,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (rightEdge) {
-    // 오른쪽 끝에 마우스/터치가 닿으면 패널 활성화
     rightEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-right")) panel.classList.add("touch-active");
     });
@@ -1638,47 +1635,45 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 
+// ---------------------- 토글 버튼 이벤트 ----------------------
+const toggleBtn = document.getElementById("toggleFollowBtn");
+const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
+let followUser = false; // 기본은 지도중심 모드
 
-  // ---------------------- 토글 버튼 이벤트 ----------------------
-  const toggleBtn = document.getElementById("toggleFollowBtn");
-  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
-  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-  let followUser = false; // 기본은 지도중심 모드
+// 초기 UI를 상태값에 맞게 세팅
+iconSpan.textContent = "🗺️";
+labelSpan.textContent = "지도중심";
+toggleBtn.classList.remove("on"); // 지도중심 모드에서는 on 클래스 제거
 
-  // 초기 UI를 상태값에 맞게 세팅
-  iconSpan.textContent = "🗺️";
-  labelSpan.textContent = "지도중심";
-  toggleBtn.classList.remove("on"); // 지도중심 모드에서는 on 클래스 제거
+toggleBtn.addEventListener("click", () => {
+  // 상태 토글
+  followUser = !followUser;
 
-  toggleBtn.addEventListener("click", () => {
-    // 상태 토글 (false → true → false 반복)
-    followUser = !followUser;
+  // 아이콘과 라벨 교체
+  iconSpan.textContent = followUser ? "👤" : "🗺️";
+  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 아이콘과 라벨 교체
-    iconSpan.textContent = followUser ? "👤" : "🗺️";
-    labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+  // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
+  toggleBtn.classList.toggle("on", followUser);
 
-    // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
-    toggleBtn.classList.toggle("on", followUser);
-
-    // 모드별 지도 이동 처리
-    if (followUser) {
-      // 사람중심 모드 → 현재 위치 기준으로 지도 이동
-      if (currentLat && currentLng) {
-        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-        map.setZoom(16);
-      }
-    } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
-      if (pathCoords.length > 0) {
-        const lastPoint = pathCoords[pathCoords.length - 1];
-        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-        map.setZoom(7);
-      }
+  // 모드별 지도 이동 처리
+  if (followUser) {
+    // 사람중심 모드 → 현재 위치 기준
+    if (currentLat && currentLng) {
+      map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+      map.setZoom(16);
     }
-  });
-}); // ← 반드시 닫기
-
+  } else {
+    // 지도중심 모드 → 경로 마지막 좌표 기준
+    if (pathCoords.length > 0) {
+      const lastPoint = pathCoords[pathCoords.length - 1];
+      map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+      map.setZoom(7);
+    }
+  }
+});
+});
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
