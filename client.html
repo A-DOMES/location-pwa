@@ -1549,9 +1549,36 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.style = "";
   });
 
+// ---------------------- DOM 준비 후 실행 ----------------------
+document.addEventListener("DOMContentLoaded", () => {
+  // ▶ 패널 관련 요소 가져오기
+  const panel = document.getElementById("user-panel");
+  const maximizeBtn = document.getElementById("maximize-btn");
+  const minimizeBtn = document.getElementById("minimize-btn");
+  const closeBtn = document.getElementById("close-user-panel");
+  const leftEdge = document.getElementById("left-edge");
+  const rightEdge = document.getElementById("right-edge");
+
+  // ---------------------- 최소화 버튼 ----------------------
+  minimizeBtn.addEventListener("click", () => {
+    // 모든 상태 초기화
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
+
+    // snap 위치에 따라 collapsed 상태 적용
+    if (panel.classList.contains("snap-left")) {
+      panel.classList.add("collapsed-left");
+    } else {
+      panel.classList.add("collapsed-right");
+    }
+
+    // 인라인 스타일 제거 → CSS 규칙만 적용
+    panel.style = "";
+  });
+
   // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
+      // 이미 최대화 상태라면 원래 상태로 복귀
       panel.classList.remove("maximized");
       if (panel.classList.contains("snap-left")) {
         panel.classList.add("collapsed-left");
@@ -1560,8 +1587,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       panel.style = "";
     } else if (panel.classList.contains("collapsed-left") || panel.classList.contains("collapsed-right")) {
+      // collapsed 상태에서 최대화로 변경
       panel.classList.remove("collapsed-left", "collapsed-right");
       if (window.innerWidth <= 768) {
+        // 모바일 화면 크기
         panel.style.width = "100%";
         panel.style.height = "40%";
         panel.style.top = "auto";
@@ -1569,6 +1598,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.left = "0";
         panel.style.right = "0";
       } else {
+        // PC 화면 크기
         panel.style.width = "600px";
         panel.style.height = "calc(100% - 50px)";
         panel.style.top = "50px";
@@ -1577,6 +1607,7 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.style.bottom = "auto";
       }
     } else {
+      // 일반 상태에서 최대화로 변경
       panel.classList.add("maximized");
       panel.style.width = "100%";
       panel.style.height = "100%";
@@ -1589,6 +1620,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
+    // 모든 상태 제거
     panel.classList.remove(
       "open",
       "collapsed-left",
@@ -1604,27 +1636,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 끝부분 이벤트 처리 ----------------------
   if (leftEdge) {
     leftEdge.addEventListener("mouseenter", () => {
-      if (panel.classList.contains("collapsed-left")) {
-        panel.classList.add("touch-active");
-      }
+      if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
     });
     leftEdge.addEventListener("touchstart", () => {
-      if (panel.classList.contains("collapsed-left")) {
-        panel.classList.add("touch-active");
-      }
+      if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
     });
   }
 
   if (rightEdge) {
     rightEdge.addEventListener("mouseenter", () => {
-      if (panel.classList.contains("collapsed-right")) {
-        panel.classList.add("touch-active");
-      }
+      if (panel.classList.contains("collapsed-right")) panel.classList.add("touch-active");
     });
     rightEdge.addEventListener("touchstart", () => {
-      if (panel.classList.contains("collapsed-right")) {
-        panel.classList.add("touch-active");
-      }
+      if (panel.classList.contains("collapsed-right")) panel.classList.add("touch-active");
     });
   }
 
@@ -1633,19 +1657,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
-});
 
-// ---------------------- DOM 준비 후 실행 ----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  // 토글 버튼 요소 가져오기
+  // ---------------------- 토글 버튼 이벤트 ----------------------
   const toggleBtn = document.getElementById("toggleFollowBtn");
   const iconSpan = toggleBtn.querySelector(".icon");
   const labelSpan = toggleBtn.querySelector(".label");
+  let followUser = true; // 기본은 사람중심 모드
 
-  // 기본은 사람중심 모드
-  let followUser = true;
-
-  // ---------------------- 토글 버튼 이벤트 ----------------------
   toggleBtn.addEventListener("click", () => {
     followUser = !followUser;
 
@@ -1657,13 +1675,13 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleBtn.classList.toggle("on", followUser);
 
     if (followUser) {
-      // ✅ 사람중심 모드 → 현재 위치 기준으로 지도 이동
+      // 사람중심 모드 → 현재 위치 기준으로 지도 이동
       if (currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
       }
     } else {
-      // ✅ 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
+      // 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
       if (pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1672,7 +1690,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
