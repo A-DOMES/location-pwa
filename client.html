@@ -19,6 +19,7 @@ let map, mode = "current", markers = [], markerCluster, intervalId, allData = []
 let polylines = [];        // 경로 Polyline 저장 배열
 let geoWatchId = null;     // geolocation watchPosition ID
 let originalCenter;        // 초기 중심 좌표
+let lastPathCenter;        // 경로 마지막 좌표 저장
 let currentLat, currentLng; // 현재 내 위치 좌표
 
 // ✅ 내 위치 마커 및 레이더 관련 변수
@@ -26,6 +27,7 @@ let myMarker = null;       // 내 위치 마커 (지도에 표시)
 let radarPolygon = null;   // 레이더(부채꼴) Polygon 객체
 let radarEnabled = true;   // 레이더 on/off 상태 관리
 
+    
 // ✅ 레이더 반경 (항상 내부적으로는 미터 단위로 저장)
 let radarRadiusMeters = 50; 
 let radarUnit = "m";       // 표시 단위: m 또는 km
@@ -52,8 +54,11 @@ let currentUserPhone = null;
 // 경로를 저장할 배열
 let myPath = [];
 let myPolyline = null; // 내 마커 전용 Polyline
-    
 
+ // ---------------------- 토글버튼 전환 ( 지도중심 사람중심) ----------------------
+let followUser = false;       // false → 지도중심, true → 사람중심
+
+    
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
     markers.forEach(m => m.setMap(null));
@@ -817,54 +822,64 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
+
 function initMap() {
+  // ✅ 초기 중심 좌표를 한 번 저장
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 기본은 일반 지도
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: originalCenter,
-        zoom: 7,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        disableDefaultUI: false
-      });
+  // ✅ 기본 지도 생성
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: originalCenter,
+    zoom: 7,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    disableDefaultUI: false
+  });
 
-      // 라이트/다크 모드 토글
-      const themeToggle = document.getElementById("themeToggle");
-      if (themeToggle) {
-        themeToggle.addEventListener("change", () => {
-          if (themeToggle.checked) {
-            map.setOptions({ styles: darkStyle });
-            document.body.classList.add("dark-mode");
-          } else {
-            map.setOptions({ styles: lightStyle });
-            document.body.classList.remove("dark-mode");
-          }
-        });
+  // ✅ 경로 좌표가 있다면 마지막 좌표를 한 번 저장
+  if (pathCoords && pathCoords.length > 0) {
+    const lastPoint = pathCoords[pathCoords.length - 1];
+    lastPathCenter = new google.maps.LatLng(lastPoint.lat, lastPoint.lng);
+    map.setCenter(lastPathCenter);
+  }
+
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      if (themeToggle.checked) {
+        map.setOptions({ styles: darkStyle });
+        document.body.classList.add("dark-mode");
+      } else {
+        map.setOptions({ styles: lightStyle });
+        document.body.classList.remove("dark-mode");
       }
+    });
+  }
 
-      // 일반 지도 버튼
-      const defaultMapBtn = document.getElementById("defaultMapBtn");
-      if (defaultMapBtn) {
-        defaultMapBtn.addEventListener("click", () => {
-          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-          map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
-          if (themeToggle) themeToggle.checked = false;
-          document.body.classList.remove("dark-mode");
-        });
-      }
+  // ✅ 일반 지도 버튼
+  const defaultMapBtn = document.getElementById("defaultMapBtn");
+  if (defaultMapBtn) {
+    defaultMapBtn.addEventListener("click", () => {
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
+      if (themeToggle) themeToggle.checked = false;
+      document.body.classList.remove("dark-mode");
+    });
+  }
 
-      // 커스텀 지도 타입 버튼
-      document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-      document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-      document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-      document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+  // ✅ 커스텀 지도 타입 버튼
+  document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+  document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+  document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+  document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
-      // 우클릭 시 초기 위치로 복귀
-      google.maps.event.addListener(map, "contextmenu", function () {
-        map.setOptions({ center: originalCenter, zoom: 7 });
-      });
-    }
-    window.initMap = initMap;
+  // ✅ 우클릭 시 초기 위치로 복귀
+  google.maps.event.addListener(map, "contextmenu", function () {
+    map.setOptions({ center: originalCenter, zoom: 7 });
+  });
+}
+window.initMap = initMap;
+
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
@@ -1649,18 +1664,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 
-  // ---------------------- 토글 버튼 이벤트 ----------------------
-  const toggleBtn = document.getElementById("toggleFollowBtn");
-  if (!toggleBtn) {
-    console.error("toggleFollowBtn 요소를 찾을 수 없습니다.");
-    return; // 버튼이 없으면 더 진행하지 않음
-  }
 
+// ---------------------- 토글 버튼 이벤트 ----------------------
+const toggleBtn = document.getElementById("toggleFollowBtn");
+if (!toggleBtn) {
+  console.error("toggleFollowBtn 요소를 찾을 수 없습니다.");
+} else {
   const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
   const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-
-  // ✅ 기본 모드를 지도중심으로 설정
-  let followUser = false; // false → 지도중심, true → 사람중심
 
   // ✅ 버튼 초기 표시도 지도중심으로 맞춤
   iconSpan.textContent = "🗺️";
@@ -1683,17 +1694,23 @@ document.addEventListener("DOMContentLoaded", () => {
       if (map && currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
+      } else {
+        console.warn("현재 위치 정보 없음");
       }
     } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준
-      if (map && pathCoords && pathCoords.length > 0) {
-        const lastPoint = pathCoords[pathCoords.length - 1];
-        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+      // 지도중심 모드 → 초기화 시 저장해둔 좌표 사용
+      if (map && lastPathCenter) {
+        map.setCenter(lastPathCenter);
         map.setZoom(7);
+      } else if (map && originalCenter) {
+        map.setCenter(originalCenter);
+        map.setZoom(7);
+      } else {
+        console.warn("초기 좌표 정보 없음");
       }
     }
   });
-});
+}
 
 
 
