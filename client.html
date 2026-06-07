@@ -1637,19 +1637,6 @@ document.addEventListener("DOMContentLoaded", () => {
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
-// ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
-document.addEventListener("DOMContentLoaded", () => {
-  // ▶ 패널 관련 요소
-  const panel = document.getElementById("user-panel");
-  const maximizeBtn = document.getElementById("maximize-btn");
-  const minimizeBtn = document.getElementById("minimize-btn");
-  const closeBtn = document.getElementById("close-user-panel");
-  const leftEdge = document.getElementById("left-edge");
-  const rightEdge = document.getElementById("right-edge");
-  const toggleBtn = document.getElementById("toggleFollowBtn");
-
-  // ... (패널 관련 이벤트 그대로 유지)
-
   // ====================== 토글 버튼 이벤트 ======================
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
