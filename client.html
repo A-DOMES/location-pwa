@@ -1541,30 +1541,7 @@ function makeResizable(panelId) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const panel = document.getElementById("user-panel");
-  const maximizeBtn = document.getElementById("maximize-btn");
-  const minimizeBtn = document.getElementById("minimize-btn");
-  const closeBtn = document.getElementById("close-user-panel");
-  const leftEdge = document.getElementById("left-edge");
-  const rightEdge = document.getElementById("right-edge");
-
-  // ---------------------- 최소화 버튼 ----------------------
-  minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-
-    if (panel.classList.contains("snap-left")) {
-      panel.classList.add("collapsed-left");
-    } else {
-      panel.classList.add("collapsed-right");
-    }
-
-    // 인라인 스타일 제거 → CSS 규칙만 적용
-    panel.style = "";
-  });
-
-// ✅ DOMContentLoaded: 모든 버튼 이벤트와 토글 이벤트를 한 블록에서 관리
+// ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
 document.addEventListener("DOMContentLoaded", () => {
   // ▶ 패널 관련 요소
   const panel = document.getElementById("user-panel");
@@ -1575,24 +1552,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightEdge = document.getElementById("right-edge");
   const toggleBtn = document.getElementById("toggleFollowBtn");
 
-  // ---------------------- 최소화 버튼 ----------------------
+  // ----- 최소화 버튼 -----
   minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-    // snap-left 상태면 collapsed-left, 아니면 collapsed-right
+    panel.classList.remove("maximized","collapsed-left","collapsed-right","touch-active");
     if (panel.classList.contains("snap-left")) {
       panel.classList.add("collapsed-left");
     } else {
       panel.classList.add("collapsed-right");
     }
-    // 인라인 스타일 제거
     panel.style = "";
   });
 
-  // ---------------------- 최대화 버튼 ----------------------
+  // ----- 최대화 버튼 -----
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
-      // 이미 최대화 상태면 해제 → collapsed 상태로 전환
       panel.classList.remove("maximized");
       if (panel.classList.contains("snap-left")) {
         panel.classList.add("collapsed-left");
@@ -1601,7 +1574,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       panel.style = "";
     } else {
-      // 최대화 상태로 전환
       panel.classList.add("maximized");
       panel.style.width = "100%";
       panel.style.height = "100%";
@@ -1612,14 +1584,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---------------------- 닫기 버튼 ----------------------
+  // ----- 닫기 버튼 -----
   closeBtn.addEventListener("click", () => {
-    // 모든 상태 제거
     panel.classList.remove("open","collapsed-left","collapsed-right","maximized","snap-left","snap-right","touch-active");
     panel.style = "";
   });
 
-  // ---------------------- 끝부분 이벤트 처리 ----------------------
+  // ----- 끝부분 이벤트 처리 -----
   if (leftEdge) {
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
@@ -1637,11 +1608,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------------------- 드래그 + 리사이즈 적용 ----------------------
+  // ----- 드래그 + 리사이즈 적용 -----
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
-// ---------------------- 토글 버튼 이벤트 ----------------------
+  // ====================== 토글 버튼 이벤트 ======================
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
@@ -1661,13 +1632,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 모드별 지도 이동 처리
       if (followUser) {
-        // 사람중심 모드 → 현재 위치 기준
         if (map && currentLat && currentLng) {
           map.setCenter(new google.maps.LatLng(currentLat, currentLng));
           map.setZoom(16);
         }
       } else {
-        // 지도중심 모드 → 경로 마지막 좌표 기준
         if (map && pathCoords && pathCoords.length > 0) {
           const lastPoint = pathCoords[pathCoords.length - 1];
           map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1681,16 +1650,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ---------------------- 현재 위치 좌표 세팅 ----------------------
-// 사람중심 모드가 정상 작동하려면 반드시 현재 좌표를 받아야 함
+// ====================== 현재 위치 좌표 세팅 ======================
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(pos => {
     currentLat = pos.coords.latitude;
     currentLng = pos.coords.longitude;
-    // 지도중심 모드용 경로에도 추가
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
+
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
