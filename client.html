@@ -1660,28 +1660,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 토글 버튼 이벤트 ----------------------
   const toggleBtn = document.getElementById("toggleFollowBtn");
-  const iconSpan = toggleBtn.querySelector(".icon");
-  const labelSpan = toggleBtn.querySelector(".label");
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
   let followUser = true; // 기본은 사람중심 모드
 
   toggleBtn.addEventListener("click", () => {
+    // 상태 토글
     followUser = !followUser;
 
-    // 아이콘과 라벨 교체
+    // 아이콘과 라벨 교체 (각 span 갱신)
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
+    // 버튼 스타일 토글
     toggleBtn.classList.toggle("on", followUser);
 
+    // 모드별 지도 이동 처리
     if (followUser) {
-      // 사람중심 모드 → 현재 위치 기준으로 지도 이동
+      // 사람중심 모드 → 현재 위치 기준
       if (currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
       }
     } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
+      // 지도중심 모드 → 경로 마지막 좌표 기준
       if (pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
