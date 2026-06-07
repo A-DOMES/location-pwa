@@ -1637,60 +1637,67 @@ document.addEventListener("DOMContentLoaded", () => {
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
-// ====================== 토글 버튼 이벤트 ======================
-if (toggleBtn) {
-  // ▶ 버튼 내부의 아이콘/라벨 span 요소 가져오기
-  const iconSpan = toggleBtn.querySelector(".icon");
-  const labelSpan = toggleBtn.querySelector(".label");
+// ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
+document.addEventListener("DOMContentLoaded", () => {
+  // ▶ 패널 관련 요소
+  const panel = document.getElementById("user-panel");
+  const maximizeBtn = document.getElementById("maximize-btn");
+  const minimizeBtn = document.getElementById("minimize-btn");
+  const closeBtn = document.getElementById("close-user-panel");
+  const leftEdge = document.getElementById("left-edge");
+  const rightEdge = document.getElementById("right-edge");
+  const toggleBtn = document.getElementById("toggleFollowBtn");
 
-  // ▶ 상태 변수: false → 지도중심, true → 사람중심
-  let followUser = false;
+  // ... (패널 관련 이벤트 그대로 유지)
 
-  // ▶ 초기 상태 설정
-  iconSpan.textContent = "🗺️";
-  labelSpan.textContent = "지도중심";
+  // ====================== 토글 버튼 이벤트 ======================
+  if (toggleBtn) {
+    const iconSpan = toggleBtn.querySelector(".icon");
+    const labelSpan = toggleBtn.querySelector(".label");
+    let followUser = false; // false → 지도중심, true → 사람중심
 
-  // ▶ 클릭 이벤트 등록
-  toggleBtn.addEventListener("click", () => {
-    followUser = !followUser; // 상태 토글
+    // 초기 상태: 지도중심
+    iconSpan.textContent = "🗺️";
+    labelSpan.textContent = "지도중심";
 
-    // 아이콘/라벨 갱신 (innerText 대신 각 span만 갱신)
-    iconSpan.textContent = followUser ? "👤" : "🗺️";
-    labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+    toggleBtn.addEventListener("click", () => {
+      followUser = !followUser; // 상태 토글
 
-    // on 클래스 토글 (스타일 적용용)
-    toggleBtn.classList.toggle("on", followUser);
+      // 아이콘/라벨 갱신
+      iconSpan.textContent = followUser ? "👤" : "🗺️";
+      labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 모드별 지도 이동 처리
-    if (followUser) {
-      // 사람중심 모드 → 현재 위치 기준
-      if (map && currentLat && currentLng) {
-        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-        map.setZoom(16);
+      toggleBtn.classList.toggle("on", followUser);
+
+      // 모드별 지도 이동 처리
+      if (followUser) {
+        if (map && currentLat && currentLng) {
+          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+          map.setZoom(16);
+        }
+      } else {
+        if (map && pathCoords && pathCoords.length > 0) {
+          const lastPoint = pathCoords[pathCoords.length - 1];
+          map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+          map.setZoom(7);
+        }
       }
-    } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준
-      if (map && pathCoords && pathCoords.length > 0) {
-        const lastPoint = pathCoords[pathCoords.length - 1];
-        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-        map.setZoom(7);
-      }
-    }
-  });
+    });
 
-  // ▶ 토글 버튼 드래그/리사이즈 가능하게 설정
-  makeDraggableAndResizable(toggleBtn);
-}
+    // 토글 버튼 드래그 가능
+    makeDraggableAndResizable(toggleBtn);
+  }
+});
 
 // ====================== 현재 위치 좌표 세팅 ======================
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(pos => {
     currentLat = pos.coords.latitude;
     currentLng = pos.coords.longitude;
-    // 경로 배열에 현재 좌표 추가
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
+
 
     
   // ---------------------- 드래그 가능 함수 ----------------------
