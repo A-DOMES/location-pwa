@@ -1668,11 +1668,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 상태 토글
     followUser = !followUser;
 
-    // 아이콘과 라벨 교체 (각 span 갱신)
+    // 아이콘과 라벨 교체
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 버튼 스타일 토글
+    // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
     toggleBtn.classList.toggle("on", followUser);
 
     // 모드별 지도 이동 처리
@@ -1692,6 +1692,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
