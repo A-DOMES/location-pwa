@@ -1552,20 +1552,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightEdge = document.getElementById("right-edge");
   const toggleBtn = document.getElementById("toggleFollowBtn");
 
-  // ----- 최소화 버튼 -----
+  // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
-    panel.classList.remove("maximized","collapsed-left","collapsed-right","touch-active");
+    // 모든 상태 초기화
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
+    // snap-left 상태면 collapsed-left, 아니면 collapsed-right
     if (panel.classList.contains("snap-left")) {
       panel.classList.add("collapsed-left");
     } else {
       panel.classList.add("collapsed-right");
     }
+    // 인라인 스타일 제거
     panel.style = "";
   });
 
-  // ----- 최대화 버튼 -----
+  // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
+      // 이미 최대화 상태면 해제 → collapsed 상태로 전환
       panel.classList.remove("maximized");
       if (panel.classList.contains("snap-left")) {
         panel.classList.add("collapsed-left");
@@ -1574,6 +1578,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       panel.style = "";
     } else {
+      // 최대화 상태로 전환
       panel.classList.add("maximized");
       panel.style.width = "100%";
       panel.style.height = "100%";
@@ -1584,13 +1589,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ----- 닫기 버튼 -----
+  // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
+    // 모든 상태 제거
     panel.classList.remove("open","collapsed-left","collapsed-right","maximized","snap-left","snap-right","touch-active");
     panel.style = "";
   });
 
-  // ----- 끝부분 이벤트 처리 -----
+  // ---------------------- 끝부분 이벤트 처리 ----------------------
   if (leftEdge) {
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
@@ -1608,7 +1614,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- 드래그 + 리사이즈 적용 -----
+  // ---------------------- 드래그 + 리사이즈 적용 ----------------------
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
