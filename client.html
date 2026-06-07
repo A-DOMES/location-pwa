@@ -1,3 +1,6 @@
+관리자용완성본 client.htm; 수정2
+260607처리완료, 한가지 문제점은 사람중심모드, 지도중심모드가 바뀌질않은 코드 수정 중
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1526,6 +1529,29 @@ function makeResizable(panelId) {
   });
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("user-panel");
+  const maximizeBtn = document.getElementById("maximize-btn");
+  const minimizeBtn = document.getElementById("minimize-btn");
+  const closeBtn = document.getElementById("close-user-panel");
+  const leftEdge = document.getElementById("left-edge");
+  const rightEdge = document.getElementById("right-edge");
+
+  // ---------------------- 최소화 버튼 ----------------------
+  minimizeBtn.addEventListener("click", () => {
+    // 모든 상태 초기화
+    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
+
+    if (panel.classList.contains("snap-left")) {
+      panel.classList.add("collapsed-left");
+    } else {
+      panel.classList.add("collapsed-right");
+    }
+
+    // 인라인 스타일 제거 → CSS 규칙만 적용
+    panel.style = "";
+  });
+
 // ---------------------- DOM 준비 후 실행 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   // ▶ 패널 관련 요소 가져오기
@@ -1637,28 +1663,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 토글 버튼 이벤트 ----------------------
   const toggleBtn = document.getElementById("toggleFollowBtn");
-  const iconSpan = toggleBtn.querySelector(".icon");
-  const labelSpan = toggleBtn.querySelector(".label");
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
   let followUser = true; // 기본은 사람중심 모드
 
   toggleBtn.addEventListener("click", () => {
+    // 상태 토글
     followUser = !followUser;
 
-    // 아이콘과 라벨 교체
+    // 아이콘과 라벨 교체 (각 span 갱신)
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-    // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
+    // 버튼 스타일 토글
     toggleBtn.classList.toggle("on", followUser);
 
+    // 모드별 지도 이동 처리
     if (followUser) {
-      // 사람중심 모드 → 현재 위치 기준으로 지도 이동
+      // 사람중심 모드 → 현재 위치 기준
       if (currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
       }
     } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
+      // 지도중심 모드 → 경로 마지막 좌표 기준
       if (pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1667,8 +1695,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
@@ -1918,10 +1944,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- ✅ 토글 버튼 -->
 <div id="toggleFollowBtn">
-  <span class="icon">🗺️</span>
-  <span class="label">지도중심</span>
+  <span class="icon">👤</span>
+  <span class="label">사람중심</span>
 </div>
-
   
 </body>
 </html>
