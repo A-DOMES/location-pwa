@@ -1665,52 +1665,51 @@ document.addEventListener("DOMContentLoaded", () => {
   makeResizable("user-panel");
 
 
-// ---------------------- 토글 버튼 이벤트 ----------------------
-const toggleBtn = document.getElementById("toggleFollowBtn");
-if (!toggleBtn) {
-  console.error("toggleFollowBtn 요소를 찾을 수 없습니다.");
-  return; // 버튼이 없으면 더 진행하지 않음
-}
-
-const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
-const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-
-// ✅ 기본 모드를 지도중심으로 설정
-let followUser = false; // false → 지도중심, true → 사람중심
-
-// ✅ 버튼 초기 표시도 지도중심으로 맞춤
-iconSpan.textContent = "🗺️";
-labelSpan.textContent = "지도중심";
-
-// ✅ 버튼 클릭 이벤트
-toggleBtn.addEventListener("click", () => {
-  followUser = !followUser; // 상태 토글
-
-  // 아이콘과 라벨 교체
-  iconSpan.textContent = followUser ? "👤" : "🗺️";
-  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
-
-  // 버튼 스타일 토글 (CSS에서 .on 클래스 활용 가능)
-  toggleBtn.classList.toggle("on", followUser);
-
-  // 모드별 지도 이동 처리
-  if (followUser) {
-    // 사람중심 모드 → 현재 위치 기준
-    if (map && currentLat && currentLng) {
-      map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-      map.setZoom(16);
-    }
-  } else {
-    // 지도중심 모드 → 경로 마지막 좌표 기준
-    if (map && pathCoords && pathCoords.length > 0) {
-      const lastPoint = pathCoords[pathCoords.length - 1];
-      map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-      map.setZoom(7);
-    }
+  // ---------------------- 토글 버튼 이벤트 ----------------------
+  const toggleBtn = document.getElementById("toggleFollowBtn");
+  if (!toggleBtn) {
+    console.error("toggleFollowBtn 요소를 찾을 수 없습니다.");
+    return; // 버튼이 없으면 더 진행하지 않음
   }
-});
 
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
 
+  // ✅ 기본 모드를 지도중심으로 설정
+  let followUser = false; // false → 지도중심, true → 사람중심
+
+  // ✅ 버튼 초기 표시도 지도중심으로 맞춤
+  iconSpan.textContent = "🗺️";
+  labelSpan.textContent = "지도중심";
+
+  // ✅ 버튼 클릭 이벤트
+  toggleBtn.addEventListener("click", () => {
+    followUser = !followUser; // 상태 토글
+
+    // 아이콘과 라벨 교체
+    iconSpan.textContent = followUser ? "👤" : "🗺️";
+    labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+
+    // 버튼 스타일 토글 (CSS에서 .on 클래스 활용 가능)
+    toggleBtn.classList.toggle("on", followUser);
+
+    // 모드별 지도 이동 처리
+    if (followUser) {
+      // 사람중심 모드 → 현재 위치 기준
+      if (map && currentLat && currentLng) {
+        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+        map.setZoom(16);
+      }
+    } else {
+      // 지도중심 모드 → 경로 마지막 좌표 기준
+      if (map && pathCoords && pathCoords.length > 0) {
+        const lastPoint = pathCoords[pathCoords.length - 1];
+        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+        map.setZoom(7);
+      }
+    }
+  });
+}); 
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
