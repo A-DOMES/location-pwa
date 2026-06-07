@@ -1635,45 +1635,41 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 
-// ---------------------- 토글 버튼 이벤트 ----------------------
-const toggleBtn = document.getElementById("toggleFollowBtn");
-const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
-const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-let followUser = false; // 기본은 지도중심 모드
+  // ---------------------- 토글 버튼 이벤트 ----------------------
+  const toggleBtn = document.getElementById("toggleFollowBtn");
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
+  let followUser = true; // 기본은 사람중심 모드
 
-// 초기 UI를 상태값에 맞게 세팅
-iconSpan.textContent = "🗺️";
-labelSpan.textContent = "지도중심";
-toggleBtn.classList.remove("on"); // 지도중심 모드에서는 on 클래스 제거
+  toggleBtn.addEventListener("click", () => {
+    // 상태 토글
+    followUser = !followUser;
 
-toggleBtn.addEventListener("click", () => {
-  // 상태 토글
-  followUser = !followUser;
+    // 아이콘과 라벨 교체 (각 span 갱신)
+    iconSpan.textContent = followUser ? "👤" : "🗺️";
+    labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-  // 아이콘과 라벨 교체
-  iconSpan.textContent = followUser ? "👤" : "🗺️";
-  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+    // 버튼 스타일 토글
+    toggleBtn.classList.toggle("on", followUser);
 
-  // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
-  toggleBtn.classList.toggle("on", followUser);
-
-  // 모드별 지도 이동 처리
-  if (followUser) {
-    // 사람중심 모드 → 현재 위치 기준
-    if (currentLat && currentLng) {
-      map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-      map.setZoom(16);
+    // 모드별 지도 이동 처리
+    if (followUser) {
+      // 사람중심 모드 → 현재 위치 기준
+      if (currentLat && currentLng) {
+        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+        map.setZoom(16);
+      }
+    } else {
+      // 지도중심 모드 → 경로 마지막 좌표 기준
+      if (pathCoords.length > 0) {
+        const lastPoint = pathCoords[pathCoords.length - 1];
+        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+        map.setZoom(7);
+      }
     }
-  } else {
-    // 지도중심 모드 → 경로 마지막 좌표 기준
-    if (pathCoords.length > 0) {
-      const lastPoint = pathCoords[pathCoords.length - 1];
-      map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-      map.setZoom(7);
-    }
-  }
+  });
 });
-});
+
 
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
