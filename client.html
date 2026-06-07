@@ -1662,7 +1662,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleBtn = document.getElementById("toggleFollowBtn");
   const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
   const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-  let followUser = true; // 기본은 사람중심 모드
+  let followUser = false; // 기본은 지도중심 모드
 
   toggleBtn.addEventListener("click", () => {
     // 상태 토글
