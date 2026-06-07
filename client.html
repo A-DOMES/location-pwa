@@ -260,83 +260,83 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-// ---------------------- 지도 초기화 (페이지 로딩 시 실행) ----------------------
-window.onload = () => {
-  // ✅ 초기 중심 좌표
-  const initialCenter = { lat: 36.5, lng: 127.5 };
-
-  // ✅ 지도 생성
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: initialCenter,
-    zoom: 7,
-    mapTypeId: "roadmap",
-    styles: null
-  });
-
-  // ✅ 마우스 우클릭 시 초기 상태로 복귀
-  map.addListener("rightclick", () => {
-    map.setZoom(7);
-    map.setCenter(initialCenter);
-  });
-
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      document.body.classList.toggle("dark-mode", themeToggle.checked);
-      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+  // ---------------------- 지도 초기화  로딩시  ----------------------
+  window.onload = () => {
+    // ✅ 초기 중심 좌표 저장
+    const initialCenter = { lat: 36.5, lng: 127.5 };
+  
+    // ✅ 지도 생성
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: initialCenter,
+      zoom: 7,
+      mapTypeId: "roadmap",
+      styles: null
     });
-  }
-
-  // ✅ 데이터 로딩 및 기본 갱신 주기 시작
-  loadData();
-  startAutoRefresh();
-};
-
+  
+    // ✅ 마우스 우클릭 시 초기 상태로 복귀
+    map.addListener("rightclick", () => {
+      map.setZoom(7);
+      map.setCenter(initialCenter);
+    });
+  
+    // ✅ 라이트/다크 모드 토글
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("change", () => {
+        document.body.classList.toggle("dark-mode", themeToggle.checked);
+        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
+      });
+    }
+  
+    // ✅ 데이터 로딩 및 기본 갱신 주기 시작
+    loadData();
+    startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
+  };
       
-// ---------------------- 자동 갱신 제어 ----------------------
-function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
-  if (!intervalId) {
-    intervalId = setInterval(loadData, intervalMs);
+  
+  // ---------------------- 자동 갱신 제어 ----------------------
+  function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
+    if (!intervalId) {
+      intervalId = setInterval(loadData, intervalMs);
+    }
   }
-}
-
-function stopAutoRefresh() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
+  
+  function stopAutoRefresh() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
   }
-}
+    
+  // ---------------------- 드롭다운 갱신 ----------------------
+  function populatePathSelect(viewMode = "all") {
+    const select = document.getElementById("path-user-select");
+    if (!select) return;
+    select.innerHTML = "";
 
-// ---------------------- 드롭다운 갱신 ----------------------
-function populatePathSelect(viewMode = "all") {
-  const select = document.getElementById("path-user-select");
-  if (!select) return;
-  select.innerHTML = "";
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "전체";
+    select.appendChild(allOption);
 
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = "전체";
-  select.appendChild(allOption);
+    let users = [];
+    if (viewMode === "current") {
+      const now = new Date();
+      users = allData.filter(u => {
+        const updated = new Date(u.updated);
+        return (now - updated <= 5 * 60 * 1000);
+      });
+    } else {
+      users = allData;
+    }
 
-  let users = [];
-  if (viewMode === "current") {
-    const now = new Date();
-    users = allData.filter(u => {
-      const updated = new Date(u.updated);
-      return (now - updated <= 5 * 60 * 1000);
+    users.forEach(user => {
+      const option = document.createElement("option");
+      option.value = user.phone;
+      option.textContent = user.phone;
+      select.appendChild(option);
     });
-  } else {
-    users = allData;
   }
-
-  users.forEach(user => {
-    const option = document.createElement("option");
-    option.value = user.phone;
-    option.textContent = user.phone;
-    select.appendChild(option);
-  });
-}
 
 // ---------------------- 지도 초기화 보조 ----------------------
 function clearMap() {
@@ -355,7 +355,6 @@ function clearMap() {
   userPaths = {};
   userPolylines = {};
 }
-
 
 // ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
@@ -818,67 +817,59 @@ const darkStyle = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] }
 ];
 
-// ---------------------- 지도 초기화 ----------------------
-// Google Maps API 스크립트 태그에 callback=initMap 이 붙어 있다면 반드시 이 함수가 필요합니다.
-// HTML 예시: <script src="https://maps.googleapis.com/maps/api/js?key=...&callback=initMap"></script>
 function initMap() {
-  // ✅ 초기 중심 좌표
   originalCenter = { lat: 36.5, lng: 127.5 };
 
-  // ✅ 기본 지도 생성 (로드맵)
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    disableDefaultUI: false
-  });
+  // ✅ 기본은 일반 지도
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: originalCenter,
+        zoom: 7,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: false
+      });
 
-  // ✅ 라이트/다크 모드 토글
-  const themeToggle = document.getElementById("themeToggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-      if (themeToggle.checked) {
-        map.setOptions({ styles: darkStyle });
-        document.body.classList.add("dark-mode");
-      } else {
-        map.setOptions({ styles: lightStyle });
-        document.body.classList.remove("dark-mode");
+      // 라이트/다크 모드 토글
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.addEventListener("change", () => {
+          if (themeToggle.checked) {
+            map.setOptions({ styles: darkStyle });
+            document.body.classList.add("dark-mode");
+          } else {
+            map.setOptions({ styles: lightStyle });
+            document.body.classList.remove("dark-mode");
+          }
+        });
       }
-    });
-  }
 
-  // ✅ 일반 지도 버튼 (기본 상태로 복귀)
-  const defaultMapBtn = document.getElementById("defaultMapBtn");
-  if (defaultMapBtn) {
-    defaultMapBtn.addEventListener("click", () => {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-      map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
-      if (themeToggle) themeToggle.checked = false;
-      document.body.classList.remove("dark-mode");
-    });
-  }
+      // 일반 지도 버튼
+      const defaultMapBtn = document.getElementById("defaultMapBtn");
+      if (defaultMapBtn) {
+        defaultMapBtn.addEventListener("click", () => {
+          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+          map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
+          if (themeToggle) themeToggle.checked = false;
+          document.body.classList.remove("dark-mode");
+        });
+      }
 
-  // ✅ 지도 타입 버튼들
-  document.getElementById("roadmapBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-  document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-  document.getElementById("hybridBtn").onclick    = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-  document.getElementById("terrainBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+      // 커스텀 지도 타입 버튼
+      document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+      document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+      document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
-  // ✅ 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, "contextmenu", function () {
-    map.setOptions({ center: originalCenter, zoom: 7 });
-  });
-}
-// ✅ Google Maps API 콜백 연결
-window.initMap = initMap;
-
+      // 우클릭 시 초기 위치로 복귀
+      google.maps.event.addListener(map, "contextmenu", function () {
+        map.setOptions({ center: originalCenter, zoom: 7 });
+      });
+    }
+    window.initMap = initMap;
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
 window.moveToLatLng = function() {
   const lat = parseFloat(document.getElementById("latInput").value);
   const lng = parseFloat(document.getElementById("lngInput").value);
-
-  // 입력값 검증
   if (isNaN(lat) || isNaN(lng)) {
     alert("올바른 위도와 경도를 입력하세요.");
     return;
@@ -887,12 +878,10 @@ window.moveToLatLng = function() {
     alert("지도가 아직 초기화되지 않았습니다.");
     return;
   }
-
-  // 지도 이동
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
 
-  // 마커 표시
+  // 위치찾기 마커 표시
   new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
@@ -901,14 +890,11 @@ window.moveToLatLng = function() {
   });
 };
 
-
 /* ---------------------- 사용자 클릭 시 지도 이동 ---------------------- */
 window.moveToUser = function(lat, lng, phone) {
   if (!map) return;
   map.setCenter({ lat: lat, lng: lng });
   map.setZoom(15);
-
-  // 사용자 마커 표시
   new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
@@ -923,16 +909,12 @@ window.setCustomInterval = function() {
   const value = parseInt(document.getElementById("intervalValue").value, 10);
   const unit = document.getElementById("intervalUnit").value;
   let intervalMs = 60000;
-
-  // 단위 변환
   if (unit === "minutes") intervalMs = value * 60000;
   else if (unit === "seconds") intervalMs = value * 1000;
 
-  // 자동 갱신 재설정
   stopAutoRefresh();
   startAutoRefresh(intervalMs);
 
-  // 메시지 표시
   const msgBox = document.getElementById("message-box");
   msgBox.textContent = `갱신 주기: ${value} ${unit === "minutes" ? "분" : "초"}`;
   msgBox.style.display = "block";
@@ -944,6 +926,7 @@ window.setCustomInterval = function() {
 // 특징: 지도 중심은 고정, 마커만 움직임, 방향 레이더(부채꼴) 표시
 // ✅ 기본 반경은 50m, 단위는 m (필요시 km로 표시 가능)
 
+// ---------------------- 관리자 모드 위치 추적 ----------------------
 // ✅ 단위 변환 함수 (미터 → 도 단위)
 function convertToDegrees(meters) {
   return meters / 111000; // 1도 ≈ 111,000m
@@ -956,11 +939,11 @@ function updateRadarPolygon(myPos, heading) {
     return;
   }
 
-  const angle = 90; // 레이더 각도 (좌우 45도)
+  const angle = 90; // ✅ 레이더 각도 (좌우 45도)
   const points = [];
   const radiusInDegrees = convertToDegrees(radarRadiusMeters);
 
-  // 레이더 부채꼴 좌표 계산
+  // ✅ 레이더 부채꼴 좌표 계산
   for (let a = -angle/2; a <= angle/2; a += 5) {
     const rad = (heading + a) * Math.PI / 180;
     const latOffset = radiusInDegrees * Math.cos(rad);
@@ -971,7 +954,7 @@ function updateRadarPolygon(myPos, heading) {
     });
   }
 
-  // 중심점 추가
+  // ✅ 중심점(레이더 대상 사용자 마커 위치) 추가
   points.unshift(myPos);
 
   if (radarPolygon) {
@@ -980,10 +963,10 @@ function updateRadarPolygon(myPos, heading) {
   } else {
     radarPolygon = new google.maps.Polygon({
       paths: points,
-      strokeColor: "#00BFFF",
+      strokeColor: "#00BFFF",   // ✅ 레이더 테두리 색
       strokeOpacity: 0.8,
       strokeWeight: 5,
-      fillColor: "#00BFFF",
+      fillColor: "#00BFFF",     // ✅ 레이더 내부 색
       fillOpacity: 0.25,
       map: map
     });
@@ -1475,7 +1458,7 @@ function makeResizable(panelId) {
     return "bottom";
   }
 
-  // ▶ PC 리사이즈
+  // ▶ PC 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("mousedown", () => {
       isResizing = true; currentHandle = getHandleType(handle);
@@ -1483,6 +1466,7 @@ function makeResizable(panelId) {
     });
   });
 
+  // ▶ PC 리사이즈 이동
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
     const rect = panel.getBoundingClientRect();
@@ -1501,11 +1485,12 @@ function makeResizable(panelId) {
     }
   });
 
+  // ▶ PC 리사이즈 종료
   document.addEventListener("mouseup", () => {
     isResizing = false; document.body.style.userSelect = "auto";
   });
 
-  // ▶ 모바일 리사이즈
+  // ▶ 모바일 리사이즈 시작
   handles.forEach(handle => {
     handle.addEventListener("touchstart", () => {
       isResizing = true; currentHandle = getHandleType(handle);
@@ -1513,6 +1498,7 @@ function makeResizable(panelId) {
     });
   });
 
+  // ▶ 모바일 리사이즈 이동
   document.addEventListener("touchmove", (e) => {
     if (!isResizing) return;
     const t = e.touches[0];
@@ -1533,6 +1519,7 @@ function makeResizable(panelId) {
     }
   });
 
+  // ▶ 모바일 리사이즈 종료
   document.addEventListener("touchend", () => {
     isResizing = false;
     document.body.style.userSelect = "auto";
@@ -1612,7 +1599,13 @@ document.addEventListener("DOMContentLoaded", () => {
   closeBtn.addEventListener("click", () => {
     // 모든 상태 제거
     panel.classList.remove(
-      "open","collapsed-left","collapsed-right","maximized","snap-left","snap-right","touch-active"
+      "open",
+      "collapsed-left",
+      "collapsed-right",
+      "maximized",
+      "snap-left",
+      "snap-right",
+      "touch-active"
     );
     panel.style = "";
   });
@@ -1644,35 +1637,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- 토글 버튼 이벤트 ----------------------
   const toggleBtn = document.getElementById("toggleFollowBtn");
-  const iconSpan = toggleBtn.querySelector(".icon");
-  const labelSpan = toggleBtn.querySelector(".label");
-  let followUser = false; // 기본은 지도중심 모드
+  const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
+  const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
+  let followUser = true; // 기본은 사람중심 모드
 
-  // ✅ 초기 UI 세팅
-  iconSpan.textContent = "🗺️";
-  labelSpan.textContent = "지도중심";
-  toggleBtn.classList.remove("on");
-
-  // ✅ 토글 버튼 클릭 이벤트
   toggleBtn.addEventListener("click", () => {
     // 상태 토글
     followUser = !followUser;
 
-    // 아이콘과 라벨 교체
+    // 아이콘과 라벨 교체 (각 span 갱신)
     iconSpan.textContent = followUser ? "👤" : "🗺️";
     labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
     // 버튼 스타일 토글
     toggleBtn.classList.toggle("on", followUser);
 
-    // 지도 이동은 값이 준비된 경우에만 실행
-    if (map) {
-      if (followUser && currentLat && currentLng) {
-        // 사람중심 모드 → 현재 위치 기준
+    // 모드별 지도 이동 처리
+    if (followUser) {
+      // 사람중심 모드 → 현재 위치 기준
+      if (currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
-      } else if (!followUser && pathCoords && pathCoords.length > 0) {
-        // 지도중심 모드 → 경로 마지막 좌표 기준
+      }
+    } else {
+      // 지도중심 모드 → 경로 마지막 좌표 기준
+      if (pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
         map.setZoom(7);
