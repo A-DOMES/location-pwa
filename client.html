@@ -1618,7 +1618,7 @@ document.addEventListener("DOMContentLoaded", () => {
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
-  // ====================== 토글 버튼 이벤트 ======================
+ // ---------------------- 토글 버튼 이벤트 ----------------------
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
@@ -1668,8 +1668,7 @@ if (navigator.geolocation) {
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
-
-
+    
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
     let isDragging = false, offsetX, offsetY;
