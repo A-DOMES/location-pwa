@@ -1658,19 +1658,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------- 네 면 리사이즈 기능 적용 ----------------------
   makeResizable("user-panel");
 
-// ---------------------- DOM 준비 후 실행  (토글 버튼 관련)----------------------
-document.addEventListener("DOMContentLoaded", () => {
-  // ▶ 토글 버튼 요소 가져오기
+  // ---------------------- 토글 버튼 이벤트 ----------------------
   const toggleBtn = document.getElementById("toggleFollowBtn");
   const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
   const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
+  let followUser = true; // 기본은 사람중심 모드
 
-  // ▶ 기본 모드: 사람중심
-  let followUser = true;
-
-  // ---------------------- 토글 버튼 이벤트 ----------------------
   toggleBtn.addEventListener("click", () => {
-    // 상태 토글 (true ↔ false)
+    // 상태 토글
     followUser = !followUser;
 
     // 아이콘과 라벨 교체
@@ -1697,7 +1692,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
 
 
   // ---------------------- 드래그 가능 함수 ----------------------
