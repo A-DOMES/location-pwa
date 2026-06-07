@@ -1645,21 +1645,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // 기본은 사람중심 모드
   let followUser = true;
 
-// ---------------------- 토글 버튼 이벤트 ----------------------
-toggleBtn.addEventListener("click", () => {
-  followUser = !followUser;
+  // ---------------------- 토글 버튼 이벤트 ----------------------
+  toggleBtn.addEventListener("click", () => {
+    followUser = !followUser;
 
-  // 아이콘과 라벨 교체
-  iconSpan.textContent = followUser ? "👤" : "🗺️";
-  labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+    // 아이콘과 라벨 교체
+    iconSpan.textContent = followUser ? "👤" : "🗺️";
+    labelSpan.textContent = followUser ? "사람중심" : "지도중심";
 
-  // 버튼 스타일 토글 (CSS에서 .on 정의 필요)
-  toggleBtn.classList.toggle("on", !followUser);
+    // 버튼 스타일 토글 (사람중심 모드일 때 on 클래스 적용)
+    toggleBtn.classList.toggle("on", followUser);
 
-  // 지도중심 모드일 때 → 줌 레벨 7로 이동 (Google Maps API)
-  if (!followUser) {
-    map.setZoom(7);   // Google Maps 기준
-  }
+    if (followUser) {
+      // ✅ 사람중심 모드 → 현재 위치 기준으로 지도 이동
+      if (currentLat && currentLng) {
+        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+        map.setZoom(16);
+      }
+    } else {
+      // ✅ 지도중심 모드 → 경로 마지막 좌표 기준으로 지도 이동
+      if (pathCoords.length > 0) {
+        const lastPoint = pathCoords[pathCoords.length - 1];
+        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+        map.setZoom(7);
+      }
+    }
+  });
 });
 
 
