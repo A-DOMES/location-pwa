@@ -1541,7 +1541,7 @@ function makeResizable(panelId) {
   });
 }
 
-// ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
+// ✅ DOMContentLoaded: 모든 버튼 이벤트와 토글 이벤트를 한 블록에서 관리
 document.addEventListener("DOMContentLoaded", () => {
   // ▶ 패널 관련 요소
   const panel = document.getElementById("user-panel");
@@ -1618,7 +1618,7 @@ document.addEventListener("DOMContentLoaded", () => {
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
- // ---------------------- 토글 버튼 이벤트 ----------------------
+  // ---------------------- 토글 버튼 이벤트 ----------------------
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
@@ -1668,6 +1668,7 @@ if (navigator.geolocation) {
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
+
     
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
