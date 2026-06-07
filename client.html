@@ -1632,11 +1632,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // 모드별 지도 이동 처리
       if (followUser) {
+        // 사람중심 모드 → 현재 위치 기준
         if (map && currentLat && currentLng) {
           map.setCenter(new google.maps.LatLng(currentLat, currentLng));
           map.setZoom(16);
         }
       } else {
+        // 지도중심 모드 → 경로 마지막 좌표 기준
         if (map && pathCoords && pathCoords.length > 0) {
           const lastPoint = pathCoords[pathCoords.length - 1];
           map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1650,11 +1652,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ====================== 현재 위치 좌표 세팅 ======================
+// ---------------------- 현재 위치 좌표 세팅 ----------------------
+// 사람중심 모드가 정상 작동하려면 반드시 현재 좌표를 받아야 함
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(pos => {
     currentLat = pos.coords.latitude;
     currentLng = pos.coords.longitude;
+    // 지도중심 모드용 경로에도 추가
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
