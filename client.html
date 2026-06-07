@@ -1526,29 +1526,6 @@ function makeResizable(panelId) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const panel = document.getElementById("user-panel");
-  const maximizeBtn = document.getElementById("maximize-btn");
-  const minimizeBtn = document.getElementById("minimize-btn");
-  const closeBtn = document.getElementById("close-user-panel");
-  const leftEdge = document.getElementById("left-edge");
-  const rightEdge = document.getElementById("right-edge");
-
-  // ---------------------- 최소화 버튼 ----------------------
-  minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-
-    if (panel.classList.contains("snap-left")) {
-      panel.classList.add("collapsed-left");
-    } else {
-      panel.classList.add("collapsed-right");
-    }
-
-    // 인라인 스타일 제거 → CSS 규칙만 적용
-    panel.style = "";
-  });
-
 // ---------------------- DOM 준비 후 실행 ----------------------
 document.addEventListener("DOMContentLoaded", () => {
   // ▶ 패널 관련 요소 가져오기
