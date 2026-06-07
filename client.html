@@ -1639,7 +1639,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ====================== 토글 버튼 이벤트 ======================
 if (toggleBtn) {
-  // ▶ 버튼 내부의 아이콘/라벨 span 요소를 가져오기
+  // ▶ 버튼 내부의 아이콘/라벨 span 요소 가져오기
   const iconSpan = toggleBtn.querySelector(".icon");
   const labelSpan = toggleBtn.querySelector(".label");
 
@@ -1662,15 +1662,13 @@ if (toggleBtn) {
     // on 클래스 토글 (스타일 적용용)
     toggleBtn.classList.toggle("on", followUser);
 
-    // 모드별 지도 이동 처리
+    // 지도 관련 동작은 그대로 두되, 버튼 갱신과는 별개임
     if (followUser) {
-      // 사람중심 모드 → 현재 위치 기준
       if (map && currentLat && currentLng) {
         map.setCenter(new google.maps.LatLng(currentLat, currentLng));
         map.setZoom(16);
       }
     } else {
-      // 지도중심 모드 → 경로 마지막 좌표 기준
       if (map && pathCoords && pathCoords.length > 0) {
         const lastPoint = pathCoords[pathCoords.length - 1];
         map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
@@ -1682,6 +1680,7 @@ if (toggleBtn) {
   // ▶ 토글 버튼 드래그/리사이즈 가능하게 설정
   makeDraggableAndResizable(toggleBtn);
 }
+
 
 // ====================== 현재 위치 좌표 세팅 ======================
 if (navigator.geolocation) {
