@@ -1568,7 +1568,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
 // ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
 document.addEventListener("DOMContentLoaded", () => {
-  // ▶ 패널 관련 요소
+  // ▶ 패널 관련 요소 (원래 코드 그대로 유지)
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
   const minimizeBtn = document.getElementById("minimize-btn");
@@ -1644,18 +1644,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let followUser = false; // false → 지도중심, true → 사람중심
 
     // 초기 상태: 지도중심
-    iconSpan.textContent = "🗺️";
-    labelSpan.textContent = "지도중심";
+    if (iconSpan) iconSpan.textContent = "🗺️";
+    if (labelSpan) labelSpan.textContent = "지도중심";
 
     toggleBtn.addEventListener("click", () => {
       followUser = !followUser; // 상태 토글
 
       // 아이콘/라벨 변경
-      iconSpan.textContent = followUser ? "👤" : "🗺️";
-      labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+      if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
+      if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+
       toggleBtn.classList.toggle("on", followUser);
 
-      // 모드별 지도 이동 처리
+      // 모드별 지도 이동 처리 (원래 코드 그대로 유지)
       if (followUser) {
         if (map && currentLat && currentLng) {
           map.setCenter(new google.maps.LatLng(currentLat, currentLng));
