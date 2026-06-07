@@ -972,7 +972,8 @@ function updateRadarPolygon(myPos, heading) {
 
 
 // ---------------------- 내 위치 추적 ----------------------
-// 특징: 내 위치는 항상 레이더 표시, 서버에 좌표 업데이트
+// 특징: 내 위치는 항상 레이더 표시
+// 서버 기록은 이미 1분마다 자동으로 처리되므로 여기서는 중복 호출하지 않음
 // 상대방은 loadData()에서 움직임 있을 때만 레이더 표시
 
 if (navigator.geolocation) {
@@ -982,13 +983,13 @@ if (navigator.geolocation) {
       const myPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const heading = pos.coords.heading || 0;
 
-      // ✅ 내 위치를 서버로 전송 (좌표 갱신용)
-      sendMyLocationToServer(myPos);
+      // ⚠️ 서버 기록은 이미 1분마다 자동으로 되고 있음
+      // sendMyLocationToServer(myPos); <-- 이 부분은 제거 (중복 기록 방지)
 
       // ✅ 로그인한 사용자 마커 기준으로 레이더 항상 갱신
       // radarTargetMarker는 showMap()에서 내 계정 마커로 지정됨
       if (radarTargetMarker) {
-        // 🔥 내 마커 위치를 실시간으로 갱신 (기존 코드에 추가된 부분)
+        // 🔥 내 마커 위치를 실시간으로 갱신
         radarTargetMarker.setPosition(myPos);
 
         // ✅ 내 위치에는 항상 레이더 붙이기
