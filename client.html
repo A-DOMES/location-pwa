@@ -1662,7 +1662,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleBtn = document.getElementById("toggleFollowBtn");
   const iconSpan = toggleBtn.querySelector(".icon");   // 아이콘 span
   const labelSpan = toggleBtn.querySelector(".label"); // 라벨 span
-  let followUser = true; // 기본은 사람중심 모드
+
+  // ✅ 기본 모드를 지도중심으로 설정
+  let followUser = false; // false → 지도중심, true → 사람중심
+
+  // ✅ 버튼 초기 표시도 지도중심으로 맞춤
+  iconSpan.textContent = "🗺️";
+  labelSpan.textContent = "지도중심";
+
+  // ✅ 초기 지도 위치도 경로 마지막 좌표 기준으로 맞춤
+  if (pathCoords.length > 0) {
+    const lastPoint = pathCoords[pathCoords.length - 1];
+    map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+    map.setZoom(7); // 넓은 범위를 보여주는 줌 레벨
+  }
 
   toggleBtn.addEventListener("click", () => {
     // 상태 토글
@@ -1941,9 +1954,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- ✅ 토글 버튼 -->
 <div id="toggleFollowBtn">
-  <span class="icon">👤</span>
-  <span class="label">사람중심</span>
+  <span class="icon">🗺️</span>
+  <span class="label">지도중심</span>
 </div>
+
   
 </body>
 </html>
