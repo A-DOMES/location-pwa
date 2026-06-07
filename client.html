@@ -1651,42 +1651,42 @@ document.addEventListener("DOMContentLoaded", () => {
   // ... (패널 관련 이벤트 그대로 유지)
 
 // ====================== 토글 버튼 이벤트 ======================
-if (toggleBtn) {
-  const iconSpan = toggleBtn.querySelector(".icon");
-  const labelSpan = toggleBtn.querySelector(".label");
-  let followUser = false; // false → 지도중심, true → 사람중심
+  if (toggleBtn) {
+    const iconSpan = toggleBtn.querySelector(".icon");
+    const labelSpan = toggleBtn.querySelector(".label");
+    let followUser = false; // false → 지도중심, true → 사람중심
 
-  // 초기 상태: 지도중심
-  if (iconSpan) iconSpan.textContent = "🗺️";
-  if (labelSpan) labelSpan.textContent = "지도중심";
+    // 초기 상태: 지도중심
+    iconSpan.textContent = "🗺️";
+    labelSpan.textContent = "지도중심";
 
-  toggleBtn.addEventListener("click", () => {
-    followUser = !followUser; // 상태 토글
+    toggleBtn.addEventListener("click", () => {
+      followUser = !followUser; // 상태 토글
 
-    // 아이콘/라벨 갱신
-    if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
-    if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+      // 아이콘/라벨 변경
+      iconSpan.textContent = followUser ? "👤" : "🗺️";
+      labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+      toggleBtn.classList.toggle("on", followUser);
 
-    toggleBtn.classList.toggle("on", followUser);
-
-    // 지도 이동 처리 (기존 로직 유지)
-    if (followUser) {
-      if (map && currentLat && currentLng) {
-        map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-        map.setZoom(16);
+      // 모드별 지도 이동 처리
+      if (followUser) {
+        if (map && currentLat && currentLng) {
+          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+          map.setZoom(16);
+        }
+      } else {
+        if (map && pathCoords && pathCoords.length > 0) {
+          const lastPoint = pathCoords[pathCoords.length - 1];
+          map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+          map.setZoom(7);
+        }
       }
-    } else {
-      if (map && pathCoords && pathCoords.length > 0) {
-        const lastPoint = pathCoords[pathCoords.length - 1];
-        map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-        map.setZoom(7);
-      }
-    }
-  });
+    });
 
-  makeDraggableAndResizable(toggleBtn);
-}
-
+    // 토글 버튼 드래그 가능
+    makeDraggableAndResizable(toggleBtn);
+  }
+});
 
 // ====================== 현재 위치 좌표 세팅 ======================
 if (navigator.geolocation) {
@@ -1696,8 +1696,6 @@ if (navigator.geolocation) {
     pathCoords.push({ lat: currentLat, lng: currentLng });
   });
 }
-
-
     
   // ---------------------- 드래그 가능 함수 ----------------------
   function makeDraggableAndResizable(element) {
