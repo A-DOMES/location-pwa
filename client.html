@@ -265,38 +265,79 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-  // ---------------------- 지도 초기화  로딩시  ----------------------
-  window.onload = () => {
-    // ✅ 초기 중심 좌표 저장
-    const initialCenter = { lat: 36.5, lng: 127.5 };
-  
-    // ✅ 지도 생성
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: initialCenter,
-      zoom: 7,
-      mapTypeId: "roadmap",
-      styles: null
+// ---------------------- 지도 초기화  로딩시  ----------------------
+window.onload = () => {
+  // ✅ 초기 중심 좌표 저장
+  const initialCenter = { lat: 36.5, lng: 127.5 };
+
+  // ✅ 지도 생성
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: initialCenter,
+    zoom: 7,
+    mapTypeId: "roadmap",
+    styles: null
+  });
+
+  // ✅ 마우스 우클릭 시 초기 상태로 복귀
+  map.addListener("rightclick", () => {
+    map.setZoom(7);
+    map.setCenter(initialCenter);
+  });
+
+  // ✅ 라이트/다크 모드 토글
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+      document.body.classList.toggle("dark-mode", themeToggle.checked);
+      map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
     });
-  
-    // ✅ 마우스 우클릭 시 초기 상태로 복귀
-    map.addListener("rightclick", () => {
-      map.setZoom(7);
-      map.setCenter(initialCenter);
+  }
+
+  // ✅ 사람중심/지도중심 토글 버튼 이벤트 연결
+  const toggleBtn = document.getElementById("toggleFollowBtn");
+  if (toggleBtn) {
+    const iconSpan = toggleBtn.querySelector(".icon");
+    const labelSpan = toggleBtn.querySelector(".label");
+
+    // 초기 상태: 지도중심
+    if (iconSpan) iconSpan.textContent = "🗺️";
+    if (labelSpan) labelSpan.textContent = "지도중심";
+
+    toggleBtn.addEventListener("click", () => {
+      followUser = !followUser; // 전역변수 상태 토글
+
+      // 아이콘/라벨 변경
+      if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
+      if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
+      toggleBtn.classList.toggle("on", followUser);
+
+      // 모드별 지도 이동 처리
+      if (map) {
+        if (followUser && currentLat && currentLng) {
+          // 사람중심 모드 → 현재 위치로 이동
+          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+          map.setZoom(16);
+        } else if (pathCoords && pathCoords.length > 0) {
+          // 지도중심 모드 → 마지막 경로 좌표로 이동
+          const lastPoint = pathCoords[pathCoords.length - 1];
+          map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
+          map.setZoom(7);
+        } else {
+          // 기본 초기 좌표로 복귀
+          map.setCenter(initialCenter);
+          map.setZoom(7);
+        }
+      }
     });
-  
-    // ✅ 라이트/다크 모드 토글
-    const themeToggle = document.getElementById("themeToggle");
-    if (themeToggle) {
-      themeToggle.addEventListener("change", () => {
-        document.body.classList.toggle("dark-mode", themeToggle.checked);
-        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-      });
-    }
-  
-    // ✅ 데이터 로딩 및 기본 갱신 주기 시작
-    loadData();
-    startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
-  };
+
+    // 토글 버튼 드래그 가능 (기존 함수 사용)
+    makeDraggableAndResizable(toggleBtn);
+  }
+
+  // ✅ 데이터 로딩 및 기본 갱신 주기 시작
+  loadData();
+  startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
+};
       
   
   // ---------------------- 자동 갱신 제어 ----------------------
@@ -1636,44 +1677,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----- 드래그 + 리사이즈 적용 -----
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
-
-  // ====================== 토글 버튼 이벤트 ======================
-  if (toggleBtn) {
-    const iconSpan = toggleBtn.querySelector(".icon");
-    const labelSpan = toggleBtn.querySelector(".label");
-    
-    // 초기 상태: 지도중심
-    if (iconSpan) iconSpan.textContent = "🗺️";
-    if (labelSpan) labelSpan.textContent = "지도중심";
-
-    toggleBtn.addEventListener("click", () => {
-      followUser = !followUser; // 상태 토글
-
-      // 아이콘/라벨 변경
-      if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
-      if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
-
-      toggleBtn.classList.toggle("on", followUser);
-
-      // 모드별 지도 이동 처리 (원래 코드 그대로 유지)
-      if (followUser) {
-        if (map && currentLat && currentLng) {
-          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
-          map.setZoom(16);
-        }
-      } else {
-        if (map && pathCoords && pathCoords.length > 0) {
-          const lastPoint = pathCoords[pathCoords.length - 1];
-          map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
-          map.setZoom(7);
-        }
-      }
-    });
-
-    // 토글 버튼 드래그 가능
-    makeDraggableAndResizable(toggleBtn);
-  }
-});
 
 // ====================== 현재 위치 좌표 세팅 ======================
 if (navigator.geolocation) {
