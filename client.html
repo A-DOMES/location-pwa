@@ -1584,34 +1584,9 @@ function makeResizable(panelId) {
   });
 }
 
-// ====================== 패널 기본 이벤트 ======================
+// ====================== 패널 + 토글 이벤트 ======================
 document.addEventListener("DOMContentLoaded", () => {
-  const panel = document.getElementById("user-panel");
-  const maximizeBtn = document.getElementById("maximize-btn");
-  const minimizeBtn = document.getElementById("minimize-btn");
-  const closeBtn = document.getElementById("close-user-panel");
-  const leftEdge = document.getElementById("left-edge");
-  const rightEdge = document.getElementById("right-edge");
-
-  // ---------------------- 최소화 버튼 ----------------------
-  minimizeBtn.addEventListener("click", () => {
-    // 모든 상태 초기화
-    panel.classList.remove("maximized", "collapsed-left", "collapsed-right", "touch-active");
-
-    if (panel.classList.contains("snap-left")) {
-      panel.classList.add("collapsed-left");
-    } else {
-      panel.classList.add("collapsed-right");
-    }
-
-    // 인라인 스타일 제거 → CSS 규칙만 적용
-    panel.style = "";
-  });
-
-    
-// ====================== DOMContentLoaded: 패널 + 토글 이벤트 ======================
-document.addEventListener("DOMContentLoaded", () => {
-  // ▶ 패널 관련 요소 (원래 코드 그대로 유지)
+  // ▶ 패널 관련 요소
   const panel = document.getElementById("user-panel");
   const maximizeBtn = document.getElementById("maximize-btn");
   const minimizeBtn = document.getElementById("minimize-btn");
@@ -1620,7 +1595,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightEdge = document.getElementById("right-edge");
   const toggleBtn = document.getElementById("toggleFollowBtn");
 
-  // ----- 최소화 버튼 -----
+  // ---------------------- 최소화 버튼 ----------------------
   minimizeBtn.addEventListener("click", () => {
     panel.classList.remove("maximized","collapsed-left","collapsed-right","touch-active");
     if (panel.classList.contains("snap-left")) {
@@ -1631,7 +1606,7 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.style = "";
   });
 
-  // ----- 최대화 버튼 -----
+  // ---------------------- 최대화 버튼 ----------------------
   maximizeBtn.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) {
       panel.classList.remove("maximized");
@@ -1652,13 +1627,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ----- 닫기 버튼 -----
+  // ---------------------- 닫기 버튼 ----------------------
   closeBtn.addEventListener("click", () => {
     panel.classList.remove("open","collapsed-left","collapsed-right","maximized","snap-left","snap-right","touch-active");
     panel.style = "";
   });
 
-  // ----- 끝부분 이벤트 처리 -----
+  // ---------------------- 끝부분 이벤트 처리 ----------------------
   if (leftEdge) {
     leftEdge.addEventListener("mouseenter", () => {
       if (panel.classList.contains("collapsed-left")) panel.classList.add("touch-active");
@@ -1676,20 +1651,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- 드래그 + 리사이즈 적용 -----
+  // ---------------------- 드래그 + 리사이즈 적용 ----------------------
   makePanelDraggable("user-panel");
   makeResizable("user-panel");
 
-// ====================== 현재 위치 좌표 세팅 ======================
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(pos => {
-    currentLat = pos.coords.latitude;
-    currentLng = pos.coords.longitude;
-    pathCoords.push({ lat: currentLat, lng: currentLng });
-  });
-}
-    
-  // ---------------------- 드래그 가능 함수 ----------------------
+  // ---------------------- 현재 위치 좌표 세팅 ----------------------
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      currentLat = pos.coords.latitude;
+      currentLng = pos.coords.longitude;
+      pathCoords.push({ lat: currentLat, lng: currentLng });
+    });
+  }
+
+  // ---------------------- 토글 버튼 드래그 가능 ----------------------
   function makeDraggableAndResizable(element) {
     let isDragging = false, offsetX, offsetY;
 
@@ -1745,7 +1720,6 @@ if (navigator.geolocation) {
   // 적용
   makeDraggableAndResizable(toggleBtn);
 });
-
     
 </script>
 </head>
