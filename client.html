@@ -65,6 +65,28 @@ let followUser = false;       // false → 지도중심, true → 사람중심
     markers = [];
   }
 
+// ---------------------- 내 위치 서버 기록 ----------------------
+// 📌 이 함수는 현재 좌표를 서버에 보내서 구글시트 Path(I/J열)에 기록되도록 합니다.
+function sendMyLocationToServer(pos) {
+  fetch(CONFIG.ADMIN_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "location",          // 로그인 이후는 location 모드
+      phone: currentUserPhone,   // 내 계정 식별자
+      lat: pos.lat,              // 현재 위도
+      lng: pos.lng,              // 현재 경도
+      status: "정상",            // 상태값
+      token: CONFIG.TOKEN        // 인증 토큰
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("서버 기록 응답:", data);
+  })
+  .catch(err => console.error("서버 기록 실패:", err));
+}
+
+    
   // ---------------------- 거리 계산 함수 ----------------------
   function calculateDistance(lat1, lng1, lat2, lng2) {
     const R = 6371; // 지구 반지름 (km)
@@ -299,19 +321,31 @@ async function loadData(token = null) {
   };
      
   
-  // ---------------------- 자동 갱신 제어 ----------------------
-  function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
-    if (!intervalId) {
-      intervalId = setInterval(loadData, intervalMs);
-    }
+// ---------------------- 자동 갱신 제어 ----------------------
+// 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고,
+//    동시에 내 위치를 서버에 기록해서 구글시트 Path(I/J열)에 이어쓰기 되도록 합니다.
+function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
+  if (!intervalId) {
+    intervalId = setInterval(() => {
+      // 1️⃣ 서버에서 최신 데이터 가져오기
+      loadData();
+
+      // 2️⃣ 내 위치를 서버에 기록 (Path 이어쓰기 트리거)
+      if (currentLat && currentLng) {
+        sendMyLocationToServer({ lat: currentLat, lng: currentLng });
+      }
+    }, intervalMs);
   }
-  
-  function stopAutoRefresh() {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
+}
+
+// 📌 자동 갱신 중지 함수 (패널 모드 전환 시 사용)
+function stopAutoRefresh() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
   }
+}
+
     
   // ---------------------- 드롭다운 갱신 ----------------------
   function populatePathSelect(viewMode = "all") {
@@ -585,26 +619,19 @@ window.openUserPanel = function(viewMode) {
   polylines.forEach(line => line.setMap(null));
   polylines = [];
 
-  // ✅ radarPolygon 제거 (필요 시 사용)
-  // if (radarPolygon) {
-  //   radarPolygon.setMap(null);
-  //   radarPolygon = null;
-  // }
-
   // ✅ 경로보기 모드 처리
   if (viewMode === "paths" && radarTargetMarker) {
     const pos = radarTargetMarker.getPosition().toJSON();
     updateRadarPolygon(pos, 0);
-
-    // ✅ 기존 마커에 애니메이션 적용 (새 마커 생성 X)
     radarTargetMarker.setAnimation(google.maps.Animation.BOUNCE);
   } else if (radarTargetMarker) {
-    // ✅ 다른 모드에서는 애니메이션 해제
     radarTargetMarker.setAnimation(null);
   }
 
-  // ✅ 특정 모드에서는 자동 갱신 중지
-  if (viewMode === "current" || viewMode === "all" || viewMode === "paths") {
+  // ✅ 자동 갱신 제어
+  // current, all 모드에서는 갱신 중지
+  // paths 모드에서는 갱신 유지 (서버 기록 필요)
+  if (viewMode === "current" || viewMode === "all") {
     stopAutoRefresh();
   } else {
     startAutoRefresh();
@@ -621,6 +648,7 @@ window.openUserPanel = function(viewMode) {
   // ✅ 패널 내용 갱신
   updateUserPanelContent(viewMode);
 };
+
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
