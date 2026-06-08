@@ -363,8 +363,7 @@ function clearMap() {
 
 // ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
-  // ❌ 기존: clearMap()으로 모든 마커 제거 → 갱신 시 '뚝 떨어지는' 효과 발생
-  // ✅ 개선: 기존 마커 재사용하여 위치만 갱신, 나머지 기능은 그대로 유지
+  clearMap(); // ✅ 기존 마커/경로 초기화 (클러스터링 위해 필요)
   if (!map) return;
 
   // ✅ 커스텀 마커 아이콘 (빨간색)
@@ -398,9 +397,8 @@ function showMap(currentUserPhone) {
         title: `${user.phone} (${user.status}, ${user.updated})`
         // ❌ animation 제거 → 떨어지는 효과 방지
       });
-      markers.push(user.marker); // ✅ 클러스터링 위해 배열에 추가
 
-      // ✅ 마커 클릭 시 모달창 갱신 (기존 기능 유지)
+      // ✅ 마커 클릭 시 모달창 갱신
       user.marker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
@@ -418,15 +416,17 @@ function showMap(currentUserPhone) {
         const loadingMessage = document.getElementById("loadingMessage");
         if (loadingMessage) loadingMessage.style.display = "none";
 
-        // ✅ 클릭 시 지도 중심 이동 (panTo로 부드럽게)
-        map.panTo(pos);
+        map.panTo(pos); // ✅ 부드럽게 이동
         map.setZoom(15);
       });
     }
 
+    // ✅ 클러스터링 위해 배열에 추가
+    markers.push(user.marker);
+
     // ✅ 내 계정일 경우 → 파란색 경로 + 레이더 표시
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = user.marker;
+      radarTargetMarker = user.marker; // 내 계정 마커 지정
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
       if (!myPolyline) {
@@ -469,7 +469,7 @@ function showMap(currentUserPhone) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-  // ✅ 첫 번째 사용자 정보 박스 갱신 (기존 기능 유지)
+  // ✅ 첫 번째 사용자 정보 박스 갱신
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
@@ -485,7 +485,6 @@ function showMap(currentUserPhone) {
     lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
     addressBox.textContent = user.address || "-";
 
-    // ✅ 로딩 메시지 숨기기
     const loadingMessage = document.getElementById("loadingMessage");
     if (loadingMessage) loadingMessage.style.display = "none";
 
@@ -494,7 +493,7 @@ function showMap(currentUserPhone) {
     document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
   }
 
-  // ✅ 사용자 패널 갱신 (기존 기능 유지)
+  // ✅ 사용자 패널 갱신
   updateUserPanelContent(mode);
 }
 
