@@ -824,8 +824,9 @@ const darkStyle = [
 
 
 /* ---------------------- 지도 초기화 (1) ---------------------- */    
+/* ---------------------- 지도 초기화 ---------------------- */
 function initMap() {
-  // ✅ 초기 중심 좌표를 한 번 저장
+  // ✅ 초기 중심 좌표 저장
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   // ✅ 기본 지도 생성
@@ -836,7 +837,7 @@ function initMap() {
     disableDefaultUI: false
   });
 
-  // ✅ 경로 좌표가 있다면 마지막 좌표를 한 번 저장
+  // ✅ 경로 좌표가 있다면 마지막 좌표를 중심으로 세팅
   if (pathCoords && pathCoords.length > 0) {
     const lastPoint = pathCoords[pathCoords.length - 1];
     lastPathCenter = new google.maps.LatLng(lastPoint.lat, lastPoint.lng);
@@ -857,7 +858,7 @@ function initMap() {
     });
   }
 
-  // ✅ 일반 지도 버튼
+  // ✅ 기본 지도 버튼 (초기화)
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
@@ -868,7 +869,7 @@ function initMap() {
     });
   }
 
-  // ✅ 커스텀 지도 타입 버튼
+  // ✅ 지도 타입 버튼들
   document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
   document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
   document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
@@ -916,12 +917,37 @@ function initMap() {
       }
     });
 
-    // 토글 버튼 드래그 가능 (기존 함수 사용)
+    // ✅ 토글 버튼 드래그 가능
     makeDraggableAndResizable(toggleBtn);
+  }
+
+  // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
+  if (navigator.geolocation) {
+    geoWatchId = navigator.geolocation.watchPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const timestamp = Date.now();
+
+      currentLat = lat;
+      currentLng = lng;
+
+      // ✅ 경로 보정 및 Polyline 갱신
+      updatePathPolyline(lat, lng);
+
+      // ✅ 속도 계산 및 스무딩
+      computeSpeedFromGPS(lat, lng, timestamp);
+
+      // ✅ 사람중심 모드일 때 지도 중심 이동
+      if (followUser && map) {
+        map.setCenter(new google.maps.LatLng(lat, lng));
+        map.setZoom(16);
+      }
+    }, err => {
+      console.error("내 위치 추적 실패:", err);
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
 }
 window.initMap = initMap;
-
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
