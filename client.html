@@ -363,8 +363,8 @@ function clearMap() {
 
 // ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
-  // ❌ 기존: clearMap()으로 모든 마커/경로 제거 → 갱신 시 '뚝 떨어지는' 효과 발생
-  // ✅ 개선: 기존 마커를 재사용하여 위치만 갱신
+  // ❌ 기존: clearMap()으로 모든 마커/경로 제거 후 새로 생성 → '뚝 떨어지는' 효과 발생
+  // ✅ 개선: 기존 마커를 재사용하여 위치만 갱신, 나머지 기능은 그대로 유지
   if (!map) return;
 
   const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
@@ -381,12 +381,13 @@ function showMap(currentUserPhone) {
       user.marker = new google.maps.Marker({
         position: pos,
         map: map,
-        icon: customRedMarker, // 기존 빨간색 아이콘 유지
+        icon: customRedMarker, // 빨간색 커스텀 아이콘 유지
         title: `${user.phone} (${user.status}, ${user.updated})`
         // ❌ animation 제거 → 떨어지는 효과 방지
       });
+      markers.push(user.marker); // ✅ 클러스터링을 위해 배열에 추가
 
-      // ✅ 마커 클릭 이벤트는 처음 생성할 때만 연결
+      // ✅ 마커 클릭 시 모달창 갱신 (기존 기능 유지)
       user.marker.addListener("click", () => {
         updateLocationBox(user);
         document.getElementById("locationBox").style.display = "block";
@@ -397,9 +398,9 @@ function showMap(currentUserPhone) {
       });
     }
 
-    // ✅ 내 계정일 경우 → 파란색 경로 갱신
+    // ✅ 내 계정일 경우 → 파란색 경로 + 레이더 표시
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = user.marker;
+      radarTargetMarker = user.marker; // 내 계정 마커 지정
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
       if (!myPolyline) {
@@ -458,6 +459,7 @@ function showMap(currentUserPhone) {
   // ✅ 사용자 패널 갱신 (기존 기능 유지)
   updateUserPanelContent(mode);
 }
+
 
 
     
