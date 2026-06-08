@@ -572,12 +572,12 @@ window.openUserPanel = function(viewMode) {
   const settingsPanel = document.getElementById("settings-panel");
   const userPanel = document.getElementById("user-panel");
 
-  // 다른 패널 닫기
+  // ✅ 다른 패널 닫기
   connectionPanel?.classList.remove("open");
   settingsPanel?.classList.remove("open");
   userPanel?.classList.add("open");
 
-  // 모드 갱신
+  // ✅ 모드 갱신
   mode = viewMode;
 
   // ✅ 기존 마커/경로 제거
@@ -585,16 +585,22 @@ window.openUserPanel = function(viewMode) {
   polylines.forEach(line => line.setMap(null));
   polylines = [];
 
-  // ✅ radarPolygon도 제거 (실제로 사용 중이므로 반드시 필요)
+  // ✅ radarPolygon 제거 (필요 시 사용)
   // if (radarPolygon) {
   //   radarPolygon.setMap(null);
-  //  radarPolygon = null;
+  //   radarPolygon = null;
   // }
 
-  // ✅ 경로보기 모드에서도 내 레이더 강제 표시
+  // ✅ 경로보기 모드 처리
   if (viewMode === "paths" && radarTargetMarker) {
     const pos = radarTargetMarker.getPosition().toJSON();
     updateRadarPolygon(pos, 0);
+
+    // ✅ 기존 마커에 애니메이션 적용 (새 마커 생성 X)
+    radarTargetMarker.setAnimation(google.maps.Animation.BOUNCE);
+  } else if (radarTargetMarker) {
+    // ✅ 다른 모드에서는 애니메이션 해제
+    radarTargetMarker.setAnimation(null);
   }
 
   // ✅ 특정 모드에서는 자동 갱신 중지
@@ -604,7 +610,7 @@ window.openUserPanel = function(viewMode) {
     startAutoRefresh();
   }
 
-  // 패널 제목 갱신
+  // ✅ 패널 제목 갱신
   const title = document.getElementById("user-panel-title");
   if (title) {
     if (viewMode === "current") title.textContent = "현재 접속자";
@@ -612,10 +618,9 @@ window.openUserPanel = function(viewMode) {
     else if (viewMode === "paths") title.textContent = "위치/경로 보기";
   }
 
-  // 패널 내용 갱신
+  // ✅ 패널 내용 갱신
   updateUserPanelContent(viewMode);
 };
-
     
 // ---------------------- 위치 박스 갱신 ----------------------
 function updateLocationBox(user) {
@@ -721,7 +726,6 @@ function drawPath(points, distanceKm, isMyPath = false) {
   }
 }
 
-    
 // ---------------------- 사용자 패널 내용 업데이트 ----------------------
 function updateUserPanelContent(viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
@@ -769,8 +773,27 @@ function updateUserPanelContent(viewMode = "current") {
     });
   }
 
+  // ✅ 테이블 헤더 갱신
   updateTableHeader(viewMode);
-  renderUserTable(users, viewMode); // ✅ 항상 전체 목록 출력
+
+  // ✅ 사용자 테이블 갱신
+  renderUserTable(users, viewMode);
+
+  // ✅ 선택된 사용자 마커 애니메이션 처리
+  const select = document.getElementById("path-user-select");
+  if (select && select.value !== "all") {
+    const selectedUser = allData.find(u => u.phone === select.value);
+
+    // 모든 마커 애니메이션 해제
+    allData.forEach(u => {
+      if (u.marker) u.marker.setAnimation(null);
+    });
+
+    // 선택된 사용자 마커만 통통 튀게
+    if (selectedUser && selectedUser.marker) {
+      selectedUser.marker.setAnimation(google.maps.Animation.BOUNCE);
+    }
+  }
 }
 
 
