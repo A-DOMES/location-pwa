@@ -363,39 +363,43 @@ function clearMap() {
 
 // ---------------------- 지도 표시 ----------------------
 function showMap(currentUserPhone) {
-  clearMap();
+  // ❌ 기존: clearMap()으로 모든 마커/경로 제거 → 갱신 시 '뚝 떨어지는' 효과 발생
+  // ✅ 개선: 기존 마커를 재사용하여 위치만 갱신
   if (!map) return;
-
-  // ✅ 커스텀 마커 아이콘 (빨간색)
-  const customRedMarker = {
-    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 32 16 32s16-20 16-32C32 7.163 24.837 0 16 0z"
-              fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
-        <circle cx="16" cy="16" r="6" fill="#FFFFFF"/>
-      </svg>
-    `),
-    scaledSize: new google.maps.Size(32, 48),
-    anchor: new google.maps.Point(16, 48)
-  };
 
   const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
   // ✅ 모든 사용자 데이터 반복
   allData.forEach(user => {
-    const marker = new google.maps.Marker({
-      position: { lat: user.lat, lng: user.lng },
-      map: map,
-      icon: customRedMarker,
-      title: `${user.phone} (${user.status}, ${user.updated})`,
-      animation: google.maps.Animation.DROP
-    });
-    markers.push(marker);
+    const pos = new google.maps.LatLng(user.lat, user.lng);
 
-    // ✅ 내 계정일 경우 → 파란색 경로
+    // ✅ 기존 마커가 있으면 위치만 갱신
+    if (user.marker) {
+      user.marker.setPosition(pos);
+    } else {
+      // ✅ 처음 생성할 때만 마커 추가
+      user.marker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        icon: customRedMarker, // 기존 빨간색 아이콘 유지
+        title: `${user.phone} (${user.status}, ${user.updated})`
+        // ❌ animation 제거 → 떨어지는 효과 방지
+      });
+
+      // ✅ 마커 클릭 이벤트는 처음 생성할 때만 연결
+      user.marker.addListener("click", () => {
+        updateLocationBox(user);
+        document.getElementById("locationBox").style.display = "block";
+
+        // ✅ 클릭 시 지도 중심 이동 (panTo로 부드럽게)
+        map.panTo(pos);
+        map.setZoom(15);
+      });
+    }
+
+    // ✅ 내 계정일 경우 → 파란색 경로 갱신
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = marker;
-      const pos = radarTargetMarker.getPosition();
+      radarTargetMarker = user.marker;
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
       if (!myPolyline) {
@@ -409,12 +413,11 @@ function showMap(currentUserPhone) {
         });
       }
 
-      const newLatLng = { lat: pos.lat(), lng: pos.lng() };
-      myPath.push(newLatLng);
+      myPath.push({ lat: pos.lat(), lng: pos.lng() });
       myPolyline.setPath(myPath);
 
     } else {
-      // ✅ 다른 사용자 → 파란색 경로
+      // ✅ 다른 사용자 → 파란색 경로 갱신
       if (!userPaths[user.phone]) userPaths[user.phone] = [];
       userPaths[user.phone].push({ lat: user.lat, lng: user.lng });
 
@@ -431,53 +434,19 @@ function showMap(currentUserPhone) {
         userPolylines[user.phone].setPath(userPaths[user.phone]);
       }
     }
-
-    // ✅ 마커 클릭 시 모달창 갱신
-    marker.addListener("click", () => {
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
-
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
-
-      locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
-
-      const loadingMessage = document.getElementById("loadingMessage");
-      if (loadingMessage) loadingMessage.style.display = "none";
-
-      map.setCenter({ lat: parseFloat(user.lat), lng: parseFloat(user.lng) });
-      map.setZoom(15);
-    });
   });
 
-  // ✅ 클러스터 옵션 체크 시 클러스터링 적용
+  // ✅ 클러스터 옵션 체크 시 클러스터링 적용 (기존 기능 유지)
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
   }
 
-    // ✅ 첫 번째 사용자 정보 박스 갱신
+  // ✅ 첫 번째 사용자 정보 박스 갱신 (기존 기능 유지)
   if (allData.length > 0) {
     const user = allData[0];
     updateLocationBox(user);
     document.getElementById("locationBox").style.display = "block";
 
-    // ✅ 모달창 갱신 (첫 사용자 기준)
-    const latBox = document.getElementById("latBox");
-    const lngBox = document.getElementById("lngBox");
-    const addressBox = document.getElementById("addressBox");
-    const locationHeaderTitle = document.querySelector("#locationHeader h3");
-
-    locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-    latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-    lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-    addressBox.textContent = user.address || "-";
-
-    // ✅ 로딩 메시지 숨기기
     const loadingMessage = document.getElementById("loadingMessage");
     if (loadingMessage) loadingMessage.style.display = "none";
 
@@ -486,9 +455,10 @@ function showMap(currentUserPhone) {
     document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
   }
 
-  // ✅ 사용자 패널 갱신 (예: 사용자 리스트, 상태 표시 등)
+  // ✅ 사용자 패널 갱신 (기존 기능 유지)
   updateUserPanelContent(mode);
 }
+
 
     
   // ---------------------- 사용자 패널 ----------------------
@@ -826,15 +796,15 @@ const darkStyle = [
 /* ---------------------- 지도 초기화 (1) ---------------------- */    
 /* ---------------------- 지도 초기화 ---------------------- */
 function initMap() {
-  // ✅ 초기 중심 좌표 저장
+  // ✅ 초기 중심 좌표 저장 (대한민국 중심 근처)
   originalCenter = { lat: 36.5, lng: 127.5 };
 
   // ✅ 기본 지도 생성
   map = new google.maps.Map(document.getElementById("map"), {
-    center: originalCenter,
-    zoom: 7,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    disableDefaultUI: false
+    center: originalCenter,          // 초기 중심 좌표
+    zoom: 7,                         // 초기 확대 레벨
+    mapTypeId: google.maps.MapTypeId.ROADMAP, // 기본 지도 타입
+    disableDefaultUI: false          // 기본 UI 표시
   });
 
   // ✅ 경로 좌표가 있다면 마지막 좌표를 중심으로 세팅
@@ -849,9 +819,11 @@ function initMap() {
   if (themeToggle) {
     themeToggle.addEventListener("change", () => {
       if (themeToggle.checked) {
+        // 다크 모드 적용
         map.setOptions({ styles: darkStyle });
         document.body.classList.add("dark-mode");
       } else {
+        // 라이트 모드 적용
         map.setOptions({ styles: lightStyle });
         document.body.classList.remove("dark-mode");
       }
@@ -862,6 +834,7 @@ function initMap() {
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
+      // 기본 지도 상태로 복귀
       map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
       if (themeToggle) themeToggle.checked = false;
@@ -869,11 +842,11 @@ function initMap() {
     });
   }
 
-  // ✅ 지도 타입 버튼들
-  document.getElementById("roadmapBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+  // ✅ 지도 타입 버튼들 (로드맵/위성/하이브리드/지형)
+  document.getElementById("roadmapBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
   document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-  document.getElementById("hybridBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-  document.getElementById("terrainBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+  document.getElementById("hybridBtn").onclick    = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+  document.getElementById("terrainBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
   // ✅ 우클릭 시 초기 위치로 복귀
   google.maps.event.addListener(map, "contextmenu", function () {
