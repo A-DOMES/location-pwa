@@ -1641,8 +1641,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
-    let followUser = false; // false → 지도중심, true → 사람중심
-
+    
     // 초기 상태: 지도중심
     if (iconSpan) iconSpan.textContent = "🗺️";
     if (labelSpan) labelSpan.textContent = "지도중심";
