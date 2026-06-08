@@ -1268,14 +1268,14 @@ window.renderUserTable = function(users, viewMode = "current") {
   const tbody = document.getElementById("user-table-body");
   tbody.innerHTML = "";
 
-  // ✅ DocumentFragment 사용 → 성능 최적화 (1000명도 문제 없음)
+  // ✅ DocumentFragment 사용 → 성능 최적화 (많은 사용자도 문제 없음)
   const fragment = document.createDocumentFragment();
 
   users.forEach(user => {
     const row = document.createElement("tr");
     row.style.cursor = "pointer";
 
-    // ✅ 사용자 상태 계산
+    // ✅ 사용자 상태 계산 (로그인 여부, 이동 여부)
     const status = getUserStatus(user);
 
     // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
@@ -1306,7 +1306,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       timeText = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
     }
 
-    // ✅ 총 이동거리 계산
+    // ✅ 총 이동거리 계산 (path 좌표 간 거리 합산)
     let distanceKm = 0;
     if (pathPoints.length > 1) {
       for (let i = 1; i < pathPoints.length; i++) {
@@ -1317,8 +1317,9 @@ window.renderUserTable = function(users, viewMode = "current") {
       }
     }
 
+    // ✅ 모드별 테이블 표시
     if (viewMode === "paths") {
-      // ✅ 경로보기 모드 → 이동거리/총 이동시간 표시
+      // 경로보기 모드 → 이동거리/총 이동시간 표시
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${distanceKm ? distanceKm.toFixed(2) + " km" : "-"}</td>   <!-- 총 이동거리 -->
@@ -1329,7 +1330,7 @@ window.renderUserTable = function(users, viewMode = "current") {
         <td>${user.address || "-"}</td>
       `;
     } else {
-      // ✅ 기본 모드 (현재 접속자 / 전체 사용자)
+      // 기본 모드 (현재 접속자 / 전체 사용자)
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${status.isLoggedIn ? (status.isMoving ? "이동중" : "접속중") : "오프라인"}</td>
