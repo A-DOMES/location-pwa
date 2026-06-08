@@ -141,18 +141,28 @@ function handleNewPath(user, lat, lng) {
 
 // ---------------------- 총 이동시간 계산 함수 ----------------------
 function calculateTotalTime(user) {
-  // ✅ startTime이 있으면 우선 사용, 없으면 기존 user.time 사용
-  const startTime = new Date(user.startTime || user.time);
-  const endTime   = new Date(user.updated);
-
-  // ✅ 두 값이 유효한 날짜일 경우 차이를 계산
-  if (!isNaN(startTime) && !isNaN(endTime)) {
-    const diffMinutes = (endTime - startTime) / 1000 / 60;
-    return diffMinutes > 0 ? diffMinutes : 0; // 음수 방지
+  // ✅ path가 초기화되면 startTime도 클리어
+  if (!user.path || user.path.length === 0) {
+    user.startTime = null;
+    return 0;
   }
 
+  // ✅ path가 처음 기록될 때 A열 시각을 배열에 저장
+  if (!user.startTime && user.path && user.path.length > 0) {
+    user.startTime = new Date(user.time); // A열: 최초 로그인 시각
+  }
+
+  // ✅ F열(마지막 갱신 시각)과 startTime 비교
+  const startTime = new Date(user.startTime);
+  const endTime   = new Date(user.updated);
+
+  if (!isNaN(startTime) && !isNaN(endTime)) {
+    const diffMinutes = (endTime - startTime) / 1000 / 60;
+    return diffMinutes > 0 ? diffMinutes : 0;
+  }
   return 0;
 }
+
 
     
   // ---------------------- 문자열 기반 색상 함수 ----------------------
@@ -1281,13 +1291,19 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
 
-    // ✅ 최초 path 기록 시각을 startTime으로 저장
-    //    - 로그인 직후 path가 처음 기록될 때만 startTime을 설정
-    if (!user.startTime && pathPoints.length > 0) {
-      user.startTime = new Date(user.time); // 최초 path 기록 시각
+    // ✅ path 초기화 처리
+    //    - 새벽 5~6시에 path(I/J열)가 삭제되면 배열도 클리어
+    if (pathPoints.length === 0) {
+      user.startTime = null;
     }
 
-    // ✅ 총 이동시간 계산 (startTime vs updated)
+    // ✅ 최초 path 기록 시각을 startTime으로 저장
+    //    - path가 처음 기록될 때만 A열의 시간을 배열에 담음
+    if (!user.startTime && pathPoints.length > 0) {
+      user.startTime = new Date(user.time); // A열: 최초 로그인 시각
+    }
+
+    // ✅ 총 이동시간 계산 (startTime vs F열 updated)
     let totalTime = 0;
     if (user.startTime && user.updated) {
       const startTime = new Date(user.startTime);
