@@ -198,6 +198,7 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 지도 표시 (내 계정 기준)
+    // → 지도와 마커는 항상 최신화
     showMap(currentUserPhone);
 
     // ❌ 모달창 갱신은 제거
