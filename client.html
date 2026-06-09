@@ -94,7 +94,7 @@ function sendMyLocationToServer(pos) {
 }
 
 
-// 평균 좌표 계산
+// ---------------------- 평균 좌표 계산 ----------------------
 function getAveragePosition(buffer) {
   const sumLat = buffer.reduce((acc, p) => acc + p.lat, 0);
   const sumLng = buffer.reduce((acc, p) => acc + p.lng, 0);
@@ -127,6 +127,34 @@ function updateMarker(lat, lng) {
     lastMarkerPos = avgPos;
   }
 }
+
+/* ---------------------- 경로 좌표 기록 및 보정 ----------------------
+ * 이 함수는 GPS로부터 받은 좌표(lat, lng)를 기반으로
+ * - 서버 기준(5m)과 동일하게 최소 이동 거리를 적용하여 기록하고
+ * - 갑작스러운 튀는 값(100m 이상)을 중간값으로 보정합니다.
+ * - Polyline 갱신은 별도 코드에서 처리하므로 여기서는 좌표만 관리합니다.
+ * ------------------------------------------------------------------ */
+function updatePathCoords(lat, lng, address = null) {
+  if (pathCoords.length > 0) {
+    const lastPoint = pathCoords[pathCoords.length - 1];
+    const distance = getDistance(lastPoint.lat, lastPoint.lng, lat, lng);
+
+    // ✅ 정상 이동: 최소 5m 이상, 100m 미만일 때만 기록
+    if (distance >= 5 && distance < 100) {
+      pathCoords.push({ lat, lng, address, timestamp: Date.now() });
+    } 
+    // ✅ 비정상 이동: 100m 이상 튀는 값은 중간 좌표를 삽입하여 보정
+    else if (distance >= 100) {
+      const midLat = (lastPoint.lat + lat) / 2;
+      const midLng = (lastPoint.lng + lng) / 2;
+      pathCoords.push({ lat: midLat, lng: midLng, address: null, timestamp: Date.now() });
+    }
+  } else {
+    // ✅ 첫 좌표: 기준점이 없을 때는 무조건 기록
+    pathCoords.push({ lat, lng, address, timestamp: Date.now() });
+  }
+}
+
     
   // ---------------------- 거리 계산 함수 ----------------------
   function calculateDistance(lat1, lng1, lat2, lng2) {
