@@ -58,6 +58,9 @@ let myPolyline = null; // 내 마커 전용 Polyline
  // ---------------------- 토글버튼 전환 ( 지도중심 사람중심) ----------------------
 let followUser = false;       // false → 지도중심, true → 사람중심
 
+// 현재 좌표 모달창 닫기
+let locationBoxClosed = false;   
+    
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -205,22 +208,22 @@ async function loadData(token = null) {
     // ✅ 위치 정보 박스 갱신 (모달창)
     if (allData.length > 0) {
       const user = allData[0]; // 첫 번째 사용자 기준
-
+    
       const loadingMessage = document.getElementById("loadingMessage");
       const latBox = document.getElementById("latBox");
       const lngBox = document.getElementById("lngBox");
       const addressBox = document.getElementById("addressBox");
       const locationHeaderTitle = document.querySelector("#locationHeader h3");
-
+    
       // ✅ 로딩 메시지 숨기기
       if (loadingMessage) loadingMessage.style.display = "none";
-
+    
       // ✅ 모달창에 위치정보 표시
       locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
       latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
       addressBox.textContent = user.address || "-";
-
+    
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
       if (shareBtn) {
@@ -228,7 +231,7 @@ async function loadData(token = null) {
           const shareUrl =
             `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
           await navigator.clipboard.writeText(shareUrl);
-
+    
           const popup = document.getElementById("popupMessage");
           popup.style.display = "block";
           popup.style.opacity = "1";
@@ -238,6 +241,13 @@ async function loadData(token = null) {
           }, 3000);
         };
       }
+    
+      // ✅ 닫기 버튼 눌렀을 때 다시 자동으로 뜨지 않도록 제어
+      if (!locationBoxClosed) {
+        document.getElementById("locationBox").style.display = "block";
+      }
+    }
+
 
       // ---------------------- 상대방 움직임 감지 ----------------------
       allData.forEach(otherUser => {
@@ -693,7 +703,8 @@ function updateLocationBox(user) {
   const closeBtn = document.getElementById("closeBtn");
   if (closeBtn) {
     closeBtn.onclick = () => {
-      locationBox.style.display = "none";
+      document.getElementById("locationBox").style.display = "none";
+      locationBoxClosed = true; // ✅ 닫힘 상태 기록
     };
   }
 
