@@ -178,32 +178,26 @@ function calculateTotalTime(user) {
 // ---------------------- 데이터 로딩 ----------------------
 async function loadData(token = null) {
   try {
-    // ✅ 서버에서 위치 데이터 가져오기
+    // 서버에서 위치 데이터 가져오기
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
     if (token) url += "&token=" + encodeURIComponent(token);
 
     const response = await fetch(url);
     allData = await response.json();
 
-    console.log("서버 응답 allData:", allData);
-    console.log("현재 사용자 phone:", currentUserPhone);
-
-    // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
+    // 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
       currentUserPhone = allData[0].phone;
-      console.log("내 계정 세팅 완료:", currentUserPhone);
     }
 
-    // ✅ 드롭다운 갱신
+    // 드롭다운 갱신
     populatePathSelect();
 
-    // ✅ 지도 표시 (내 계정 기준)
-    // → 지도와 마커는 항상 최신화
+    // 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
     // ❌ 모달창 갱신은 제거
     // → 자동 갱신 시 모달창은 건드리지 않음
-    // → 모달창은 마커 클릭 시 openUserModal(user)로만 열림
   } catch (err) {
     console.error("데이터 로딩 오류:", err);
   }
@@ -211,47 +205,24 @@ async function loadData(token = null) {
 
 // ---------------------- 모달창 열기 함수 ----------------------
 function openUserModal(user) {
-  // ✅ 모달창 내부 요소 가져오기
   const loadingMessage = document.getElementById("loadingMessage");
   const latBox = document.getElementById("latBox");
   const lngBox = document.getElementById("lngBox");
   const addressBox = document.getElementById("addressBox");
   const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-  // ✅ 로딩 메시지 숨기기
   if (loadingMessage) loadingMessage.style.display = "none";
 
-  // ✅ 모달창에 위치정보 표시
   locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
   latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
   lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
   addressBox.textContent = user.address || "-";
 
-  // ✅ 모달창 보이기
   document.getElementById("locationBox").style.display = "block";
-
-  // ✅ 공유 버튼 이벤트 (클릭 시 구글맵 링크 복사)
-  const shareBtn = document.getElementById("shareBtn");
-  if (shareBtn) {
-    shareBtn.onclick = async () => {
-      const shareUrl =
-        `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-      await navigator.clipboard.writeText(shareUrl);
-
-      const popup = document.getElementById("popupMessage");
-      popup.style.display = "block";
-      popup.style.opacity = "1";
-      setTimeout(() => {
-        popup.style.opacity = "0";
-        setTimeout(() => { popup.style.display = "none"; }, 2000);
-      }, 3000);
-    };
-  }
 }
 
 // ---------------------- 모달창 닫기 이벤트 ----------------------
 document.getElementById("closeBtn").addEventListener("click", () => {
-  // ✅ 모달창 숨기기
   document.getElementById("locationBox").style.display = "none";
 });
 
@@ -460,23 +431,8 @@ function showMap(currentUserPhone) {
 
       // ✅ 마커 클릭 시 모달창 열기
       user.marker.addListener("click", () => {
-        updateLocationBox(user); // 모달창 내부 갱신
-        document.getElementById("locationBox").style.display = "block";
-
-        const latBox = document.getElementById("latBox");
-        const lngBox = document.getElementById("lngBox");
-        const addressBox = document.getElementById("addressBox");
-        const locationHeaderTitle = document.querySelector("#locationHeader h3");
-
-        locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-        latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-        lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-        addressBox.textContent = user.address || "-";
-
-        const loadingMessage = document.getElementById("loadingMessage");
-        if (loadingMessage) loadingMessage.style.display = "none";
-
-        map.panTo(pos); // ✅ 클릭 시 지도 이동
+        openUserModal(user); // ← 모달창은 여기서만 열림
+        map.panTo(pos);      // 클릭 시 지도 이동
         map.setZoom(15);
       });
     }
@@ -486,7 +442,7 @@ function showMap(currentUserPhone) {
 
     // ✅ 내 계정일 경우 → 파란색 경로 + 레이더 표시
     if (normalize(user.phone) === normalize(currentUserPhone)) {
-      radarTargetMarker = user.marker; // 내 계정 마커 지정
+      radarTargetMarker = user.marker;
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
 
       if (!myPolyline) {
@@ -535,6 +491,7 @@ function showMap(currentUserPhone) {
   // ✅ 사용자 패널 갱신 (모달창과는 별개)
   updateUserPanelContent(mode);
 }
+
 
     
   // ---------------------- 사용자 패널 ----------------------
