@@ -332,18 +332,19 @@ async function loadData(token = null) {
      
   
 // ---------------------- 자동 갱신 제어 ----------------------
-// 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고,
-//    동시에 내 위치를 서버에 기록해서 구글시트 Path(I/J열)에 이어쓰기 되도록 합니다.
+// 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고(현재 sendMyLocationToServer()함수는 주석처리한상태),
+//  주석을 해제하면  동시에 내 위치를 서버에 기록해서 구글시트 Path(I/J열)에 이어쓰기 되도록 합니다.
+//    (현재 관리자 클라이언트는 좌표를 서버에 기록할 필요 없음, 이유는 관리자 시트를 관리하는 코드이기 때문에 자동갱신 됨)
 function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
   if (!intervalId) {
     intervalId = setInterval(() => {
       // 1️⃣ 서버에서 최신 데이터 가져오기
       loadData();
 
-      // 2️⃣ 내 위치를 서버에 기록 (Path 이어쓰기 트리거)
-      if (currentLat && currentLng) {
-        sendMyLocationToServer({ lat: currentLat, lng: currentLng });
-      }
+      // 2️⃣ 내 위치 서버 기록은 관리자 클라이언트에서는 불필요 → 삭제
+      // if (currentLat && currentLng) {
+      //   sendMyLocationToServer({ lat: currentLat, lng: currentLng });
+      // }
     }, intervalMs);
   }
 }
