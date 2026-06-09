@@ -190,8 +190,6 @@ async function loadData(token = null) {
 
     // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
-      // ⚠️ 현재는 첫 번째 사용자 기준으로 내 계정을 세팅
-      // 필요하다면 로그인 시 받은 phone 값과 비교해서 지정 가능
       currentUserPhone = allData[0].phone;
       console.log("내 계정 세팅 완료:", currentUserPhone);
     }
@@ -200,11 +198,11 @@ async function loadData(token = null) {
     populatePathSelect();
 
     // ✅ 지도 표시 (내 계정 기준)
-    // 지도와 마커를 최신화하는 함수
     showMap(currentUserPhone);
 
-    // ⚠️ 모달창 갱신은 여기서 하지 않음
-    // → 모달창은 사용자가 마커를 클릭했을 때만 열리도록 변경
+    // ❌ 모달창 갱신은 제거
+    // → 자동 갱신 시 모달창은 건드리지 않음
+    // → 모달창은 마커 클릭 시 openUserModal(user)로만 열림
   } catch (err) {
     console.error("데이터 로딩 오류:", err);
   }
