@@ -202,42 +202,59 @@ async function loadData(token = null) {
     // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
-    // ✅ 위치 정보 박스 갱신 (모달창)
-    if (allData.length > 0) {
-      const user = allData[0]; // 첫 번째 사용자 기준
+    // ⚠️ 모달창 갱신은 여기서 하지 않음
+    // → 자동 갱신(loadData)에서는 지도와 마커만 최신화
+    // → 모달창은 사용자가 마커를 클릭했을 때만 열리도록 변경
+  } catch (err) {
+    console.error("데이터 로딩 오류:", err);
+  }
+}
 
-      const loadingMessage = document.getElementById("loadingMessage");
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
+  // ---------------------- 모달창 열기 함수 ----------------------
+  function openUserModal(user) {
+    const loadingMessage = document.getElementById("loadingMessage");
+    const latBox = document.getElementById("latBox");
+    const lngBox = document.getElementById("lngBox");
+    const addressBox = document.getElementById("addressBox");
+    const locationHeaderTitle = document.querySelector("#locationHeader h3");
+  
+    // ✅ 로딩 메시지 숨기기
+    if (loadingMessage) loadingMessage.style.display = "none";
+  
+    // ✅ 모달창에 위치정보 표시
+    locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
+    latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+    lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+    addressBox.textContent = user.address || "-";
+  
+    // ✅ 모달창 보이기
+    document.getElementById("locationBox").style.display = "block";
+  
+    // ✅ 공유 버튼 이벤트
+    const shareBtn = document.getElementById("shareBtn");
+    if (shareBtn) {
+      shareBtn.onclick = async () => {
+        const shareUrl =
+          `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
+        await navigator.clipboard.writeText(shareUrl);
+  
+        const popup = document.getElementById("popupMessage");
+        popup.style.display = "block";
+        popup.style.opacity = "1";
+        setTimeout(() => {
+          popup.style.opacity = "0";
+          setTimeout(() => { popup.style.display = "none"; }, 2000);
+        }, 3000);
+      };
+    }
+  }
+  
+  // ---------------------- 모달창 닫기 이벤트 ----------------------
+  document.getElementById("closeBtn").addEventListener("click", () => {
+    // ✅ 모달창 숨기기
+    document.getElementById("locationBox").style.display = "none";
+  });
 
-      // ✅ 로딩 메시지 숨기기
-      if (loadingMessage) loadingMessage.style.display = "none";
-
-      // ✅ 모달창에 위치정보 표시
-      locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
-
-      // ✅ 공유 버튼 이벤트
-      const shareBtn = document.getElementById("shareBtn");
-      if (shareBtn) {
-        shareBtn.onclick = async () => {
-          const shareUrl =
-            `https://www.google.com/maps/search/?api=1&query=${user.lat},${user.lng}`;
-          await navigator.clipboard.writeText(shareUrl);
-
-          const popup = document.getElementById("popupMessage");
-          popup.style.display = "block";
-          popup.style.opacity = "1";
-          setTimeout(() => {
-            popup.style.opacity = "0";
-            setTimeout(() => { popup.style.display = "none"; }, 2000);
-          }, 3000);
-        };
-      }
 
       // ---------------------- 상대방 움직임 감지 ----------------------
       allData.forEach(otherUser => {
