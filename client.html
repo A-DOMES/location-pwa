@@ -307,39 +307,7 @@ async function loadData(token = null) {
     setTimeout(() => { msgBox.style.display = "none"; }, 2000);
   }
 
-  // ---------------------- 지도 초기화  로딩시  ----------------------
-  window.onload = () => {
-    // ✅ 초기 중심 좌표 저장
-    const initialCenter = { lat: 36.5, lng: 127.5 };
-  
-    // ✅ 지도 생성
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: initialCenter,
-      zoom: 7,
-      mapTypeId: "roadmap",
-      styles: null
-    });
-  
-    // ✅ 마우스 우클릭 시 초기 상태로 복귀
-    map.addListener("rightclick", () => {
-      map.setZoom(7);
-      map.setCenter(initialCenter);
-    });
-  
-    // ✅ 라이트/다크 모드 토글
-    const themeToggle = document.getElementById("themeToggle");
-    if (themeToggle) {
-      themeToggle.addEventListener("change", () => {
-        document.body.classList.toggle("dark-mode", themeToggle.checked);
-        map.setOptions({ styles: themeToggle.checked ? darkStyle : lightStyle });
-      });
-    }
-  
-    // ✅ 데이터 로딩 및 기본 갱신 주기 시작
-    loadData();
-    startAutoRefresh(); // ← 기존 setInterval 대신 함수 호출
-  };
-     
+    
   
 // ---------------------- 자동 갱신 제어 ----------------------
 // 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고,
@@ -928,11 +896,9 @@ function initMap() {
   if (themeToggle) {
     themeToggle.addEventListener("change", () => {
       if (themeToggle.checked) {
-        // 다크 모드 적용
         map.setOptions({ styles: darkStyle });
         document.body.classList.add("dark-mode");
       } else {
-        // 라이트 모드 적용
         map.setOptions({ styles: lightStyle });
         document.body.classList.remove("dark-mode");
       }
@@ -943,7 +909,6 @@ function initMap() {
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
-      // 기본 지도 상태로 복귀
       map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
       if (themeToggle) themeToggle.checked = false;
@@ -951,14 +916,14 @@ function initMap() {
     });
   }
 
-  // ✅ 지도 타입 버튼들 (로드맵/위성/하이브리드/지형)
+  // ✅ 지도 타입 버튼들
   document.getElementById("roadmapBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
   document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
   document.getElementById("hybridBtn").onclick    = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
   document.getElementById("terrainBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
 
   // ✅ 우클릭 시 초기 위치로 복귀
-  google.maps.event.addListener(map, "contextmenu", function () {
+  google.maps.event.addListener(map, "contextmenu", () => {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
@@ -968,42 +933,35 @@ function initMap() {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
 
-    // 초기 상태: 지도중심
     if (iconSpan) iconSpan.textContent = "🗺️";
     if (labelSpan) labelSpan.textContent = "지도중심";
 
     toggleBtn.addEventListener("click", () => {
-      followUser = !followUser; // 전역변수 상태 토글
+      followUser = !followUser;
 
-      // 아이콘/라벨 변경
       if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
       if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
       toggleBtn.classList.toggle("on", followUser);
 
-      // 모드별 지도 이동 처리
       if (map) {
         if (followUser && currentLat && currentLng) {
-          // 사람중심 모드 → 현재 위치로 이동
           map.setCenter(new google.maps.LatLng(currentLat, currentLng));
           map.setZoom(16);
         } else if (pathCoords && pathCoords.length > 0) {
-          // 지도중심 모드 → 마지막 경로 좌표로 이동
           const lastPoint = pathCoords[pathCoords.length - 1];
           map.setCenter(new google.maps.LatLng(lastPoint.lat, lastPoint.lng));
           map.setZoom(7);
         } else {
-          // 기본 초기 좌표로 복귀
           map.setCenter(originalCenter);
           map.setZoom(7);
         }
       }
     });
 
-    // ✅ 토글 버튼 드래그 가능
     makeDraggableAndResizable(toggleBtn);
   }
 
-  // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
+  // ✅ 내 위치 실시간 추적
   if (navigator.geolocation) {
     geoWatchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
@@ -1013,13 +971,9 @@ function initMap() {
       currentLat = lat;
       currentLng = lng;
 
-      // ✅ 경로 보정 및 Polyline 갱신
       updatePathPolyline(lat, lng);
-
-      // ✅ 속도 계산 및 스무딩
       computeSpeedFromGPS(lat, lng, timestamp);
 
-      // ✅ 사람중심 모드일 때 지도 중심 이동
       if (followUser && map) {
         map.setCenter(new google.maps.LatLng(lat, lng));
         map.setZoom(16);
@@ -1028,7 +982,12 @@ function initMap() {
       console.error("내 위치 추적 실패:", err);
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
+
+  // ✅ 데이터 로딩 및 기본 갱신 주기 시작
+  loadData();
+  startAutoRefresh();
 }
+
 window.initMap = initMap;
 
 
