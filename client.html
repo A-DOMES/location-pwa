@@ -65,6 +65,28 @@ let followUser = false;       // false → 지도중심, true → 사람중심
     markers = [];
   }
 
+// ---------------------- 내 위치 서버 기록 ----------------------
+// 📌 이 함수는 현재 좌표를 서버에 보내서 구글시트 Path(I/J열)에 기록되도록 합니다.
+function sendMyLocationToServer(pos) {
+  fetch(CONFIG.ADMIN_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "location",          // 로그인 이후는 location 모드
+      phone: currentUserPhone,   // 내 계정 식별자
+      lat: pos.lat,              // 현재 위도
+      lng: pos.lng,              // 현재 경도
+      status: "정상",            // 상태값
+      token: CONFIG.TOKEN        // 인증 토큰
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("서버 기록 응답:", data);
+  })
+  .catch(err => console.error("서버 기록 실패:", err));
+}
+
+    
   // ---------------------- 거리 계산 함수 ----------------------
   function calculateDistance(lat1, lng1, lat2, lng2) {
     const R = 6371; // 지구 반지름 (km)
@@ -310,25 +332,27 @@ async function loadData(token = null) {
      
   
 // ---------------------- 자동 갱신 제어 ----------------------
-// 📌 이 함수는 일정 간격(intervalMs)마다 서버에서 최신 데이터를 가져옵니다.
-//    - 기존에는 내 위치를 서버에 기록하는 코드도 있었지만,
-//      서버가 이미 1분마다 위치를 자동 갱신하므로 중복 트래픽을 막기 위해 제거했습니다.
-//    - 따라서 클라이언트는 조회/표시만 담당하고, 저장은 서버가 책임집니다.
+// 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고,
+//    동시에 내 위치를 서버에 기록해서 구글시트 Path(I/J열)에 이어쓰기 되도록 합니다.
 function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
   if (!intervalId) {
-    // ✅ setInterval을 이용해 주기적으로 loadData() 실행
-    //    → 서버에서 최신 사용자 데이터를 가져와 화면에 반영
-    intervalId = setInterval(loadData, intervalMs);
+    intervalId = setInterval(() => {
+      // 1️⃣ 서버에서 최신 데이터 가져오기
+      loadData();
+
+      // 2️⃣ 내 위치를 서버에 기록 (Path 이어쓰기 트리거)
+      if (currentLat && currentLng) {
+        sendMyLocationToServer({ lat: currentLat, lng: currentLng });
+      }
+    }, intervalMs);
   }
 }
 
-// 📌 자동 갱신 중지 함수
-//    - 패널 모드 전환, 화면 이동 등 특정 상황에서 호출하여
-//      불필요한 데이터 요청을 멈추고 자원 낭비를 방지합니다.
+// 📌 자동 갱신 중지 함수 (패널 모드 전환 시 사용)
 function stopAutoRefresh() {
   if (intervalId) {
-    clearInterval(intervalId); // ✅ 주기적 호출 중단
-    intervalId = null;         // ✅ 상태 초기화
+    clearInterval(intervalId);
+    intervalId = null;
   }
 }
 
@@ -877,8 +901,8 @@ function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: originalCenter,          // 초기 중심 좌표
     zoom: 7,                         // 초기 확대 레벨
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    disableDefaultUI: false
+    mapTypeId: google.maps.MapTypeId.ROADMAP, // 기본 지도 타입
+    disableDefaultUI: false          // 기본 UI 표시
   });
 
   // ✅ 경로 좌표가 있다면 마지막 좌표를 중심으로 세팅
@@ -893,9 +917,11 @@ function initMap() {
   if (themeToggle) {
     themeToggle.addEventListener("change", () => {
       if (themeToggle.checked) {
+        // 다크 모드 적용
         map.setOptions({ styles: darkStyle });
         document.body.classList.add("dark-mode");
       } else {
+        // 라이트 모드 적용
         map.setOptions({ styles: lightStyle });
         document.body.classList.remove("dark-mode");
       }
@@ -906,6 +932,7 @@ function initMap() {
   const defaultMapBtn = document.getElementById("defaultMapBtn");
   if (defaultMapBtn) {
     defaultMapBtn.addEventListener("click", () => {
+      // 기본 지도 상태로 복귀
       map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       map.setOptions({ styles: null, center: originalCenter, zoom: 7 });
       if (themeToggle) themeToggle.checked = false;
@@ -913,7 +940,7 @@ function initMap() {
     });
   }
 
-  // ✅ 지도 타입 버튼들
+  // ✅ 지도 타입 버튼들 (로드맵/위성/하이브리드/지형)
   document.getElementById("roadmapBtn").onclick   = () => map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
   document.getElementById("satelliteBtn").onclick = () => map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
   document.getElementById("hybridBtn").onclick    = () => map.setMapTypeId(google.maps.MapTypeId.HYBRID);
@@ -924,19 +951,18 @@ function initMap() {
     map.setOptions({ center: originalCenter, zoom: 7 });
   });
 
-  // ---------------------- 사람중심 / 지도중심 토글 ----------------------
+  // ✅ 사람중심/지도중심 토글 버튼 이벤트 연결
   const toggleBtn = document.getElementById("toggleFollowBtn");
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
 
     // 초기 상태: 지도중심
-    followUser = false;
     if (iconSpan) iconSpan.textContent = "🗺️";
     if (labelSpan) labelSpan.textContent = "지도중심";
 
     toggleBtn.addEventListener("click", () => {
-      followUser = !followUser; // 상태 토글
+      followUser = !followUser; // 전역변수 상태 토글
 
       // 아이콘/라벨 변경
       if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
@@ -966,7 +992,7 @@ function initMap() {
     makeDraggableAndResizable(toggleBtn);
   }
 
-  // ---------------------- 내 위치 실시간 추적 ----------------------
+  // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
   if (navigator.geolocation) {
     geoWatchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
@@ -979,7 +1005,7 @@ function initMap() {
       // ✅ 경로 보정 및 Polyline 갱신
       updatePathPolyline(lat, lng);
 
-      // ✅ 속도 계산
+      // ✅ 속도 계산 및 스무딩
       computeSpeedFromGPS(lat, lng, timestamp);
 
       // ✅ 사람중심 모드일 때 지도 중심 이동
@@ -993,7 +1019,6 @@ function initMap() {
   }
 }
 window.initMap = initMap;
-
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
