@@ -488,6 +488,14 @@ function showMap(currentUserPhone) {
       myPath.push(newLatLng);
       myPolyline.setPath(myPath);
 
+      // ✅ 사람중심 모드일 때 지도 중심을 계속 내 위치로 이동
+      currentLat = user.lat;
+      currentLng = user.lng;
+      if (followUser) {
+        map.setCenter(pos);
+        map.setZoom(16);
+      }
+
     } else {
       // ✅ 다른 사용자 → 파란색 경로 갱신
       if (!userPaths[user.phone]) userPaths[user.phone] = [];
@@ -511,30 +519,6 @@ function showMap(currentUserPhone) {
   // ✅ 클러스터 옵션 체크 시 클러스터링 적용
   if (document.getElementById("clusterOption")?.checked) {
     markerCluster = new markerClusterer.MarkerClusterer({ map: map, markers: markers });
-  }
-
-  // ✅ 첫 번째 사용자 정보 박스 갱신
-  if (allData.length > 0) {
-    const user = allData[0];
-    updateLocationBox(user);
-    document.getElementById("locationBox").style.display = "block";
-
-    const latBox = document.getElementById("latBox");
-    const lngBox = document.getElementById("lngBox");
-    const addressBox = document.getElementById("addressBox");
-    const locationHeaderTitle = document.querySelector("#locationHeader h3");
-
-    locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-    latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-    lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-    addressBox.textContent = user.address || "-";
-
-    const loadingMessage = document.getElementById("loadingMessage");
-    if (loadingMessage) loadingMessage.style.display = "none";
-
-  } else {
-    // ✅ 데이터가 없을 경우 모달창에 오류 메시지 표시
-    document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
   }
 
   // ✅ 사용자 패널 갱신
@@ -991,6 +975,7 @@ function initMap() {
     // ✅ 토글 버튼 드래그 가능
     makeDraggableAndResizable(toggleBtn);
   }
+}
 
   // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
   if (navigator.geolocation) {
