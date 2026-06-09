@@ -218,7 +218,7 @@ async function loadData(token = null) {
       // ✅ 로딩 메시지 숨기기
       if (loadingMessage) loadingMessage.style.display = "none";
     
-      // ✅ 모달창에 위치정보 표시
+      // ✅ 모달창에 위치정보 표시 (값은 항상 갱신)
       locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
       latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
       lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
@@ -242,11 +242,15 @@ async function loadData(token = null) {
         };
       }
     
-      // ✅ 닫기 버튼 눌렀을 때 다시 자동으로 뜨지 않도록 제어
+      // ✅ 닫기 버튼 눌렀을 때 다시 자동으로 뜨지 않도록 제어 (표시만 조건 처리)
       if (!locationBoxClosed) {
         document.getElementById("locationBox").style.display = "block";
       }
     }
+  } catch (err) {
+    console.error("데이터 로딩 실패:", err);
+  }
+}
 
 
       // ---------------------- 상대방 움직임 감지 ----------------------
