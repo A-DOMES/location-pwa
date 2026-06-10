@@ -79,17 +79,15 @@ function sendMyLocationToServer(pos) {
     method: "POST",
     body: new URLSearchParams({
       mode: "location",          // 로그인 이후는 location 모드
-      phone: currentUserPhone,   // 내 계정 식별자
+      phone: pos.phone,   // ✅ 닉네임(고유값) 전달
       lat: pos.lat,              // 현재 위도
       lng: pos.lng,              // 현재 경도
       status: "정상",            // 상태값
-      token: CONFIG.TOKEN        // 인증 토큰
+      // 인증 토큰 삭제
     })
   })
   .then(res => res.json())
-  .then(data => {
-    console.log("서버 기록 응답:", data);
-  })
+  .then(data => console.log("서버 기록 응답:", data))
   .catch(err => console.error("서버 기록 실패:", err));
 }
 
