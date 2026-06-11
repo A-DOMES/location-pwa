@@ -43,19 +43,6 @@ let currentUserPhone = null;
 let coordBuffer = [];
 let lastMarkerPos = null;
     
-// ✅ 수정 방향:
-// 로그인 성공 시 서버 응답 객체(data)에 phone 값이 포함되어 있음.
-// 따라서 로그인 처리 함수에서 아래처럼 세팅해야 함:
-//
-// fetch("/login", { ... })
-//   .then(res => res.json())
-//   .then(data => {
-//     currentUserPhone = data.phone; // 서버에서 내려준 내 별명(phone 값)
-//   });
-//
-// 이렇게 하면 currentUserPhone이 정상적으로 세팅되고,
-// 이후 showMap(currentUserPhone) 호출 시 내 위치에 항상 레이더가 붙게 됨.
-
 // 경로를 저장할 배열
 let myPath = [];
 let myPolyline = null; // 내 마커 전용 Polyline
@@ -63,8 +50,8 @@ let myPolyline = null; // 내 마커 전용 Polyline
  // ---------------------- 토글버튼 전환 ( 지도중심 사람중심) ----------------------
 let followUser = false;       // false → 지도중심, true → 사람중심
 
-// ✅ 1분마사 서버에 전송하기위한 phone값 저장
-// let currentUserPhone = localStorage.getItem("nickname");
+// 사용자별 path 시작 시각 저장용
+let userStartTimes = {}; 
 
     
   // ---------------------- 마커 제거 함수 ----------------------
@@ -307,6 +294,15 @@ async function loadData(token = null) {
         };
       }
 
+      // ---------------------- Path 시작 시각 기록 ----------------------
+      allData.forEach(u => {
+        // ✅ path가 처음 기록될 때만 A열 시각을 저장
+        if (!userStartTimes[u.phone] && u.path && u.path.length > 0) {
+          userStartTimes[u.phone] = new Date(u.time);
+          console.log(`Path 시작 시각 저장: ${u.phone} → ${userStartTimes[u.phone]}`);
+        }
+      });
+
       // ---------------------- 상대방 움직임 감지 ----------------------
       allData.forEach(otherUser => {
         const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
@@ -343,6 +339,7 @@ async function loadData(token = null) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
+
     
   // ---------------------- 갱신 주기 설정 ----------------------
   function setCustomInterval() {
@@ -865,9 +862,17 @@ function updateUserPanelContent(viewMode = "current") {
     });
     users = Object.values(latestByUser);
 
+    // ✅ 경로 클리어 (현재 사용자 보기로 전환 시)
+    polylines.forEach(line => line.setMap(null));
+    polylines = [];
+
   } else if (viewMode === "all") {
     // ✅ 전체 사용자
     users = allData;
+
+    // ✅ 경로 클리어 (전체 사용자 보기로 전환 시)
+    polylines.forEach(line => line.setMap(null));
+    polylines = [];
 
   } else if (viewMode === "paths") {
     // ✅ 전체 사용자 경로
@@ -913,6 +918,7 @@ function updateUserPanelContent(viewMode = "current") {
 }
 
 
+
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
 function updateTableHeader(viewMode) {
   const headerRow = document.getElementById("user-table-header");
@@ -925,7 +931,7 @@ function updateTableHeader(viewMode) {
       <th>이동<br>거리</th>
       <th>로그인<br>시각</th>
       <th>최근 갱신</th>
-      <th>이동시간</th>   <!-- ✅ 추가 -->
+      <th>이동시간</th>   <!-- ✅ paths 모드에서만 표시 -->
       <th>위도/경도</th>
       <th>주소</th>
     `;
@@ -940,6 +946,7 @@ function updateTableHeader(viewMode) {
     `;
   }
 }
+
 
 function getMapIdByDevice() {
   const ua = navigator.userAgent.toLowerCase();
@@ -1369,22 +1376,16 @@ window.renderUserTable = function(users, viewMode = "current") {
     // ✅ path 배열 파싱 (경로보기 모드일 때만 의미 있음)
     const pathPoints = Array.isArray(user.path) ? parsePathArray(user.path) : [];
 
-    // ✅ path 초기화 처리
-    //    - 새벽 5~6시에 path(I/J열)가 삭제되면 배열도 클리어
-    if (pathPoints.length === 0) {
-      user.startTime = null;
+    // ✅ path 시작 시각 기록
+    //    - path가 처음 기록될 때만 A열의 시간을 userStartTimes 배열에 저장
+    if (!userStartTimes[user.phone] && pathPoints.length > 0) {
+      userStartTimes[user.phone] = new Date(user.time);
     }
 
-    // ✅ 최초 path 기록 시각을 startTime으로 저장
-    //    - path가 처음 기록될 때만 A열의 시간을 배열에 담음
-    if (!user.startTime && pathPoints.length > 0) {
-      user.startTime = new Date(user.time); // A열: 최초 로그인 시각
-    }
-
-    // ✅ 총 이동시간 계산 (startTime vs F열 updated)
+    // ✅ 총 이동시간 계산 (userStartTimes vs F열 updated)
     let totalTime = 0;
-    if (user.startTime && user.updated) {
-      const startTime = new Date(user.startTime);
+    if (userStartTimes[user.phone] && user.updated) {
+      const startTime = new Date(userStartTimes[user.phone]);
       const endTime   = new Date(user.updated);
       if (!isNaN(startTime) && !isNaN(endTime)) {
         const diffMinutes = (endTime - startTime) / 1000 / 60;
@@ -1417,7 +1418,7 @@ window.renderUserTable = function(users, viewMode = "current") {
       row.innerHTML = `
         <td>${user.phone || "-"}</td>
         <td>${distanceKm ? distanceKm.toFixed(2) + " km" : "-"}</td>   <!-- 총 이동거리 -->
-        <td>${user.startTime ? formatToKST(user.startTime) : "-"}</td> <!-- 최초 path 기록 시각 -->
+        <td>${userStartTimes[user.phone] ? formatToKST(userStartTimes[user.phone]) : "-"}</td> <!-- 최초 path 기록 시각 -->
         <td>${user.updated ? formatToKST(user.updated) : "-"}</td>     <!-- 마지막 갱신 시각 -->
         <td>${timeText}</td> <!-- ✅ 총 이동시간 (시간+분 형식) -->
         <td>${user.lat ? user.lat.toFixed(5) : "-"}<br>${user.lng ? user.lng.toFixed(5) : "-"}</td>
