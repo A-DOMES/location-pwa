@@ -306,63 +306,75 @@ input[type="text"] {
     document.querySelectorAll(".modal").forEach(m => m.remove());
   };
 
-  // ============================
-  // 📌 위치 전송 (POST 요청)
-  // ============================
-  window.sendLocation = function() {
-    const phone = document.getElementById("phone").value.trim();
-    if (!phone) {
-      showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
-      return;
-    }
+// ============================
+// 📌 위치 전송 (POST 요청)
+// ============================
+window.sendLocation = function() {
+  const phoneInput = document.getElementById("phone").value.trim();
+  const nickname = localStorage.getItem("nickname");
+  
+  // 🚫 원천 차단: 닉네임과 토큰 검증
+  if (!userToken) {
+    showModal("❌ 토큰이 유효하지 않습니다.\n다시 로그인하세요.", true);
+    return;
+  }
+  if (!nickname || nickname.toLowerCase() !== phoneInput.toLowerCase()) {
+    showModal("❌ 닉네임 값이 로그인 시점과 다릅니다.\n위치 전송을 할 수 없습니다.", true);
+    return;
+  }
 
-    showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
-    if (!navigator.geolocation) {
-      showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
-      return;
-    }
+  if (!phoneInput) {
+    showModal("📌 입력값이 없습니다.\n위치전송에 사용 할 고유값을 입력하세요.", true);
+    return;
+  }
 
-    navigator.geolocation.getCurrentPosition(function(position) {
-      // ✅ POST 요청으로 doPost 실행
-      fetch(CONFIG.ADMIN_URL, {
-        method: "POST",
-        body: new URLSearchParams({
-          mode: "login",   // ✅ 최초 전송 시 login 모드
-          phone: phone,
-          status: "정상",
-          lat: position.coords.latitude || 0,
-          lng: position.coords.longitude || 0,
-          token: userToken
-        })
+  showModal("위치정보 전송 중입니다...\n잠시만 기다려주세요.");
+  if (!navigator.geolocation) {
+    showModal("이 브라우저에서는 위치 정보를 지원하지 않습니다.", true);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    // ✅ POST 요청으로 doPost 실행
+    fetch(CONFIG.ADMIN_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        mode: "login",   // ✅ 최초 전송 시 login 모드
+        phone: phoneInput,
+        status: "정상",
+        lat: position.coords.latitude || 0,
+        lng: position.coords.longitude || 0,
+        token: userToken
       })
-      .then(res => res.json())
-      .then(result => {
-        closeModal();
-        if (result.result === "success") {
-          showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
-      
-          // ✅ 실제 응답이 success일 때만 지도맵 버튼 활성화
-          const mapBtn = document.getElementById("mapBtn");
-          mapBtn.style.visibility = "visible";
-          mapBtn.style.pointerEvents = "auto";
-        } else {
-          showModal("❌ " + result.message, true);
-      
-          // 실패 시 지도맵 버튼은 계속 숨김
-          const mapBtn = document.getElementById("mapBtn");
-          mapBtn.style.visibility = "hidden";
-          mapBtn.style.pointerEvents = "none";
-        }
-      })
-      .catch(err => {
-        closeModal();
-        showModal("위치 전송 실패:\n" + err.message, true);
-      });
+    })
+    .then(res => res.json())
+    .then(result => {
+      closeModal();
+      if (result.result === "success") {
+        showModal("✅ 위치정보가 성공적으로 전송되었습니다.", true);
 
-      // ✅ 자동 갱신 시작
-      if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
+        // ✅ 실제 응답이 success일 때만 지도맵 버튼 활성화
+        const mapBtn = document.getElementById("mapBtn");
+        mapBtn.style.visibility = "visible";
+        mapBtn.style.pointerEvents = "auto";
+      } else {
+        showModal("❌ " + result.message, true);
+
+        // 실패 시 지도맵 버튼은 계속 숨김
+        const mapBtn = document.getElementById("mapBtn");
+        mapBtn.style.visibility = "hidden";
+        mapBtn.style.pointerEvents = "none";
+      }
+    })
+    .catch(err => {
+      closeModal();
+      showModal("위치 전송 실패:\n" + err.message, true);
     });
-  };
+
+    // ✅ 자동 갱신 시작
+    if (!intervalId) intervalId = setInterval(autoUpdate, CONFIG.DEFAULT_INTERVAL);
+  });
+};
 
   // ============================
   // 📌 위치 해제 (POST 요청)
