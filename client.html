@@ -406,14 +406,15 @@ async function loadData(token = null) {
 // ---------------------- 자동 갱신 제어 ----------------------
 function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
   if (!intervalId) {
-    intervalId = setInterval(() => {
+    intervalId = setInterval(async () => {
       // 1️⃣ 서버에서 최신 데이터 가져오기
-      loadData();
+      await loadData();
 
-      // 2️⃣ 지도 표시용: 이미 avgLat/avgLng로 마커 갱신 중이라면 여기서 또 호출할 필요 없음
-      // (중복 호출은 의미 없음, 이미 잘 작동 중)
+      // 2️⃣ 지도 마커 및 경로 갱신
+      showMap(currentUserPhone);
 
       // 3️⃣ 서버 기록용: 관리자 클라이언트는 좌표를 서버에 기록할 필요 없음
+      // ❌ 주석 해제하지 마세요. 관리자 클라이언트는 데이터 표시만 담당합니다.
       // if (currentLat && currentLng && currentUserPhone) {
       //   sendMyLocationToServer({
       //     phone: currentUserPhone,   // 서버 식별 필드
