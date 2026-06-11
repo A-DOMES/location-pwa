@@ -403,6 +403,7 @@ async function loadData(token = null) {
 // 📌 이 함수는 1분마다 서버에서 최신 데이터를 가져오고(현재 sendMyLocationToServer()함수는 주석처리한상태),
 //  주석을 해제하면  동시에 내 위치를 서버에 기록해서 구글시트 Path(I/J열)에 이어쓰기 되도록 합니다.
 //    (현재 관리자 클라이언트는 좌표를 서버에 기록할 필요 없음, 이유는 관리자 시트를 관리하는 코드이기 때문에 자동갱신 됨)
+// ---------------------- 자동 갱신 제어 ----------------------
 function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
   if (!intervalId) {
     intervalId = setInterval(() => {
@@ -412,14 +413,14 @@ function startAutoRefresh(intervalMs = CONFIG.DEFAULT_INTERVAL || 60000) {
       // 2️⃣ 지도 표시용: 이미 avgLat/avgLng로 마커 갱신 중이라면 여기서 또 호출할 필요 없음
       // (중복 호출은 의미 없음, 이미 잘 작동 중)
 
-      // 3️⃣ 서버 기록용: 반드시 원본 좌표를 보내야 Path 기록이 됨
-      if (currentLat && currentLng && currentUserPhone) {
-        sendMyLocationToServer({
-          phone: currentUserPhone,   // 서버 식별 필드
-          lat: currentLat,           // 원본 위도
-          lng: currentLng            // 원본 경도
-        });
-      }
+      // 3️⃣ 서버 기록용: 관리자 클라이언트는 좌표를 서버에 기록할 필요 없음
+      // if (currentLat && currentLng && currentUserPhone) {
+      //   sendMyLocationToServer({
+      //     phone: currentUserPhone,   // 서버 식별 필드
+      //     lat: currentLat,           // 원본 위도
+      //     lng: currentLng            // 원본 경도
+      //   });
+      // }
     }, intervalMs);
   }
 }
