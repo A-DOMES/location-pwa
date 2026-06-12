@@ -265,18 +265,16 @@ async function loadData(token = null) {
       const loadingMessage = document.getElementById("loadingMessage");
       if (loadingMessage) loadingMessage.style.display = "none";
 
-      // ✅ 모달창은 사용자가 열었을 때만 갱신
-      if (modalOpenedByUser) {
-        const latBox = document.getElementById("latBox");
-        const lngBox = document.getElementById("lngBox");
-        const addressBox = document.getElementById("addressBox");
-        const locationHeaderTitle = document.querySelector("#locationHeader h3");
+      // ✅ 모달창은 항상 갱신 (조건 제거)
+      const latBox = document.getElementById("latBox");
+      const lngBox = document.getElementById("lngBox");
+      const addressBox = document.getElementById("addressBox");
+      const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-        locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
-        latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-        lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-        addressBox.textContent = user.address || "-";
-      }
+      locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
+      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+      addressBox.textContent = user.address || "-";
 
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
@@ -349,6 +347,7 @@ document.getElementById("reopenBtn").addEventListener("click", () => {
   document.getElementById("locationBox").style.display = "block";
   modalOpenedByUser = true;
 });
+
 
     
   // ---------------------- 갱신 주기 설정 ----------------------
@@ -1114,11 +1113,6 @@ function initMap() {
       console.error("내 위치 추적 실패:", err);
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
-
-  // ✅ 지도 초기화 후 데이터 불러오기 (idle 이벤트 활용)
-  google.maps.event.addListenerOnce(map, "idle", () => {
-    loadData();
-  });
 }
 window.initMap = initMap;
 
