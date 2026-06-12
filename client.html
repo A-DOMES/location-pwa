@@ -989,8 +989,7 @@ const darkStyle = [
 ];
 
 
-/* ---------------------- 지도 초기화 (1) ---------------------- */    
-/* ---------------------- 지도 초기화 ---------------------- */
+/* ---------------------- 지도 초기화 (1) ---------------------- */
 function initMap() {
   // ✅ 초기 중심 좌표 저장 (대한민국 중심 근처)
   originalCenter = { lat: 36.5, lng: 127.5 };
@@ -1090,7 +1089,6 @@ function initMap() {
     makeDraggableAndResizable(toggleBtn);
   }
 
-
   // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
   if (navigator.geolocation) {
     geoWatchId = navigator.geolocation.watchPosition(pos => {
@@ -1116,8 +1114,12 @@ function initMap() {
       console.error("내 위치 추적 실패:", err);
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
+
+  // ✅ 지도 초기화 후 데이터 불러오기
+  loadData();
 }
 window.initMap = initMap;
+
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
