@@ -53,9 +53,6 @@ let followUser = false;       // false → 지도중심, true → 사람중심
 // 사용자별 path 시작 시각 저장용
 let userStartTimes = {}; 
 
-// 모달 상태 변수 (열기 / 닫기)
-let modalOpenedByUser = false;
-
     
   // ---------------------- 마커 제거 함수 ----------------------
   function clearMarkers() {
@@ -248,6 +245,8 @@ async function loadData(token = null) {
 
     // ✅ 내 계정 phone 값 세팅 (처음 로딩 시)
     if (!currentUserPhone && allData.length > 0) {
+      // ⚠️ 현재는 첫 번째 사용자 기준으로 내 계정을 세팅
+      // 필요하다면 로그인 시 받은 phone 값과 비교해서 지정 가능
       currentUserPhone = allData[0].phone;
       console.log("내 계정 세팅 완료:", currentUserPhone);
     }
@@ -258,31 +257,24 @@ async function loadData(token = null) {
     // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
-// ✅ 위치 정보 박스 갱신 (모달창)
-if (allData.length > 0) {
-  const user = allData[0]; // 첫 번째 사용자 기준
+    // ✅ 위치 정보 박스 갱신 (모달창)
+    if (allData.length > 0) {
+      const user = allData[0]; // 첫 번째 사용자 기준
 
-  const loadingMessage = document.getElementById("loadingMessage");
-  if (loadingMessage) loadingMessage.style.display = "none";
+      const loadingMessage = document.getElementById("loadingMessage");
+      const latBox = document.getElementById("latBox");
+      const lngBox = document.getElementById("lngBox");
+      const addressBox = document.getElementById("addressBox");
+      const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-  // ✅ 모달창 내용은 항상 갱신
-  const latBox = document.getElementById("latBox");
-  const lngBox = document.getElementById("lngBox");
-  const addressBox = document.getElementById("addressBox");
-  const locationHeaderTitle = document.querySelector("#locationHeader h3");
+      // ✅ 로딩 메시지 숨기기
+      if (loadingMessage) loadingMessage.style.display = "none";
 
-  locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
-  latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-  lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-  addressBox.textContent = user.address || "-";
-
-  // ✅ 단, 닫기 버튼으로 숨겼을 경우 다시 자동으로 열리지 않음
-  if (!modalOpenedByUser) {
-    // 모달창은 닫힌 상태 유지, 내용만 갱신
-    document.getElementById("locationBox").style.display = "none";
-  }
-}
-
+      // ✅ 모달창에 위치정보 표시
+      locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
+      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+      addressBox.textContent = user.address || "-";
 
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
@@ -304,6 +296,7 @@ if (allData.length > 0) {
 
       // ---------------------- Path 시작 시각 기록 ----------------------
       allData.forEach(u => {
+        // ✅ path가 처음 기록될 때만 A열 시각을 저장
         if (!userStartTimes[u.phone] && u.path && u.path.length > 0) {
           userStartTimes[u.phone] = new Date(u.time);
           console.log(`Path 시작 시각 저장: ${u.phone} → ${userStartTimes[u.phone]}`);
@@ -314,6 +307,7 @@ if (allData.length > 0) {
       allData.forEach(otherUser => {
         const normalize = str => (str || "").replace(/[^0-9a-zA-Z가-힣]/g, "").trim().toLowerCase();
 
+        // ✅ 내 계정이 아닌 경우만 체크
         if (normalize(otherUser.phone) !== normalize(currentUserPhone)) {
           if (!window.prevPositions) window.prevPositions = {};
 
@@ -326,11 +320,13 @@ if (allData.length > 0) {
               new google.maps.LatLng(curr.lat, curr.lng)
             );
 
+            // ✅ 움직임이 2m 이상일 때만 레이더 표시
             if (dist > 2) {
               updateRadarPolygon(curr, 0);
             }
           }
 
+          // ✅ 현재 좌표를 prevPositions에 저장
           window.prevPositions[otherUser.phone] = curr;
         }
       });
@@ -343,19 +339,6 @@ if (allData.length > 0) {
     showMessage("⚠️ 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.");
   }
 }
-
-// 닫기 버튼
-document.getElementById("closeBtn").addEventListener("click", () => {
-  document.getElementById("locationBox").style.display = "none";
-  modalOpenedByUser = false;
-});
-
-// 다시 열기 버튼
-document.getElementById("reopenBtn").addEventListener("click", () => {
-  document.getElementById("locationBox").style.display = "block";
-  modalOpenedByUser = true;
-});
-
 
     
   // ---------------------- 갱신 주기 설정 ----------------------
@@ -534,30 +517,28 @@ function showMap(currentUserPhone) {
         // ❌ animation 제거 → 떨어지는 효과 방지
       });
 
-    // ✅ 마커 클릭 시 모달창 갱신
-    user.marker.addListener("click", () => {
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
-      modalOpenedByUser = true; // ✅ 사용자가 직접 열었음을 표시
-    
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
-    
-      // ✅ 모달창 내용 갱신
-      locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
-    
-      const loadingMessage = document.getElementById("loadingMessage");
-      if (loadingMessage) loadingMessage.style.display = "none";
-    
-      map.panTo(pos); // ✅ 클릭 시 지도 중심 이동
-      map.setZoom(15);
-    });
-   }
+      // ✅ 마커 클릭 시 모달창 갱신
+      user.marker.addListener("click", () => {
+        updateLocationBox(user);
+        document.getElementById("locationBox").style.display = "block";
+
+        const latBox = document.getElementById("latBox");
+        const lngBox = document.getElementById("lngBox");
+        const addressBox = document.getElementById("addressBox");
+        const locationHeaderTitle = document.querySelector("#locationHeader h3");
+
+        locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
+        latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+        lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+        addressBox.textContent = user.address || "-";
+
+        const loadingMessage = document.getElementById("loadingMessage");
+        if (loadingMessage) loadingMessage.style.display = "none";
+
+        map.panTo(pos); // ✅ 부드럽게 이동
+        map.setZoom(15);
+      });
+    }
 
     // ✅ 클러스터링 위해 배열에 추가
     markers.push(user.marker);
@@ -610,23 +591,22 @@ function showMap(currentUserPhone) {
   // ✅ 첫 번째 사용자 정보 박스 갱신
   if (allData.length > 0) {
     const user = allData[0];
-    if (modalOpenedByUser) { // ✅ 사용자가 열었을 때만 갱신
-      updateLocationBox(user);
-      document.getElementById("locationBox").style.display = "block";
+    updateLocationBox(user);
+    document.getElementById("locationBox").style.display = "block";
 
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
+    const latBox = document.getElementById("latBox");
+    const lngBox = document.getElementById("lngBox");
+    const addressBox = document.getElementById("addressBox");
+    const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-      locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
+    locationHeaderTitle.textContent = `${user.name || user.phone}의 현재 위치`;
+    latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+    lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+    addressBox.textContent = user.address || "-";
 
-      const loadingMessage = document.getElementById("loadingMessage");
-      if (loadingMessage) loadingMessage.style.display = "none";
-    }
+    const loadingMessage = document.getElementById("loadingMessage");
+    if (loadingMessage) loadingMessage.style.display = "none";
+
   } else {
     // ✅ 데이터가 없을 경우 모달창에 오류 메시지 표시
     document.getElementById("locationBox").innerHTML = "❌ 위치 데이터를 불러올 수 없습니다.";
@@ -996,7 +976,8 @@ const darkStyle = [
 ];
 
 
-/* ---------------------- 지도 초기화 (1) ---------------------- */
+/* ---------------------- 지도 초기화 (1) ---------------------- */    
+/* ---------------------- 지도 초기화 ---------------------- */
 function initMap() {
   // ✅ 초기 중심 좌표 저장 (대한민국 중심 근처)
   originalCenter = { lat: 36.5, lng: 127.5 };
@@ -1095,6 +1076,7 @@ function initMap() {
     // ✅ 토글 버튼 드래그 가능
     makeDraggableAndResizable(toggleBtn);
   }
+
 
   // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
   if (navigator.geolocation) {
@@ -2120,5 +2102,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
-  
   
