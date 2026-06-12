@@ -546,8 +546,9 @@ function showMap(currentUserPhone) {
     // ✅ 내 계정일 경우 → 파란색 경로 + 레이더 표시
     if (normalize(user.phone) === normalize(currentUserPhone)) {
       radarTargetMarker = user.marker; // 내 계정 마커 지정
+      myMarker = user.marker;          // ✅ 내 계정 마커를 myMarker에도 저장
       updateRadarPolygon({ lat: pos.lat(), lng: pos.lng() }, 0);
-
+    
       if (!myPolyline) {
         myPolyline = new google.maps.Polyline({
           path: myPath,
@@ -558,10 +559,17 @@ function showMap(currentUserPhone) {
           map: map
         });
       }
-
+    
       const newLatLng = { lat: pos.lat(), lng: pos.lng() };
       myPath.push(newLatLng);
       myPolyline.setPath(myPath);
+    
+      // ✅ 사람중심 모드일 때 지도 중심 이동
+      if (followUser && myMarker) {
+        map.setCenter(myMarker.getPosition());
+        map.setZoom(16);
+      }
+    }
 
     } else {
       // ✅ 다른 사용자 → 파란색 경로 갱신
