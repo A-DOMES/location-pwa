@@ -1041,24 +1041,24 @@ function initMap() {
   if (toggleBtn) {
     const iconSpan = toggleBtn.querySelector(".icon");
     const labelSpan = toggleBtn.querySelector(".label");
-
+  
     // 초기 상태: 지도중심
     if (iconSpan) iconSpan.textContent = "🗺️";
     if (labelSpan) labelSpan.textContent = "지도중심";
-
+  
     toggleBtn.addEventListener("click", () => {
       followUser = !followUser; // 전역변수 상태 토글
-
+  
       // 아이콘/라벨 변경
       if (iconSpan) iconSpan.textContent = followUser ? "👤" : "🗺️";
       if (labelSpan) labelSpan.textContent = followUser ? "사람중심" : "지도중심";
       toggleBtn.classList.toggle("on", followUser);
-
+  
       // 모드별 지도 이동 처리
       if (map) {
-        if (followUser && currentLat && currentLng) {
-          // 사람중심 모드 → 현재 위치로 이동
-          map.setCenter(new google.maps.LatLng(currentLat, currentLng));
+        if (followUser && myMarker) {
+          // 사람중심 모드 → 내 마커 위치로 이동
+          map.setCenter(myMarker.getPosition());
           map.setZoom(16);
         } else if (pathCoords && pathCoords.length > 0) {
           // 지도중심 모드 → 마지막 경로 좌표로 이동
@@ -1072,10 +1072,11 @@ function initMap() {
         }
       }
     });
-
+  
     // ✅ 토글 버튼 드래그 가능
     makeDraggableAndResizable(toggleBtn);
   }
+
 
   // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
   if (navigator.geolocation) {
