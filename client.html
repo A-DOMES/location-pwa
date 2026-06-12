@@ -258,23 +258,31 @@ async function loadData(token = null) {
     // ✅ 지도 표시 (내 계정 기준)
     showMap(currentUserPhone);
 
-    // ✅ 위치 정보 박스 갱신 (모달창)
-    if (allData.length > 0) {
-      const user = allData[0]; // 첫 번째 사용자 기준
+// ✅ 위치 정보 박스 갱신 (모달창)
+if (allData.length > 0) {
+  const user = allData[0]; // 첫 번째 사용자 기준
 
-      const loadingMessage = document.getElementById("loadingMessage");
-      if (loadingMessage) loadingMessage.style.display = "none";
+  const loadingMessage = document.getElementById("loadingMessage");
+  if (loadingMessage) loadingMessage.style.display = "none";
 
-      // ✅ 모달창은 항상 갱신 (조건 제거)
-      const latBox = document.getElementById("latBox");
-      const lngBox = document.getElementById("lngBox");
-      const addressBox = document.getElementById("addressBox");
-      const locationHeaderTitle = document.querySelector("#locationHeader h3");
+  // ✅ 모달창 내용은 항상 갱신
+  const latBox = document.getElementById("latBox");
+  const lngBox = document.getElementById("lngBox");
+  const addressBox = document.getElementById("addressBox");
+  const locationHeaderTitle = document.querySelector("#locationHeader h3");
 
-      locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
-      latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
-      lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
-      addressBox.textContent = user.address || "-";
+  locationHeaderTitle.textContent = `${user.name || user.phone || "사용자"}의 현재 위치`;
+  latBox.textContent = user.lat ? user.lat.toFixed(6) : "-";
+  lngBox.textContent = user.lng ? user.lng.toFixed(6) : "-";
+  addressBox.textContent = user.address || "-";
+
+  // ✅ 단, 닫기 버튼으로 숨겼을 경우 다시 자동으로 열리지 않음
+  if (!modalOpenedByUser) {
+    // 모달창은 닫힌 상태 유지, 내용만 갱신
+    document.getElementById("locationBox").style.display = "none";
+  }
+}
+
 
       // ✅ 공유 버튼 이벤트
       const shareBtn = document.getElementById("shareBtn");
