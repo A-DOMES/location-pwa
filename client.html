@@ -1085,33 +1085,33 @@ function initMap() {
   }
 
 
-  // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
-  if (navigator.geolocation) {
-    geoWatchId = navigator.geolocation.watchPosition(pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const timestamp = Date.now();
-
-      currentLat = lat;
-      currentLng = lng;
-
-      // ✅ 경로 보정 및 Polyline 갱신
-      updatePathPolyline(lat, lng);
-      
-      // ✅ 마커 위치 안정화 (GPS 오차율 완화)
-      updateMarker(lat, lng);
-
-      // ✅ 사람중심 모드일 때 지도 중심 이동
-      if (followUser && map) {
-        map.setCenter(new google.maps.LatLng(lat, lng));
-        map.setZoom(16);
-      }
-    }, err => {
-      console.error("내 위치 추적 실패:", err);
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    // ✅ 내 위치 실시간 추적 (경로 보정 + 속도 계산)
+    if (navigator.geolocation) {
+      geoWatchId = navigator.geolocation.watchPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const timestamp = Date.now();
+    
+        currentLat = lat;
+        currentLng = lng;
+    
+        // ✅ 경로 보정 및 Polyline 갱신
+        updatePathPolyline(lat, lng);
+        
+        // ✅ 마커 위치 안정화 (GPS 오차율 완화)
+        updateMarker(lat, lng);
+    
+        // ✅ 사람중심 모드일 때 지도 중심 이동
+        if (followUser && myMarker) {
+          map.setCenter(myMarker.getPosition()); // ✅ 내 마커 기준으로 이동
+          map.setZoom(16);
+        }
+      }, err => {
+        console.error("내 위치 추적 실패:", err);
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    }
   }
-}
-window.initMap = initMap;
+  window.initMap = initMap;
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
