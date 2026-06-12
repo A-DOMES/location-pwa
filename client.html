@@ -1115,11 +1115,12 @@ function initMap() {
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
 
-  // ✅ 지도 초기화 후 데이터 불러오기
-  loadData();
+  // ✅ 지도 초기화 후 데이터 불러오기 (idle 이벤트 활용)
+  google.maps.event.addListenerOnce(map, "idle", () => {
+    loadData();
+  });
 }
 window.initMap = initMap;
-
 
 
 /* ---------------------- 위치찾기 기능 ---------------------- */
