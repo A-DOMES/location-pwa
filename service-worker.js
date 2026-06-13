@@ -1,10 +1,10 @@
-const CACHE_NAME = "adomes-cache-v7";
+const CACHE_NAME = "adomes-admin-cache-v1";
 const urlsToCache = [
-  "index.html",
-  "manifest.json",
-  "icon-192.png",
-  "icon-512.png",
-  "config.js"   // ✅ 새로 추가된 파일
+  "/location-pwa/index.html",
+  "/location-pwa/manifest.json",
+  "/location-pwa/icon-192.png",
+  "/location-pwa/icon-512.png",
+  "/location-pwa/config.js"
 ];
 
 self.addEventListener("install", (event) => {
