@@ -169,14 +169,13 @@ body { display:flex; justify-content:center; align-items:center;
   window.login = login;
 </script>
 
-<!-- ✅ 최신 서비스 워커 등록 -->
+<!-- 📌 관리자용 서비스워커 등록 -->
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/location-app/service-worker.js')
-      .then(reg => console.log('Service Worker registered:', reg))
-      .catch(err => console.error('Service Worker registration failed:', err));
+    navigator.serviceWorker.register('/location-pwa/service-worker.js')
+      .then(reg => console.log('Admin Service Worker registered:', reg))
+      .catch(err => console.error('Admin Service Worker registration failed:', err));
   }
 </script>
-
 </body>
 </html>
