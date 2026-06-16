@@ -51,7 +51,7 @@ let myPolyline = null; // 내 마커 전용 Polyline
 let followUser = false;       // false → 지도중심, true → 사람중심
 
 // 사용자별 path 시작 시각 저장용
-let userStartTimes = {}; 
+// let userStartTimes = {}; 
 
     
   // ---------------------- 마커 제거 함수 ----------------------
@@ -202,22 +202,17 @@ function calculateTotalTime(user) {
     return 0;
   }
 
-  // ✅ path가 처음 기록될 때 A열 시각을 배열에 저장
-  if (!user.startTime && user.path && user.path.length > 0) {
-    user.startTime = new Date(user.time); // A열: 최초 로그인 시각
-  }
-
-  // ✅ F열(마지막 갱신 시각)과 startTime 비교
-  const startTime = new Date(user.startTime);
+  // ✅ 서버에서 내려준 startTime 사용
+  const startTime = user.startTime ? new Date(user.startTime) : null;
   const endTime   = new Date(user.updated);
 
-  if (!isNaN(startTime) && !isNaN(endTime)) {
+  // ✅ F열(마지막 갱신 시각)과 startTime 비교
+  if (startTime && !isNaN(endTime)) {
     const diffMinutes = (endTime - startTime) / 1000 / 60;
     return diffMinutes > 0 ? diffMinutes : 0;
   }
   return 0;
 }
-
 
     
   // ---------------------- 문자열 기반 색상 함수 ----------------------
@@ -295,13 +290,13 @@ async function loadData(token = null) {
       }
 
       // ---------------------- Path 시작 시각 기록 ----------------------
-      allData.forEach(u => {
+     // allData.forEach(u => {
         // ✅ path가 처음 기록될 때만 A열 시각을 저장
-        if (!userStartTimes[u.phone] && u.path && u.path.length > 0) {
-          userStartTimes[u.phone] = new Date(u.time);
-          console.log(`Path 시작 시각 저장: ${u.phone} → ${userStartTimes[u.phone]}`);
-        }
-      });
+    //     if (!userStartTimes[u.phone] && u.path && u.path.length > 0) {
+    //       userStartTimes[u.phone] = new Date(u.time);
+    //       console.log(`Path 시작 시각 저장: ${u.phone} → ${userStartTimes[u.phone]}`);
+    //     }
+    //    });
 
       // ---------------------- 상대방 움직임 감지 ----------------------
       allData.forEach(otherUser => {
@@ -895,6 +890,10 @@ function updateUserPanelContent(viewMode = "current") {
           );
         }
       }
+
+      // ✅ 총 이동시간 계산 (서버에서 내려준 startTime 사용)
+      user.totalTime = calculateTotalTime(user);
+
       if (pathPoints.length > 0) {
         drawPath(pathPoints, user.distance);
       }
@@ -923,7 +922,6 @@ function updateUserPanelContent(viewMode = "current") {
     }
   }
 }
-
 
 
 /* ---------------------- 테이블 헤더 갱신 ---------------------- */
