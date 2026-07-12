@@ -11,7 +11,7 @@ const CONFIG = {
   CLIENT_URL: "client.html",
 
   // ✅ 구글 API_KEY
-  GOOGLE_API_KEY: "AIzaSyAPE3jQB_meh3sA5NvDU3ISMg6VTLNT4kc",
+  GOOGLE_API_KEY: "AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY",
   
   // ✅ 구글 지도 Map ID (환경별)
   mapIds: {
