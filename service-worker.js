@@ -1,4 +1,4 @@
-const CACHE_NAME = "adomes-admin-cache-v1";
+const CACHE_NAME = "adomes-admin-cache-v2";
 const urlsToCache = [
   "/location-pwa/index.html",
   "/location-pwa/manifest.json",
@@ -8,6 +8,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // 새 버전을 바로 적용
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );

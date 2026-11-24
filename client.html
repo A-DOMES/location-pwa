@@ -71,7 +71,7 @@ function sendMyLocationToServer(pos) {
       lat: pos.lat,              // 현재 위도
       lng: pos.lng,              // 현재 경도
       status: "정상",            // 상태값
-      // 인증 토큰 삭제
+      token: sessionStorage.getItem("token") || localStorage.getItem("token") || ""
     })
   })
   .then(res => res.json())
@@ -231,7 +231,7 @@ function calculateTotalTime(user) {
   }
 
 // ---------------------- 데이터 로딩 ----------------------
-async function loadData(token = null) {
+async function loadData(token = sessionStorage.getItem("token") || localStorage.getItem("token")) {
   try {
     // ✅ 서버에서 위치 데이터 가져오기
     let url = CONFIG.ADMIN_URL + "?mode=getLocations";
@@ -2100,7 +2100,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <!-- Google Maps API -->
 <script async defer 
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOmWcR48yf1sp2RABZFQ52qnDCoWc8AJY&libraries=places,geometry&callback=initMap">
+  src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_KEY_REQUIRED&libraries=places,geometry&callback=initMap">
 </script>
 
   <!-- ✅ 내가 만든 지도 기능 코드 불러오기 -->

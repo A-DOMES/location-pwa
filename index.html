@@ -124,8 +124,7 @@ body { display:flex; justify-content:center; align-items:center;
     modal.querySelector("h2").innerText = "🔑 관리자 서버에 로그인 중입니다...";
     modal.querySelector("p").innerText = "잠시만 기다려주세요.";
 
-    const callbackName = "handleLoginResponse";
-    window[callbackName] = function(result) {
+    const handleLoginResponse = function(result) {
       console.log("로그인 응답:", result);
       if (result.result === "success") {
         modal.querySelector("h2").innerText = "✅ 로그인 성공!";
@@ -135,6 +134,7 @@ body { display:flex; justify-content:center; align-items:center;
         sessionStorage.setItem("role", result.role);
         sessionStorage.setItem("userId", id);
         sessionStorage.setItem("token", result.token);
+        localStorage.setItem("token", result.token); // 지도 화면(새 탭)에서도 쓰기 위해
         localStorage.setItem("nickname", result.nickname);
 
         // ✅ role에 따라 분기 처리
@@ -161,9 +161,17 @@ body { display:flex; justify-content:center; align-items:center;
       }
     };
 
-    const script = document.createElement("script");
-    script.src = `${USER_API_URL}?mode=checkPassword&id=${encodeURIComponent(id)}&pw=${encodeURIComponent(pw)}&callback=${callbackName}`;
-    document.body.appendChild(script);
+    // ✅ 로그인 요청 (POST: 비밀번호가 주소창에 남지 않도록)
+    fetch(USER_API_URL, {
+      method: "POST",
+      body: new URLSearchParams({ mode: "checkPassword", id: id, pw: pw })
+    })
+      .then(res => res.json())
+      .then(handleLoginResponse)
+      .catch(() => {
+        modal.style.display = "none";
+        alert("❌ 서버에 연결하지 못했습니다.");
+      });
   }
 
   window.login = login;
