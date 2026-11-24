@@ -291,6 +291,10 @@ input[type="text"] {
     try { localStorage.removeItem("token"); localStorage.removeItem("nickname"); } catch (e) {}
     window.location.href = "index.html";
   };
+  // 다른 화면(탭)에서 로그아웃하면 이 화면도 함께 로그아웃 (위치 전송 중단)
+  window.addEventListener("storage", function(e) {
+    if (e.key === "token" && !e.newValue) window.logout();
+  });
 
   let userToken = sessionStorage.getItem("token") || "";
 
