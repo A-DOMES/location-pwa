@@ -218,6 +218,14 @@ input[type="text"] {
     font-size:16px;                 /* 모바일에서는 글자 작게 */
   }
 }
+  /* 로그아웃 버튼 (헤더 오른쪽) */
+  header { position: relative; padding-left: 60px; padding-right: 60px; }
+  .logout-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    padding: 4px 10px; font-size: 12px; color: #fff; cursor: pointer;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.6); border-radius: 6px;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.32); }
 </style>
 </head>
   
@@ -226,6 +234,7 @@ input[type="text"] {
   <!-- ✅ 헤더 -->
   <header>
     <h2>A-DOMES | 관리자 시스템</h2>
+    <button type="button" class="logout-btn" onclick="logout()">로그아웃</button>
   </header>
 
   <!-- ✅ 입력창 및 버튼 -->
@@ -263,6 +272,26 @@ input[type="text"] {
 <script src="config.js"></script>
 <script>
   let intervalId;
+
+  // ============================
+  // 📌 로그아웃: 위치 전송 중이면 해제하고, 저장된 로그인 정보를 지운 뒤 로그인 화면으로
+  // ============================
+  window.logout = function() {
+    const phoneBox = document.getElementById("phone");
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+    if (intervalId && phoneBox && phoneBox.value.trim() && token) {
+      fetch(CONFIG.ADMIN_URL, {
+        method: "POST",
+        keepalive: true,
+        body: new URLSearchParams({ mode: "stop", phone: phoneBox.value.trim(), status: "해제", token: token })
+      }).catch(() => {});
+    }
+    clearInterval(intervalId); intervalId = null;
+    try { sessionStorage.clear(); } catch (e) {}
+    try { localStorage.removeItem("token"); localStorage.removeItem("nickname"); } catch (e) {}
+    window.location.href = "index.html";
+  };
+
   let userToken = sessionStorage.getItem("token") || "";
 
   // ============================
