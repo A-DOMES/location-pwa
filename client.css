@@ -267,7 +267,7 @@ body.dark-mode #defaultMapBtn:hover {
 
 /* =========================== ✅ 로그아웃 버튼(우측 상단) + 제목 가운데 =========================== */
 #top-bar #title { position:absolute; left:50%; transform:translateX(-50%); margin-right:0; text-align:center; white-space:nowrap; }
-#logout-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); padding:6px 12px; font-size:14px; color:#fff; cursor:pointer; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.6); border-radius:6px; }
+#logout-btn { position:absolute; right:24px; top:50%; transform:translateY(-50%); padding:6px 12px; font-size:14px; color:#fff; cursor:pointer; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.6); border-radius:6px; }
 #logout-btn:hover { background:rgba(255,255,255,0.32); }
 @media (max-width:768px) and (orientation:portrait) {
   #top-bar #title { position:static; transform:none; width:100%; font-size:16px; }
